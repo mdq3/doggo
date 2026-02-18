@@ -2,8 +2,8 @@
 Identify which channel controls which servo.
 
 Upload and run in REPL:
-    mpremote fs cp drivers/servo.py :servo.py
-    mpremote fs cp poses/identify_servos.py :identify_servos.py
+    mpremote fs cp src/drivers/servo.py :servo.py
+    mpremote fs cp src/configuration/identify_servos.py :identify_servos.py
     mpremote repl
     >>> from identify_servos import *
     >>> test(0)   # Watch which servo moves

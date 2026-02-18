@@ -4,8 +4,8 @@ Test servo control - Run this first!
 Tests direct PWM servo control on BiBoard V1.
 
 Usage:
-    mpremote fs cp drivers/servo.py :servo.py
-    mpremote run poses/test_servo.py
+    mpremote fs cp src/drivers/servo.py :servo.py
+    mpremote run src/configuration/verify_servos_working.py
 """
 
 import time
@@ -102,5 +102,5 @@ print("\n" + "=" * 50)
 print("SUCCESS! All servos working!")
 print("=" * 50)
 print("\nNext steps:")
-print("1. Calibrate servos: mpremote run poses/calibrate.py")
-print("2. Make Bittle stand: mpremote run poses/stand.py")
+print("1. Calibrate servos: mpremote run src/calibrate.py")
+print("2. Make Bittle stand: mpremote run src/demos/stand.py")

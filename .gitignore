@@ -60,3 +60,6 @@ desktop.ini
 # Project specific
 /OpenCat/
 *.pyc
+
+# The doggo config
+config.py

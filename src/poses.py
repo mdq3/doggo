@@ -1,5 +1,5 @@
 """
-Make Bittle Stand
+Bittle Pose Library
 
 Poses derived from OpenCatEsp32 InstinctBittleESP.h reference data.
 
@@ -13,7 +13,7 @@ rotationDirection (indices 8-15):
   FL_LEG(ch8)=-1       FR_LEG(ch9)=+1       RR_LEG(ch10)=+1      RL_LEG(ch11)=-1
 
 Usage:
-    mpremote run poses/stand.py
+    from poses import stand, sit, rest, zero_position
 """
 
 from servo import Servos
@@ -162,40 +162,3 @@ def rest():
     print("\nLying down...")
     move_to(_REST_COMMANDED, speed=1)
     print("✓ Resting position")
-
-# Main sequence
-print("\n" + "=" * 60)
-print("Bittle Stand Demo")
-print("=" * 60)
-
-try:
-    # Start from zero (smooth from rest since current_pos is initialised to rest)
-    # zero_position()
-    # time.sleep(1)
-
-    # Stand up
-    stand()
-    time.sleep(2)
-
-    # Sit down
-    sit()
-    time.sleep(2)
-
-    # Stand again
-    stand()
-    time.sleep(2)
-
-    # Rest
-    rest()
-    time.sleep(1)
-
-    print("\n✓ Demo complete!")
-
-except KeyboardInterrupt:
-    print("\n\nInterrupted!")
-    rest()
-
-except Exception as e:
-    print(f"\n✗ Error: {e}")
-
-print("\n" + "=" * 60)
