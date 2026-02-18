@@ -31,48 +31,49 @@ esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 erase-flash
 esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 --baud 460800 write-flash -z 0x1000 ESP32_GENERIC-20251209-v1.27.0.bin
 
 # Connect and test
-screen /dev/cu.usbmodem5AA90272331 115200
+mpremote repl
 >>> print("Python on Bittle!")
 ```
 
-### 2. Upload Code and Test Servo (10 minutes)
+### 2. Upload Code and Verify Servos (10 minutes)
 
 ```bash
 # Install upload tool
 pip install mpremote
 
-# Upload servo driver
-mpremote fs cp drivers/servo.py :servo.py
+# Upload servo driver and pose library
+mpremote fs cp src/drivers/servo.py :servo.py
+mpremote fs cp src/poses.py :poses.py
 
-# Test servos
-mpremote run poses/test_servo.py
+# Verify servos are working
+mpremote run src/configuration/verify_servos_working.py
 ```
 
 ### 3. Identify Servo Mapping (10 minutes)
 
 ```bash
-mpremote fs cp poses/identify_servos.py :identify_servos.py
+mpremote fs cp src/configuration/identify_servos.py :identify_servos.py
 mpremote repl
 
 >>> from identify_servos import *
 >>> test(0)    # Watch which joint moves
->>> test(1)    # Test each channel 0-8
+>>> test(4)    # Test each channel
 # Write down which channel controls which joint
 ```
 
 ### 4. Calibrate Servos (30 minutes)
 
 ```bash
-mpremote fs cp poses/calibrate.py :calibrate.py
+mpremote fs cp src/calibrate.py :calibrate.py
 mpremote repl
 
 >>> from calibrate import *
 >>> move(0, 90)    # Adjust servo 0
 >>> save(0, 87)    # Save when neutral
->>> done()         # Generate config.py
+>>> done()         # Generate config.py content
 ```
 
-Copy the output to `config.py` and upload:
+Copy the output to `config.py` (gitignored — stays local to your robot) and upload:
 ```bash
 mpremote fs cp config.py :config.py
 ```
@@ -80,11 +81,11 @@ mpremote fs cp config.py :config.py
 ### 5. Make Bittle Stand! (5 minutes)
 
 ```bash
-mpremote run poses/stand.py
+mpremote run src/demos/stand.py
 # Bittle will stand up!
 ```
 
-**See `MICROPYTHON_GETTING_STARTED.md` for detailed step-by-step guide.**
+**See `docs/micropython-getting-started.md` for detailed step-by-step guide.**
 
 ---
 
@@ -92,30 +93,32 @@ mpremote run poses/stand.py
 
 ```
 doggo/
-├── drivers/
-│   └── servo.py                # Direct PWM servo driver
-│
-├── kinematics/
-│   └── (TODO: inverse kinematics)
-│
-├── gaits/
-│   └── (TODO: walking gaits)
-│
-├── poses/
-│   ├── calibrate.py            # Servo calibration helper
-│   ├── identify_servos.py      # Identify channel-to-joint mapping
-│   ├── stand.py                # Basic poses (stand, sit, rest)
-│   └── test_servo.py           # Test servo control
+├── src/
+│   ├── drivers/
+│   │   └── servo.py                # Direct PWM servo driver (ESP32 LEDC)
+│   │
+│   ├── configuration/
+│   │   ├── identify_servos.py      # Identify channel-to-joint mapping
+│   │   └── verify_servos_working.py # Verify all servos move correctly
+│   │
+│   ├── demos/
+│   │   └── stand.py                # Stand demo script
+│   │
+│   ├── calibrate.py                # Interactive REPL calibration tool
+│   └── poses.py                    # Pose library (move_to, stand, sit, rest)
 │
 ├── docs/
-│   ├── micropython_detailed_plan.md    # Full technical analysis
-│   └── micropython_option.md           # Pros/cons discussion
+│   ├── file-reference-guide.md
+│   ├── flashing-opencat-arduino-bins.md
+│   ├── micropython-detailed-plan.md
+│   ├── micropython-getting-started.md
+│   ├── micropython-option.md
+│   ├── pico-2-w-vs-esp32-comparison.md
+│   └── restore-original-opencat-firmware.md
 │
-├── config.py                   # Configuration (auto-generated)
-│
-├── MICROPYTHON_GETTING_STARTED.md      # Complete setup guide
-├── RESTORE_ORIGINAL_FIRMWARE.md        # How to restore OpenCat
-└── README.md                           # This file
+├── config.py                       # Calibration data (gitignored — generate locally)
+├── CLAUDE.md                       # Project notes for Claude Code
+└── README.md                       # This file
 ```
 
 ---
@@ -132,11 +135,8 @@ doggo/
 # Install esptool for flashing
 pip install esptool
 
-# Install mpremote for file upload
+# Install mpremote for REPL and file transfers
 pip install mpremote
-
-# macOS/Linux: screen (usually pre-installed)
-# Windows: Download PuTTY
 ```
 
 ---
@@ -146,11 +146,11 @@ pip install mpremote
 ### Upload and Run Scripts
 
 ```bash
-# Run a script
-mpremote run test_servo.py
+# Run a script directly from host
+mpremote run src/demos/stand.py
 
-# Upload a file
-mpremote fs cp myfile.py :myfile.py
+# Upload a file to the device
+mpremote fs cp src/poses.py :poses.py
 
 # Interactive REPL
 mpremote repl
@@ -167,16 +167,16 @@ mpremote fs ls
 4. Port: /dev/cu.usbmodem5AA90272331
 5. Write code and click Run!
 
-### Direct REPL (Advanced)
+### Direct REPL
 
 ```bash
-screen /dev/cu.usbmodem5AA90272331 115200
+mpremote repl
 >>> # Type Python directly
 >>> from machine import Pin
 >>> Pin(2, Pin.OUT).on()
 ```
 
-Exit: `Ctrl+A` then `K` then `Y`
+Exit: `Ctrl+]`
 
 ---
 
@@ -229,7 +229,7 @@ cd OpenCatEsp32-Quadruped-Robot
 3. **Translate to Python** (same logic, Python syntax)
 4. **Test and tune** with hardware
 
-**Example:** See inverse kinematics example in `docs/micropython_detailed_plan.md`
+**Example:** See inverse kinematics example in `docs/micropython-detailed-plan.md`
 
 ---
 
@@ -247,12 +247,12 @@ esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 \
 ### Download Fresh Firmware
 Use Petoi Desktop App → Firmware Uploader
 
-**See `RESTORE_ORIGINAL_FIRMWARE.md` for complete guide.**
+**See `docs/restore-original-opencat-firmware.md` for complete guide.**
 
 ### Flashing Compiled Firmware from Arduino IDE
 If you compiled OpenCat from source and have multiple `.bin` files (`.ino.bin`, `.ino.bootloader.bin`, `.ino.partitions.bin`):
 
-**See `FLASHING_ARDUINO_BINS.md` for step-by-step instructions.**
+**See `docs/flashing-opencat-arduino-bins.md` for step-by-step instructions.**
 
 ---
 
@@ -321,8 +321,8 @@ JOINTS = {
 
 ### Servo doesn't move
 - Battery connected and charged?
-- Correct channel number (0-8 for Bittle)?
-- Try running `poses/test_servo.py`
+- Correct channel number?
+- Try running `src/configuration/verify_servos_working.py`
 - Check servo is plugged into right connector
 
 ### Can't upload files
@@ -339,17 +339,17 @@ mpremote fs ls
 - Import only what you need
 
 ### Need more help?
-See `MICROPYTHON_GETTING_STARTED.md` for detailed troubleshooting.
+See `docs/micropython-getting-started.md` for detailed troubleshooting.
 
 ---
 
 ## Resources
 
 ### Documentation
-- [Getting Started Guide](MICROPYTHON_GETTING_STARTED.md) - Complete setup
-- [Firmware Restoration](RESTORE_ORIGINAL_FIRMWARE.md) - Restore OpenCat
-- [Technical Deep Dive](docs/micropython_detailed_plan.md) - Full analysis
-- [Pico 2 W vs ESP32 Comparison](docs/pico_2_w_vs_esp32_comparison.md) - Platform comparison
+- [Getting Started Guide](docs/micropython-getting-started.md) - Complete setup
+- [Firmware Restoration](docs/restore-original-opencat-firmware.md) - Restore OpenCat
+- [Technical Deep Dive](docs/micropython-detailed-plan.md) - Full analysis
+- [Pico 2 W vs ESP32 Comparison](docs/pico-2-w-vs-esp32-comparison.md) - Platform comparison
 - [MicroPython Docs](https://docs.micropython.org/en/latest/esp32/) - Official reference
 
 ### Source Code
@@ -412,4 +412,4 @@ This project uses MicroPython (MIT License) and builds on concepts from Petoi's 
 
 Happy hacking!
 
-**Last Updated:** 2026-02-11
+**Last Updated:** 2026-02-18

@@ -18,13 +18,11 @@ Step-by-step guide to flash MicroPython and control your first servo.
 
 ### Software
 ```bash
-# Install esptool
+# Install esptool (for flashing firmware)
 pip install esptool
 
-# Install screen (macOS/Linux) or use PuTTY (Windows)
-# macOS: built-in
-# Linux: sudo apt install screen
-# Windows: Download PuTTY
+# Install mpremote (for REPL and file transfers)
+pip install mpremote
 ```
 
 ### Hardware
@@ -95,7 +93,7 @@ esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 erase-flash
 ```bash
 # Flash MicroPython firmware
 esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 \
-    --baud 460800 write-flash -z 0x1000 ESP32_GENERIC-20251209-v1.27.0.bin
+--baud 460800 write-flash -z 0x1000 ESP32_GENERIC-20251209-v1.27.0.bin
 
 # Wait for completion (~30 seconds)
 # You should see: "Hard resetting via RTS pin..."
@@ -111,28 +109,10 @@ esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 \
 
 REPL = Read-Eval-Print Loop (Python interactive shell)
 
-### macOS/Linux
-
 ```bash
-# Connect with screen
-screen /dev/cu.usbmodem5AA90272331 115200
-
-# Press ENTER
-# You should see Python prompt:
-# >>>
-
-# If blank, press Ctrl+C then ENTER
-```
-
-### Windows
-
-```
-1. Open PuTTY
-2. Connection type: Serial
-3. Serial line: COM3 (your COM port)
-4. Speed: 115200
-5. Click Open
-6. Press ENTER
+mpremote repl
+# Press ENTER if prompt doesn't appear
+# Exit: Ctrl+]
 ```
 
 ### First Test
@@ -151,8 +131,6 @@ Hello from MicroPython!
 
 # Success! MicroPython is working!
 ```
-
-**Exit screen:** `Ctrl+A` then `K` then `Y`
 
 ---
 
@@ -190,7 +168,7 @@ The I2C bus (GPIO 21/22) connects to the IMU only:
 
 **IMPORTANT: Reconnect the battery now!** Servos require more power than USB can provide. The battery must be connected and charged for servos to move.
 
-The repository includes a direct PWM servo driver at `drivers/servo.py`.
+The repository includes a direct PWM servo driver at `src/drivers/servo.py`.
 
 ### Install mpremote
 
@@ -202,7 +180,7 @@ pip install mpremote
 
 ```bash
 # Upload the servo driver from the repo
-mpremote fs cp drivers/servo.py :servo.py
+mpremote fs cp src/drivers/servo.py :servo.py
 
 # Verify it uploaded
 mpremote fs ls
@@ -215,40 +193,19 @@ mpremote fs ls
 - 50Hz PWM signal with 500-2500μs pulse width
 - Supports all 12 BiBoard servo channels
 
-### Test First Servo
+### Verify Servos Are Working
 
-The repository includes `poses/test_servo.py` for testing.
+The repository includes `src/configuration/verify_servos_working.py` for testing.
 
 ```bash
 # Run the test script directly from your computer
-mpremote run poses/test_servo.py
+mpremote run src/configuration/verify_servos_working.py
 ```
 
 The script will:
 1. Initialize the PWM servo driver
 2. Move servo on channel 0 through different positions
 3. Test all 9 Bittle servos with a quick sweep
-
-**Expected output:**
-```
-==================================================
-Servo Test Script (BiBoard V1 Direct PWM)
-==================================================
-
-BiBoard V1 servo pin mapping:
-  Channel 0: GPIO 18    Channel 6:  GPIO 12
-  ...
-
-1. Initializing servo driver...
-✓ Servo driver initialized
-
-2. Testing servo on channel 0 (GPIO 18)...
-   → Center (90°)
-   → Minimum (0°)
-   → Maximum (180°)
-   → Back to center (90°)
-✓ Servo test completed!
-```
 
 **If servo doesn't move:**
 - Check battery is connected and charged
@@ -273,7 +230,7 @@ Before calibrating, you need to identify which channel controls which joint. The
 ### Upload Identification Script
 
 ```bash
-mpremote fs cp poses/identify_servos.py :identify_servos.py
+mpremote fs cp src/configuration/identify_servos.py :identify_servos.py
 mpremote repl
 ```
 
@@ -300,14 +257,14 @@ Write down which joint moves for each channel:
 
 ```
 Channel 0: _____________ (e.g., "head")
-Channel 1: _____________ (e.g., "front left shoulder")
-Channel 2: _____________
-Channel 3: _____________
-Channel 4: _____________
+Channel 4: _____________ (e.g., "front left shoulder")
 Channel 5: _____________
 Channel 6: _____________
 Channel 7: _____________
 Channel 8: _____________
+Channel 9: _____________
+Channel 10: _____________
+Channel 11: _____________
 ```
 
 You'll need this mapping for calibration.
@@ -322,7 +279,7 @@ Use the channel mapping you identified in Step 7 to calibrate each servo to its 
 
 ```bash
 # Upload the calibration helper to BiBoard
-mpremote fs cp poses/calibrate.py :calibrate.py
+mpremote fs cp src/calibrate.py :calibrate.py
 ```
 
 ### Connect to REPL
@@ -350,27 +307,27 @@ Quick start:
   >>> done()
 ```
 
-**For each servo (0-8):**
+**For each servo:**
 
 ```python
 # 1. Move servo to starting position
->>> move(0, 90)
-[0] Front Left Shoulder -> 90°
+>>> move(4, 90)
+[4] Front Left Shoulder -> 90°
 
 # 2. Adjust until the joint is in neutral position
->>> move(0, 85)
->>> move(0, 87)
+>>> move(4, 85)
+>>> move(4, 87)
 
 # 3. Save when it looks right
->>> save(0, 87)
-Saved: [0] Front Left Shoulder = 87° (offset: -3°)
+>>> save(4, 87)
+Saved: [4] Front Left Shoulder = 87° (offset: -3°)
 
 # 4. Move to next servo
->>> move(1, 90)
-# ... repeat ...
+>>> move(5, 90)
+# ... repeat for all channels ...
 ```
 
-**Shortcut commands:** `m(0, 90)` and `s(0, 90)` work the same as `move()` and `save()`.
+**Shortcut commands:** `m(4, 90)` and `s(4, 90)` work the same as `move()` and `save()`.
 
 ### Generate config.py
 
@@ -388,9 +345,8 @@ Bittle Calibration Config
 """
 
 CALIBRATION = {
-    0:  -3,  # Front Left Shoulder
-    1:  +0,  # Front Left Leg
-    2:  +2,  # Front Right Shoulder
+     0:  +0,  # Head Pan
+     4: +37,  # Front Left Shoulder
     ...
 }
 
@@ -403,7 +359,7 @@ def apply_calibration(angle, channel):
 ### Save to BiBoard
 
 1. Copy the config content from the terminal
-2. Save to `config.py` on your computer
+2. Save to `config.py` at the repo root (`config.py` is gitignored — it's specific to your robot)
 3. Upload to BiBoard:
 
 ```bash
@@ -434,36 +390,32 @@ mpremote fs cp config.py :config.py
 
 Now that you've calibrated the servos, let's make Bittle stand!
 
-The repository includes `poses/stand.py` which demonstrates standing, sitting, and resting poses.
+The demo script is at `src/demos/stand.py`. It imports pose functions from `src/poses.py`.
 
-### Run Stand Demo
+### Upload Pose Library and Run Demo
 
 ```bash
-# Run the standing demo
-mpremote run poses/stand.py
+mpremote fs cp src/poses.py :poses.py
+mpremote run src/demos/stand.py
 ```
 
 ### What It Does
 
 The script will automatically:
 1. Load your calibration data from `config.py` (if available)
-2. Move to zero position (all servos at 90°)
-3. Stand up
-4. Sit down
-5. Stand again
-6. Rest position
+2. Stand up
+3. Sit down
+4. Stand again
+5. Rest (lie flat)
 
 **Expected output:**
 ```
-==============================================================
+============================================================
 Bittle Stand Demo
-==============================================================
+============================================================
 ✓ Loaded calibration data
 Initializing hardware...
 ✓ Hardware ready
-
-Moving to zero position...
-✓ Zero position
 
 Standing up...
 ✓ Standing position
@@ -475,7 +427,7 @@ Lying down...
 ✓ Resting position
 
 ✓ Demo complete!
-==============================================================
+============================================================
 ```
 
 ### Servo Mapping Reference
@@ -498,22 +450,28 @@ Lying down...
 
 ### Customizing Poses
 
-To adjust the angles for your specific Bittle:
+The pose functions live in `src/poses.py`. To adjust angles for your Bittle:
 
-1. Edit `poses/stand.py` on your computer
-2. Modify the angle values in `stand()`, `sit()`, or `rest()` functions
-3. Run it again: `mpremote run poses/stand.py`
+1. Edit `src/poses.py` on your computer
+2. Modify the angle values in `stand()`, `sit()`, or `rest()`
+3. Re-upload and run:
+
+```bash
+mpremote fs cp src/poses.py :poses.py
+mpremote run src/demos/stand.py
+```
 
 **Example adjustment:**
 ```python
 def stand():
-    # Front legs - adjust these angles as needed
-    set_calibrated_servo(0, 90)   # FL shoulder
-    set_calibrated_servo(1, 45)   # FL leg - try different values
-    # ... etc
+    move_to({
+        CH_FL_LEG: 65,   # was 60 — tune this per robot
+        CH_FR_LEG: 115,  # was 120
+        # ... etc
+    }, speed=2)
 ```
 
-**TIP:** The `set_calibrated_servo()` function automatically applies your calibration offsets!
+Angles are *commanded* values (before calibration). `move_to` applies `apply_calibration` internally.
 
 ---
 
@@ -522,14 +480,10 @@ def stand():
 ### Option 1: REPL (Quick Testing)
 
 ```bash
-# Connect
-screen /dev/cu.usbmodem5AA90272331 115200
+mpremote repl
+# Exit: Ctrl+]
 
-# Type code directly
 >>> servos.set_servo(0, 45)
-
-# Good for testing
-# Bad for writing lots of code
 ```
 
 ### Option 2: mpremote (File Upload)
@@ -538,14 +492,11 @@ screen /dev/cu.usbmodem5AA90272331 115200
 # Install mpremote
 pip install mpremote
 
-# Upload file
-mpremote fs cp stand.py :stand.py
+# Upload a file
+mpremote fs cp src/poses.py :poses.py
 
-# Run it
-mpremote exec "import stand"
-
-# Or run directly
-mpremote run stand.py
+# Run a script directly from host
+mpremote run src/demos/stand.py
 ```
 
 ### Option 3: WebREPL (Wireless!)
@@ -589,37 +540,40 @@ Now you can:
 
 ```
 doggo/
-├── drivers/
-│   └── servo.py                # ✅ Direct PWM servo driver
-│
-├── kinematics/                  # 📋 TODO: Inverse kinematics
-│
-├── gaits/                       # 📋 TODO: Walking gaits
-│
-├── poses/
-│   ├── calibrate.py            # ✅ Calibration helper
-│   ├── identify_servos.py      # ✅ Identify servo mapping
-│   ├── stand.py                # ✅ Standing/sitting/rest poses
-│   └── test_servo.py           # ✅ First servo test
+├── src/
+│   ├── drivers/
+│   │   └── servo.py                # ✅ Direct PWM servo driver (ESP32 LEDC)
+│   │
+│   ├── configuration/
+│   │   ├── identify_servos.py      # ✅ Identify channel-to-joint mapping
+│   │   └── verify_servos_working.py # ✅ Verify all servos move correctly
+│   │
+│   ├── demos/
+│   │   └── stand.py                # ✅ Stand demo script
+│   │
+│   ├── calibrate.py                # ✅ Interactive REPL calibration tool
+│   └── poses.py                    # ✅ Pose library (move_to, stand, sit, rest)
 │
 ├── docs/
+│   ├── file_reference_guide.md
+│   ├── flashing_opencat_arduino_bins.md
 │   ├── micropython_detailed_plan.md
 │   ├── micropython_option.md
-│   └── file_reference_guide.md
+│   ├── pico_2_w_vs_esp32_comparison.md
+│   └── restore_original_opencat_firmware.md
 │
-├── config.py                   # ⚙️ Auto-generated by calibrate.py
-│
+├── config.py                   # ⚙️ Gitignored — generate with calibrate.py
+├── CLAUDE.md                   # Project notes for Claude Code
 ├── MICROPYTHON_GETTING_STARTED.md
-├── RESTORE_ORIGINAL_FIRMWARE.md
-├── FLASHING_ARDUINO_BINS.md
 └── README.md
 ```
 
 **Files uploaded to BiBoard:**
 ```
 BiBoard:/
-├── servo.py       # Servo driver (from drivers/)
-└── config.py      # Calibration data (generated)
+├── servo.py       # from src/drivers/servo.py
+├── poses.py       # from src/poses.py
+└── config.py      # generated locally, gitignored
 ```
 
 ---
@@ -628,27 +582,27 @@ BiBoard:/
 
 ### Phase 1: Basic Control (✅ Complete!)
 1. ✅ Flash MicroPython
-2. ✅ Upload servo driver (`servo.py`)
-3. ✅ Test first servo
-4. ✅ Calibrate all servos (`calibrate.py`)
-5. ✅ Make Bittle stand (`stand.py`)
+2. ✅ Upload servo driver (`src/drivers/servo.py`)
+3. ✅ Verify servos (`src/configuration/verify_servos_working.py`)
+4. ✅ Calibrate all servos (`src/calibrate.py`)
+5. ✅ Make Bittle stand (`src/demos/stand.py`)
 
 ### Phase 2: Kinematics (In Progress)
 1. ⬜ Study OpenCat IK algorithms
 2. ⬜ Port inverse kinematics to Python
 3. ⬜ Create `Leg` class for leg control
 4. ⬜ Test foot positioning with IK
-5. ⬜ Add `kinematics/ik.py` and `kinematics/leg.py`
+5. ⬜ Add `src/kinematics/ik.py` and `src/kinematics/leg.py`
 
 ### Phase 3: Gaits (Next)
 1. ⬜ Implement simple sequential walk
 2. ⬜ Add trot gait (diagonal pairs)
 3. ⬜ Add crawl gait
 4. ⬜ Tune gait parameters for smooth motion
-5. ⬜ Create `gaits/walk.py`, `gaits/trot.py`, `gaits/crawl.py`
+5. ⬜ Create `src/gaits/walk.py`, `src/gaits/trot.py`, `src/gaits/crawl.py`
 
 ### Phase 4: Advanced (Future)
-1. ⬜ IMU integration (MPU6050 gyro/accelerometer)
+1. ⬜ IMU integration (ICM20600 gyro/accelerometer)
 2. ⬜ Balance improvements using IMU feedback
 3. ⬜ WiFi control interface
 4. ⬜ Autonomous behaviors
@@ -665,19 +619,21 @@ BiBoard:/
 
 ### "No module named 'servo'"
 - servo.py not uploaded to BiBoard
-- Run: `mpremote fs cp drivers/servo.py :servo.py`
+- Run: `mpremote fs cp src/drivers/servo.py :servo.py`
+
+### "No module named 'poses'"
+- poses.py not uploaded to BiBoard
+- Run: `mpremote fs cp src/poses.py :poses.py`
 
 ### Servo doesn't move
 - Battery connected and charged?
-- Correct channel number (0-8 for Bittle)?
+- Correct channel number?
 - Check servo is plugged into the right connector
-- Try running test_servo.py to verify
+- Try running `src/configuration/verify_servos_working.py`
 
 ### Can't connect to REPL
-- Correct port?
-- Correct baud rate (115200)?
 - Try unplugging/replugging USB
-- Press Ctrl+C in terminal
+- Run `mpremote repl` and press `Ctrl+C` then `Enter` if prompt doesn't appear
 
 ---
 
@@ -710,7 +666,7 @@ esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 \
     --baud 460800 write-flash -z 0x1000 ESP32_GENERIC-20251209-v1.27.0.bin
 
 # Connect
-screen /dev/cu.usbmodem5AA90272331 115200
+mpremote repl
 
 # Test
 >>> print("Let's build a robot!")
@@ -720,4 +676,4 @@ screen /dev/cu.usbmodem5AA90272331 115200
 
 ---
 
-**Last Updated:** 2026-02-11
+**Last Updated:** 2026-02-18
