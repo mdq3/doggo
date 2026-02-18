@@ -404,7 +404,7 @@ Contributions welcome! Ideas:
 
 ## License
 
-This project uses MicroPython (MIT License) and builds on concepts from Petoi's OpenCat (Apache 2.0). Check respective licenses for details.
+This project uses MicroPython (MIT License) and builds on concepts from Petoi's OpenCat (MIT License). Check respective licenses for details.
 
 ---
 
