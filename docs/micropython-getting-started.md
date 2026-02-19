@@ -279,7 +279,7 @@ Use the channel mapping you identified in Step 7 to calibrate each servo to its 
 
 ```bash
 # Upload the calibration helper to BiBoard
-mpremote fs cp src/calibrate.py :calibrate.py
+mpremote fs cp src/configuration/calibrate.py :calibrate.py
 ```
 
 ### Connect to REPL
@@ -584,7 +584,7 @@ BiBoard:/
 1. ✅ Flash MicroPython
 2. ✅ Upload servo driver (`src/drivers/servo.py`)
 3. ✅ Verify servos (`src/configuration/verify_servos_working.py`)
-4. ✅ Calibrate all servos (`src/calibrate.py`)
+4. ✅ Calibrate all servos (`src/configuration/calibrate.py`)
 5. ✅ Make Bittle stand (`src/demos/stand.py`)
 
 ### Phase 2: Kinematics (In Progress)

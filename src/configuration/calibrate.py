@@ -5,7 +5,7 @@ Use interactively in REPL to calibrate servos and generate config.py
 
 Usage:
     1. Upload: mpremote fs cp src/drivers/servo.py :servo.py
-    2. Upload: mpremote fs cp src/calibrate.py :calibrate.py
+    2. Upload: mpremote fs cp src/configuration/calibrate.py :calibrate.py
     3. Connect: mpremote repl
     4. Run:
        >>> from calibrate import *

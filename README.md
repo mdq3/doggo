@@ -64,7 +64,7 @@ mpremote repl
 ### 4. Calibrate Servos (30 minutes)
 
 ```bash
-mpremote fs cp src/calibrate.py :calibrate.py
+mpremote fs cp src/configuration/calibrate.py :calibrate.py
 mpremote repl
 
 >>> from calibrate import *
