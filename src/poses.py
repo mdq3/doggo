@@ -74,6 +74,20 @@ _REST_COMMANDED = {
 current_pos = {ch: apply_calibration(_REST_COMMANDED.get(ch, 90), ch)
                for ch in ALL_CHANNELS}
 
+def play_frame(targets):
+    """
+    Send commanded angles directly to servos with no software interpolation.
+    Used for gait playback where frames are already a smooth trajectory.
+
+    Args:
+        targets: Dict of {channel: commanded_angle} (before calibration)
+    """
+    for ch, angle in targets.items():
+        cal = apply_calibration(angle, ch)
+        servos.set_servo(ch, cal)
+        current_pos[ch] = cal
+
+
 def move_to(targets, speed=2, delay=0.015):
     """
     Move multiple servos simultaneously to target positions.
@@ -128,7 +142,7 @@ def stand():
         CH_FR_LEG:      120,   # 90 + 1*30  (rd=+1, opencat=30)
         CH_RR_LEG:      120,   # 90 + 1*30
         CH_RL_LEG:       60,   # 90 - 1*30  (rd=-1, opencat=30)
-    }, speed=2)
+    }, speed=1)
     print("✓ Standing position")
 
 def sit():
