@@ -67,6 +67,47 @@ Device must already have `servo.py`, `poses.py`, and `config.py` uploaded.
 
 ---
 
+### `src/gaits/trot.py`
+
+**Purpose:** Trot gait — the robot's first locomotion. Diagonal leg pairs (FL+RR, FR+RL) move simultaneously using discrete keyframes passed to `move_to()`. No inverse kinematics needed.
+
+**What it provides:**
+- `_PHASE_A`, `_PHASE_B` — commanded-angle dicts for each gait phase
+- `trot(steps=None)` — runs the gait for a fixed number of A→B cycles, or indefinitely until `KeyboardInterrupt`; returns to stand on completion
+
+**Approach speed:** `speed=2` (entry), `speed=3` (gait steps), ~0.21s/phase, ~2.4 Hz cycle
+
+**Upload to device:**
+```bash
+mpremote fs mkdir :gaits
+mpremote fs cp src/gaits/trot.py :gaits/trot.py
+```
+
+**Import in scripts:**
+```python
+from gaits.trot import trot
+trot(steps=10)
+```
+
+**Referenced in:** `src/demos/walk.py`
+
+---
+
+### `src/demos/walk.py`
+
+**Purpose:** Walk demo script. Runs stand → trot → rest sequence.
+
+**What it does:** stand → `trot(steps=10)` → rest
+
+**Run directly from host:**
+```bash
+mpremote run src/demos/walk.py
+```
+
+Device must already have `servo.py`, `poses.py`, `config.py`, and `gaits/trot.py` uploaded.
+
+---
+
 ### `src/configuration/calibrate.py`
 
 **Purpose:** Interactive REPL calibration tool. Use once to find each servo's neutral position.
@@ -180,7 +221,7 @@ Platform comparison between Raspberry Pi Pico 2 W and ESP32 (historical planning
 
 ## Device Filesystem Layout
 
-Files that must be on the BiBoard to run the stand demo:
+### Stand demo
 
 ```
 BiBoard:/
@@ -189,11 +230,32 @@ BiBoard:/
 └── config.py      # generated locally, gitignored
 ```
 
-Upload all at once:
 ```bash
 mpremote cp src/drivers/servo.py :servo.py + cp src/poses.py :poses.py + cp config.py :config.py
 ```
 
+### Walk demo (adds trot gait)
+
+```
+BiBoard:/
+├── servo.py
+├── poses.py
+├── config.py
+└── gaits/
+    └── trot.py    # from src/gaits/trot.py
+```
+
+```bash
+mpremote fs cp src/drivers/servo.py :servo.py + \
+    fs cp src/poses.py :poses.py + \
+    fs cp config.py :config.py + \
+    fs mkdir :gaits + \
+    fs cp src/gaits/trot.py :gaits/trot.py + \
+    run src/demos/walk.py
+```
+
+Note: `fs mkdir :gaits` will error if the directory already exists on the device — safe to ignore on re-deploy.
+
 ---
 
-**Last Updated:** 2026-02-18
+**Last Updated:** 2026-02-19

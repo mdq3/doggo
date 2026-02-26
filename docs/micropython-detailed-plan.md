@@ -700,11 +700,11 @@ More RAM = Better CV possibilities
 2. Test servo control
 3. Implement basic poses (stand, sit)
 
-### Phase 2: Port Gaits (Week 2-3)
-1. Study OpenCat source
-2. Port IK functions
-3. Implement simple walk
-4. Add trot gait
+### Phase 2: Port Gaits ✅ (trot done)
+1. ~~Study OpenCat source~~ ✅
+2. Port IK functions (TODO — `kinematics/`)
+3. ~~Implement simple walk~~ ✅ (`src/demos/walk.py`)
+4. ~~Add trot gait~~ ✅ (`src/gaits/trot.py`) — discrete-keyframe diagonal-pair trot, ~2.4 Hz
 
 ### Phase 3: Add Basic Vision (Week 4)
 **Choose ONE:**
@@ -784,4 +784,4 @@ Want to proceed with MicroPython? I can help you:
 
 ---
 
-**Last Updated:** 2026-02-10
+**Last Updated:** 2026-02-19
