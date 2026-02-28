@@ -6,22 +6,23 @@ real serial port, and bridges it to the device WebREPL WebSocket. This avoids
 any library patching — mpremote sees a proper tty device with a real fd.
 
 Usage:
-    python webrepl_proxy.py <host> <password> [ws_port=8266]
+    # Single command — proxy connects, runs mpremote, then exits:
+    python webrepl_proxy.py <host> <password> repl
+    python webrepl_proxy.py <host> <password> run src/demos/walk.py
+    python webrepl_proxy.py <host> <password> fs cp src/poses.py :poses.py
 
-The proxy prints the PTY path on startup. Use that path with mpremote:
-    mpremote connect /dev/ttys003 repl
-    mpremote connect /dev/ttys003 run src/demos/walk.py
-    mpremote connect /dev/ttys003 fs cp src/poses.py :poses.py
+    # Daemon mode — proxy stays running, print PTY path for manual mpremote use:
+    python webrepl_proxy.py <host> <password>
 
-The proxy stays running; Ctrl+C to quit.
-Each mpremote session gets a fresh PTY (path may change between sessions).
+    # Custom WebREPL port (default 8266) — pass as a numeric third argument:
+    python webrepl_proxy.py <host> <password> 8266 repl
 """
 import os
 import socket
 import struct
+import subprocess
 import threading
 import sys
-import time
 
 _FRAME_TXT = 0x81
 _FRAME_BIN = 0x82
@@ -127,6 +128,18 @@ def _bridge(ws, master_fd):
     os.close(master_fd)
 
 
+def _run_command(ws, cmd_args):
+    """Open a PTY, run mpremote connect <pty> <cmd_args>, wait for exit."""
+    master_fd, slave_fd = os.openpty()
+    slave_path = os.ttyname(slave_fd)
+    os.close(slave_fd)
+    bridge = threading.Thread(target=_bridge, args=(ws, master_fd), daemon=True)
+    bridge.start()
+    returncode = subprocess.call(["mpremote", "connect", slave_path] + cmd_args)
+    bridge.join(timeout=2)
+    return returncode
+
+
 def main():
     if len(sys.argv) < 3:
         print(__doc__)
@@ -134,29 +147,38 @@ def main():
 
     host = sys.argv[1]
     password = sys.argv[2]
-    ws_port = int(sys.argv[3]) if len(sys.argv) > 3 else 8266
+
+    # Optional numeric third arg is the WebREPL port; everything after is the mpremote command.
+    if len(sys.argv) > 3 and sys.argv[3].isdigit():
+        ws_port = int(sys.argv[3])
+        cmd_args = sys.argv[4:]
+    else:
+        ws_port = 8266
+        cmd_args = sys.argv[3:]
 
     print(f"Connecting to WebREPL at {host}:{ws_port}...")
     ws = _WS(socket.socket())
     ws.settimeout(10)
     ws._sock.connect((host, ws_port))
     ws.handshake()
-    print("Logging in...")
     ws.login(password)
     ws.settimeout(None)
     print(f"WebREPL connected: {host}:{ws_port}")
 
     try:
-        while True:
-            master_fd, slave_fd = os.openpty()
-            slave_path = os.ttyname(slave_fd)
-            os.close(slave_fd)
-            print(f"\nPTY ready: {slave_path}")
-            print(f"  mpremote connect {slave_path} repl")
-            print(f"  mpremote connect {slave_path} run <script.py>")
-            print(f"  mpremote connect {slave_path} fs cp <file> :<file>")
-            _bridge(ws, master_fd)
-            print("mpremote disconnected")
+        if cmd_args:
+            sys.exit(_run_command(ws, cmd_args))
+        else:
+            while True:
+                master_fd, slave_fd = os.openpty()
+                slave_path = os.ttyname(slave_fd)
+                os.close(slave_fd)
+                print(f"\nPTY ready: {slave_path}")
+                print(f"  mpremote connect {slave_path} repl")
+                print(f"  mpremote connect {slave_path} run <script.py>")
+                print(f"  mpremote connect {slave_path} fs cp <file> :<file>")
+                _bridge(ws, master_fd)
+                print("mpremote disconnected")
     except KeyboardInterrupt:
         print("\nProxy stopped")
     finally:
