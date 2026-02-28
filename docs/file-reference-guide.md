@@ -185,6 +185,92 @@ mpremote run src/configuration/verify_servos_working.py
 
 ---
 
+### `src/server.py`
+
+**Purpose:** HTTP command server for wireless Bittle control. Runs in a background `_thread` using raw sockets so the main thread stays free for WebREPL.
+
+**Routes:**
+
+| Route | Action |
+|-------|--------|
+| `GET /stand` | Call `stand()` |
+| `GET /sit` | Call `sit()` |
+| `GET /rest` | Call `rest()` |
+| `GET /walk?steps=N` | Call `walk(steps=N)` |
+| `GET /trot?steps=N` | Call `trot(steps=N)` |
+
+Returns `200 OK` on success, `404 Not found` for unknown routes.
+
+**What it provides:**
+- `run(port)` — starts a background `_thread` that listens on port 80 (called by `main.py`, returns immediately)
+
+**Upload to device:**
+```bash
+mpremote fs cp src/server.py :server.py
+```
+
+**Use from host:**
+```bash
+curl http://192.168.1.x/stand
+curl http://192.168.1.x/walk?steps=3
+```
+
+---
+
+## Root-level device files
+
+### `boot.py`
+
+**Purpose:** Runs on every device boot (before `main.py`). Connects to WiFi and starts WebREPL.
+
+**Behaviour:**
+- Reads credentials from `wifi_config.py` (gitignored)
+- On success: prints `WiFi connected: <ip>`, starts WebREPL on port 8266
+- On failure or missing file: prints status and continues (USB REPL still works)
+
+**Upload to device:**
+```bash
+mpremote fs cp boot.py :boot.py
+```
+
+**Serial output after reboot:**
+```
+WiFi connected: 192.168.1.x
+WebREPL daemon started on ws://0.0.0.0:8266
+```
+
+---
+
+### `main.py`
+
+**Purpose:** Runs after `boot.py`. Starts the HTTP command server loop.
+
+**Behaviour:**
+- Imports `server` and calls `server.run()` which starts a background thread and returns immediately
+- Main thread falls back to MicroPython REPL — WebREPL stays accessible
+- If server import fails (e.g. file missing), exits silently — USB REPL unaffected
+
+**Upload to device:**
+```bash
+mpremote fs cp main.py :main.py
+```
+
+---
+
+### `wifi_config_template.py` (checked in)
+
+**Purpose:** Template showing the format for WiFi credentials.
+
+**Usage:**
+```bash
+cp wifi_config_template.py wifi_config.py
+# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD
+```
+
+`wifi_config.py` is gitignored. `wifi_config_template.py` is safe to commit (no real credentials).
+
+---
+
 ## Configuration File: `config.py`
 
 **Purpose:** Store servo calibration offsets for this specific robot.
@@ -285,6 +371,43 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
 ```
 
 Note: `fs mkdir :gaits` will error if the directory already exists on the device — safe to ignore on re-deploy.
+
+### With WiFi control
+
+```
+BiBoard:/
+├── boot.py        # boot.py — WiFi connect + WebREPL
+├── main.py        # main.py — HTTP server loop
+├── server.py      # src/server.py — command routes
+├── servo.py
+├── poses.py
+├── config.py
+├── wifi_config.py # gitignored, credentials
+└── gaits/
+    ├── walk.py
+    └── trot.py
+```
+
+```bash
+# First-time USB upload (one-time setup):
+mpremote fs cp src/drivers/servo.py :servo.py + \
+    fs cp src/poses.py :poses.py + \
+    fs cp config.py :config.py + \
+    fs cp wifi_config.py :wifi_config.py + \
+    fs cp boot.py :boot.py + \
+    fs cp src/server.py :server.py + \
+    fs mkdir :gaits + \
+    fs cp src/gaits/walk.py :gaits/walk.py + \
+    fs cp src/gaits/trot.py :gaits/trot.py + \
+    fs cp main.py :main.py
+
+# Reboot and read IP from serial:
+mpremote reset
+
+# Then wireless:
+curl http://192.168.1.x/stand
+python webrepl_proxy.py 192.168.1.x <password>   # then mpremote connect /dev/ttysNNN
+```
 
 ---
 
