@@ -365,6 +365,96 @@ trot(steps=5)
 
 ---
 
+## Step 11: Enable WiFi Control
+
+Remove the USB tether. After this step you can run scripts and send commands wirelessly.
+
+### 11a: Create your WiFi credentials file
+
+```bash
+cp wifi_config_template.py wifi_config.py
+# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD
+```
+
+`wifi_config.py` is gitignored. Never commit it.
+
+### 11b: Upload WiFi files (USB, one-time)
+
+```bash
+mpremote fs cp src/drivers/servo.py :servo.py + \
+    fs cp src/poses.py :poses.py + \
+    fs cp config.py :config.py + \
+    fs cp wifi_config.py :wifi_config.py + \
+    fs cp boot.py :boot.py + \
+    fs cp src/server.py :server.py + \
+    fs mkdir :gaits + \
+    fs cp src/gaits/walk.py :gaits/walk.py + \
+    fs cp src/gaits/trot.py :gaits/trot.py + \
+    fs cp main.py :main.py
+```
+
+Note: `fs mkdir :gaits` errors if the directory already exists — safe to ignore.
+
+### 11c: Reboot and find the IP address
+
+```bash
+mpremote reset
+# Serial output shows:
+# WiFi connected: 192.168.1.x
+# HTTP server on port 80
+```
+
+Or open a REPL to see the output:
+
+```bash
+mpremote repl
+# press Ctrl+D for soft reset
+```
+
+### 11d: Send HTTP commands
+
+```bash
+curl http://192.168.1.x/stand
+curl http://192.168.1.x/sit
+curl http://192.168.1.x/rest
+curl http://192.168.1.x/walk?steps=3
+curl http://192.168.1.x/trot?steps=5
+```
+
+### 11e: Run scripts and transfer files over WiFi
+
+mpremote does not support WebREPL natively. Use `webrepl_proxy.py` (repo root) to expose a PTY that mpremote treats as a normal serial port.
+
+**Terminal 1 — start the proxy (leave it running):**
+
+```bash
+python webrepl_proxy.py 192.168.1.x doggo
+# prints: PTY ready: /dev/ttys003
+```
+
+**Terminal 2 — use mpremote with the printed PTY path:**
+
+```bash
+mpremote connect /dev/ttys003 repl
+mpremote connect /dev/ttys003 run src/demos/walk.py
+mpremote connect /dev/ttys003 fs cp src/poses.py :poses.py
+mpremote connect /dev/ttys003 fs ls
+```
+
+The PTY path may change between proxy sessions. The proxy stays alive between mpremote invocations; Ctrl+C to stop it.
+
+For a convenient alias, add to your `.zshrc` after the proxy is running:
+
+```bash
+alias mpremote-doggo='mpremote connect /dev/ttys003'
+```
+
+### Disconnect USB
+
+Once verified, unplug the cable. `curl` and `webrepl_proxy.py` + mpremote both work over WiFi alone.
+
+---
+
 ## Device Filesystem Reference
 
 ### Minimum for stand demo
@@ -386,6 +476,22 @@ BiBoard:/
 └── gaits/
     ├── walk.py    # src/gaits/walk.py
     └── trot.py    # src/gaits/trot.py (optional)
+```
+
+### With WiFi control
+
+```
+BiBoard:/
+├── boot.py        # boot.py — WiFi connect + WebREPL
+├── main.py        # main.py — HTTP server loop
+├── server.py      # src/server.py — command routes
+├── servo.py
+├── poses.py
+├── config.py
+├── wifi_config.py # wifi_config.py — gitignored, credentials
+└── gaits/
+    ├── walk.py
+    └── trot.py
 ```
 
 ---
@@ -444,7 +550,11 @@ doggo/
 │   ├── demos/
 │   │   ├── stand.py                # Stand demo: stand → sit → stand → rest
 │   │   └── walk.py                 # Walk demo: stand → walk → rest
+│   ├── server.py                   # HTTP command server (uasyncio, port 80)
 │   └── poses.py                    # Pose library (move_to, stand, sit, rest)
+├── boot.py                         # WiFi connect + WebREPL start (runs on boot)
+├── main.py                         # HTTP server loop (runs after boot.py)
+├── wifi_config_template.py         # Copy → wifi_config.py, fill in credentials
 ├── docs/
 │   ├── micropython-getting-started.md   # This file
 │   ├── file-reference-guide.md
@@ -469,13 +579,17 @@ doggo/
 - Walk gait — one foot at a time, 116 frames from OpenCat `wkF`
 - Trot gait — diagonal pairs, 48 frames from OpenCat `trF`
 
-### 📋 Phase 3: Advanced Motion (Next)
+### ✅ Phase 3: WiFi Control (Complete)
+- WebREPL — wireless REPL + file transfer via `mpremote connect ws://`
+- HTTP command server — `curl /stand`, `/walk?steps=N`, etc.
+- `boot.py` + `main.py` + `src/server.py`
+
+### 📋 Phase 4: Advanced Motion (Next)
 - Inverse kinematics
 - Crawl gait
 - IMU-assisted balance (ICM20600 at I2C 0x69)
 
-### 🚀 Phase 4: Autonomy (Future)
-- WiFi control interface / WebREPL
+### 🚀 Phase 5: Autonomy (Future)
 - Autonomous behaviours
 - Computer vision (ESP32-CAM)
 

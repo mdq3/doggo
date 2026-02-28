@@ -63,3 +63,6 @@ desktop.ini
 
 # The doggo config
 config.py
+
+# WiFi credentials (copy wifi_config_template.py → wifi_config.py and fill in)
+wifi_config.py
