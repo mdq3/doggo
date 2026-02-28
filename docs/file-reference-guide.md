@@ -13,7 +13,7 @@ Quick reference for every file in the repo: what it does, where it lives, and ho
 **What it provides:**
 - `Servos` class with `set_servo(channel, angle)` and `set_servo_us(channel, pulse_us)`
 - Lazy PWM initialisation per channel
-- 50Hz PWM, 500–2500µs pulse range (0–180°)
+- 200Hz PWM, 500–2500µs pulse range (0–180°), ~409 steps across servo range
 - Supports all 12 BiBoard channels
 
 **No calibration knowledge** — it takes raw angles and sends them to hardware.
@@ -217,9 +217,9 @@ curl http://192.168.1.x/walk?steps=3
 
 ---
 
-## Root-level device files
+## WiFi support files (`src/`)
 
-### `boot.py`
+### `src/boot.py`
 
 **Purpose:** Runs on every device boot (before `main.py`). Connects to WiFi and starts WebREPL.
 
@@ -230,7 +230,7 @@ curl http://192.168.1.x/walk?steps=3
 
 **Upload to device:**
 ```bash
-mpremote fs cp boot.py :boot.py
+mpremote fs cp src/boot.py :boot.py
 ```
 
 **Serial output after reboot:**
@@ -241,33 +241,53 @@ WebREPL daemon started on ws://0.0.0.0:8266
 
 ---
 
-### `main.py`
+### `src/main.py`
 
-**Purpose:** Runs after `boot.py`. Starts the HTTP command server loop.
+**Purpose:** Runs after `boot.py`. Starts the HTTP command server.
 
 **Behaviour:**
-- Imports `server` and calls `server.run()` which starts a background thread and returns immediately
+- Imports `server` and calls `server.run()` which starts a background `_thread` and returns immediately
 - Main thread falls back to MicroPython REPL — WebREPL stays accessible
 - If server import fails (e.g. file missing), exits silently — USB REPL unaffected
 
 **Upload to device:**
 ```bash
-mpremote fs cp main.py :main.py
+mpremote fs cp src/main.py :main.py
 ```
 
 ---
 
-### `wifi_config_template.py` (checked in)
+### `src/configuration/wifi_config_template.py` (checked in)
 
 **Purpose:** Template showing the format for WiFi credentials.
 
 **Usage:**
 ```bash
-cp wifi_config_template.py wifi_config.py
+cp src/configuration/wifi_config_template.py wifi_config.py
 # edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD
 ```
 
-`wifi_config.py` is gitignored. `wifi_config_template.py` is safe to commit (no real credentials).
+`wifi_config.py` is gitignored. `src/configuration/wifi_config_template.py` is safe to commit (no real credentials).
+
+---
+
+### `src/webrepl_proxy.py`
+
+**Purpose:** Host-side PTY bridge that lets `mpremote` talk to the device over WebREPL. mpremote has no built-in WebREPL transport; this proxy creates a pseudo-terminal (PTY) that mpremote treats as a normal serial port.
+
+**Not deployed to device** — runs on the host machine.
+
+**Usage:**
+```bash
+# Terminal 1 — start proxy, leave running:
+python src/webrepl_proxy.py 192.168.1.x <webrepl_password>
+# prints: PTY ready: /dev/ttys003
+
+# Terminal 2 — use mpremote with the printed PTY path:
+mpremote connect /dev/ttys003 repl
+mpremote connect /dev/ttys003 run src/demos/walk.py
+mpremote connect /dev/ttys003 fs cp src/poses.py :poses.py
+```
 
 ---
 
@@ -306,7 +326,11 @@ Step-by-step setup guide (flash firmware → REPL → calibrate → stand).
 
 ### `README.md`
 
-Quick-start overview, project structure, development roadmap, hardware reference.
+Project description, prerequisites, quick start, WiFi control.
+
+### `docs/hardware-and-opencat-reference.md`
+
+BiBoard pinout, servo PWM details, OpenCat angle conversion, porting notes, restoring firmware, and why MicroPython.
 
 ### `CLAUDE.md`
 
@@ -394,19 +418,19 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs cp wifi_config.py :wifi_config.py + \
-    fs cp boot.py :boot.py + \
+    fs cp src/boot.py :boot.py + \
     fs cp src/server.py :server.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/trot.py :gaits/trot.py + \
-    fs cp main.py :main.py
+    fs cp src/main.py :main.py
 
 # Reboot and read IP from serial:
 mpremote reset
 
 # Then wireless:
 curl http://192.168.1.x/stand
-python webrepl_proxy.py 192.168.1.x <password>   # then mpremote connect /dev/ttysNNN
+python src/webrepl_proxy.py 192.168.1.x <password>   # then mpremote connect /dev/ttysNNN
 ```
 
 ---

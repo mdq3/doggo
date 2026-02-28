@@ -3,4 +3,4 @@
 
 SSID = "your_network_name"
 PASSWORD = "your_password"
-WEBREPL_PASSWORD = "bittle"   # password for mpremote/WebREPL connections
+WEBREPL_PASSWORD = "doggo"   # password for mpremote/WebREPL connections
