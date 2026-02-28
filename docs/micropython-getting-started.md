@@ -372,7 +372,7 @@ Remove the USB tether. After this step you can run scripts and send commands wir
 ### 11a: Create your WiFi credentials file
 
 ```bash
-cp wifi_config_template.py wifi_config.py
+cp src/configuration/wifi_config_template.py wifi_config.py
 # edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD
 ```
 
@@ -385,12 +385,12 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs cp wifi_config.py :wifi_config.py + \
-    fs cp boot.py :boot.py + \
+    fs cp src/boot.py :boot.py + \
     fs cp src/server.py :server.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/trot.py :gaits/trot.py + \
-    fs cp main.py :main.py
+    fs cp src/main.py :main.py
 ```
 
 Note: `fs mkdir :gaits` errors if the directory already exists — safe to ignore.
@@ -423,12 +423,12 @@ curl http://192.168.1.x/trot?steps=5
 
 ### 11e: Run scripts and transfer files over WiFi
 
-mpremote does not support WebREPL natively. Use `webrepl_proxy.py` (repo root) to expose a PTY that mpremote treats as a normal serial port.
+mpremote does not support WebREPL natively. Use `src/webrepl_proxy.py` to expose a PTY that mpremote treats as a normal serial port.
 
 **Terminal 1 — start the proxy (leave it running):**
 
 ```bash
-python webrepl_proxy.py 192.168.1.x doggo
+python src/webrepl_proxy.py 192.168.1.x doggo
 # prints: PTY ready: /dev/ttys003
 ```
 
@@ -482,13 +482,13 @@ BiBoard:/
 
 ```
 BiBoard:/
-├── boot.py        # boot.py — WiFi connect + WebREPL
-├── main.py        # main.py — HTTP server loop
+├── boot.py        # src/boot.py — WiFi connect + WebREPL
+├── main.py        # src/main.py — HTTP server loop
 ├── server.py      # src/server.py — command routes
 ├── servo.py
 ├── poses.py
 ├── config.py
-├── wifi_config.py # wifi_config.py — gitignored, credentials
+├── wifi_config.py # gitignored, credentials
 └── gaits/
     ├── walk.py
     └── trot.py
@@ -543,18 +543,19 @@ doggo/
 │   ├── configuration/
 │   │   ├── calibrate.py            # Interactive REPL calibration tool
 │   │   ├── identify_servos.py      # Identify channel-to-joint mapping
-│   │   └── verify_servos_working.py # Verify all servos move correctly
+│   │   ├── verify_servos_working.py # Verify all servos move correctly
+│   │   └── wifi_config_template.py # Copy → wifi_config.py, fill in credentials
 │   ├── gaits/
 │   │   ├── trot.py                 # Trot gait (diagonal pairs, 48 frames)
 │   │   └── walk.py                 # Walk gait (one foot at a time, 116 frames)
 │   ├── demos/
 │   │   ├── stand.py                # Stand demo: stand → sit → stand → rest
 │   │   └── walk.py                 # Walk demo: stand → walk → rest
-│   ├── server.py                   # HTTP command server (uasyncio, port 80)
+│   ├── boot.py                     # WiFi connect + WebREPL start (deployed as :boot.py)
+│   ├── main.py                     # HTTP server start (deployed as :main.py)
+│   ├── server.py                   # HTTP command server (_thread, port 80)
+│   ├── webrepl_proxy.py            # Host-side PTY bridge for mpremote over WiFi
 │   └── poses.py                    # Pose library (move_to, stand, sit, rest)
-├── boot.py                         # WiFi connect + WebREPL start (runs on boot)
-├── main.py                         # HTTP server loop (runs after boot.py)
-├── wifi_config_template.py         # Copy → wifi_config.py, fill in credentials
 ├── docs/
 │   ├── micropython-getting-started.md   # This file
 │   ├── file-reference-guide.md
@@ -580,9 +581,9 @@ doggo/
 - Trot gait — diagonal pairs, 48 frames from OpenCat `trF`
 
 ### ✅ Phase 3: WiFi Control (Complete)
-- WebREPL — wireless REPL + file transfer via `mpremote connect ws://`
+- WebREPL — wireless REPL + file transfer via `src/webrepl_proxy.py` PTY bridge
 - HTTP command server — `curl /stand`, `/walk?steps=N`, etc.
-- `boot.py` + `main.py` + `src/server.py`
+- `src/boot.py` + `src/main.py` + `src/server.py`
 
 ### 📋 Phase 4: Advanced Motion (Next)
 - Inverse kinematics
