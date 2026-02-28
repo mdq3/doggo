@@ -423,30 +423,35 @@ curl http://192.168.1.x/trot?steps=5
 
 ### 11e: Run scripts and transfer files over WiFi
 
-mpremote does not support WebREPL natively. Use `src/webrepl_proxy.py` to expose a PTY that mpremote treats as a normal serial port.
-
-**Terminal 1 — start the proxy (leave it running):**
+mpremote does not support WebREPL natively. Use `src/webrepl_proxy.py` — it connects to WebREPL, then runs `mpremote` for you, so the whole thing is a single command:
 
 ```bash
+python src/webrepl_proxy.py 192.168.1.x doggo repl
+python src/webrepl_proxy.py 192.168.1.x doggo run src/demos/walk.py
+python src/webrepl_proxy.py 192.168.1.x doggo fs cp src/poses.py :poses.py
+python src/webrepl_proxy.py 192.168.1.x doggo fs ls
+```
+
+The proxy exits when mpremote exits. For repeated use, a shell alias helps:
+
+```bash
+alias dog='python src/webrepl_proxy.py 192.168.1.x doggo'
+
+dog repl
+dog run src/demos/walk.py
+dog fs cp src/poses.py :poses.py
+```
+
+For a persistent proxy (stays alive between mpremote invocations), omit the subcommand — the proxy prints the PTY path and loops:
+
+```bash
+# Terminal 1:
 python src/webrepl_proxy.py 192.168.1.x doggo
 # prints: PTY ready: /dev/ttys003
-```
 
-**Terminal 2 — use mpremote with the printed PTY path:**
-
-```bash
+# Terminal 2:
 mpremote connect /dev/ttys003 repl
 mpremote connect /dev/ttys003 run src/demos/walk.py
-mpremote connect /dev/ttys003 fs cp src/poses.py :poses.py
-mpremote connect /dev/ttys003 fs ls
-```
-
-The PTY path may change between proxy sessions. The proxy stays alive between mpremote invocations; Ctrl+C to stop it.
-
-For a convenient alias, add to your `.zshrc` after the proxy is running:
-
-```bash
-alias mpremote-doggo='mpremote connect /dev/ttys003'
 ```
 
 ### Disconnect USB

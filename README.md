@@ -144,21 +144,20 @@ curl http://192.168.1.x/trot?steps=5
 
 ### 5. Run scripts and transfer files over WiFi
 
-mpremote has no built-in WebREPL support. Use `src/webrepl_proxy.py` to create a PTY that mpremote treats as a normal serial port.
-
-**Terminal 1 — start the proxy (leave it running):**
+mpremote has no built-in WebREPL support. Use `src/webrepl_proxy.py` — pass the mpremote subcommand directly and it handles everything:
 
 ```bash
-python src/webrepl_proxy.py 192.168.1.x <webrepl_password>
-# prints: PTY ready: /dev/ttys003
+python src/webrepl_proxy.py 192.168.1.x doggo repl
+python src/webrepl_proxy.py 192.168.1.x doggo run src/demos/walk.py
+python src/webrepl_proxy.py 192.168.1.x doggo fs cp src/poses.py :poses.py
 ```
 
-**Terminal 2 — use mpremote with the PTY path:**
+A shell alias makes this even shorter:
 
 ```bash
-mpremote connect /dev/ttys003 repl
-mpremote connect /dev/ttys003 run src/demos/walk.py
-mpremote connect /dev/ttys003 fs cp src/poses.py :poses.py
+alias dog='python src/webrepl_proxy.py 192.168.1.x doggo'
+dog repl
+dog run src/demos/walk.py
 ```
 
 ---

@@ -279,14 +279,15 @@ cp src/configuration/wifi_config_template.py wifi_config.py
 
 **Usage:**
 ```bash
-# Terminal 1 — start proxy, leave running:
-python src/webrepl_proxy.py 192.168.1.x <webrepl_password>
-# prints: PTY ready: /dev/ttys003
+# Single command — proxy connects, runs mpremote, then exits:
+python src/webrepl_proxy.py 192.168.1.x <password> repl
+python src/webrepl_proxy.py 192.168.1.x <password> run src/demos/walk.py
+python src/webrepl_proxy.py 192.168.1.x <password> fs cp src/poses.py :poses.py
 
-# Terminal 2 — use mpremote with the printed PTY path:
-mpremote connect /dev/ttys003 repl
-mpremote connect /dev/ttys003 run src/demos/walk.py
-mpremote connect /dev/ttys003 fs cp src/poses.py :poses.py
+# Daemon mode — stays running between mpremote invocations:
+python src/webrepl_proxy.py 192.168.1.x <password>
+# prints: PTY ready: /dev/ttys003
+# then: mpremote connect /dev/ttys003 repl
 ```
 
 ---
