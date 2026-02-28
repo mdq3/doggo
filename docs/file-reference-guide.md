@@ -69,13 +69,19 @@ Device must already have `servo.py`, `poses.py`, and `config.py` uploaded.
 
 ### `src/gaits/trot.py`
 
-**Purpose:** Trot gait — the robot's first locomotion. Diagonal leg pairs (FL+RR, FR+RL) move simultaneously using discrete keyframes passed to `move_to()`. No inverse kinematics needed.
+**Purpose:** Trot gait — diagonal leg pairs (FL+RR, FR+RL) move simultaneously. Ported directly from OpenCat `trF` array in `InstinctBittleESP.h`.
 
 **What it provides:**
-- `_PHASE_A`, `_PHASE_B` — commanded-angle dicts for each gait phase
-- `trot(steps=None)` — runs the gait for a fixed number of A→B cycles, or indefinitely until `KeyboardInterrupt`; returns to stand on completion
+- `_FRAMES` — 48 raw OpenCat keyframes per cycle
+- `_ZERO` — per-joint mechanical neutral positions (accounts for OpenCat `middleShift[]`)
+- `trot(steps=None)` — runs the gait for a fixed number of 48-frame cycles, or indefinitely until `KeyboardInterrupt`; returns to stand on completion
 
-**Approach speed:** `speed=2` (entry), `speed=3` (gait steps), ~0.21s/phase, ~2.4 Hz cycle
+**Conversion formula:**
+```
+commanded = ZERO_POS[joint] + rotDir[joint] * opencat_raw
+```
+
+**Frame delay:** `_FRAME_DELAY = 0.012` (~1.7 Hz cycle at 48 frames)
 
 **Upload to device:**
 ```bash
@@ -89,22 +95,45 @@ from gaits.trot import trot
 trot(steps=10)
 ```
 
-**Referenced in:** `src/demos/walk.py`
+---
+
+### `src/gaits/walk.py`
+
+**Purpose:** Walk gait — one foot at a time, three feet always on the ground. Much more stable than trot; body stays level. Ported from OpenCat `wkF` array in `InstinctBittleESP.h`.
+
+**What it provides:**
+- `_FRAMES` — 116 raw OpenCat keyframes per cycle
+- `_SHOULDER_SQUEEZE = 0.85` — compresses shoulder sweep around the balance pose to prevent front/rear foot clash
+- `walk(steps=None)` — runs the gait for a fixed number of cycles, or indefinitely until `KeyboardInterrupt`; returns to stand on completion
+
+**Frame delay:** `_FRAME_DELAY = 0.016`, plays every 2nd frame (~0.9s cycle at 58 effective frames)
+
+**Upload to device:**
+```bash
+mpremote fs mkdir :gaits
+mpremote fs cp src/gaits/walk.py :gaits/walk.py
+```
+
+**Import in scripts:**
+```python
+from gaits.walk import walk
+walk(steps=5)
+```
 
 ---
 
 ### `src/demos/walk.py`
 
-**Purpose:** Walk demo script. Runs stand → trot → rest sequence.
+**Purpose:** Walk demo script. Runs stand → walk → rest sequence.
 
-**What it does:** stand → `trot(steps=10)` → rest
+**What it does:** stand → `walk(steps=5)` → rest
 
 **Run directly from host:**
 ```bash
 mpremote run src/demos/walk.py
 ```
 
-Device must already have `servo.py`, `poses.py`, `config.py`, and `gaits/trot.py` uploaded.
+Device must already have `servo.py`, `poses.py`, `config.py`, and `gaits/walk.py` uploaded.
 
 ---
 
@@ -234,7 +263,7 @@ BiBoard:/
 mpremote cp src/drivers/servo.py :servo.py + cp src/poses.py :poses.py + cp config.py :config.py
 ```
 
-### Walk demo (adds trot gait)
+### Walk demo
 
 ```
 BiBoard:/
@@ -242,7 +271,8 @@ BiBoard:/
 ├── poses.py
 ├── config.py
 └── gaits/
-    └── trot.py    # from src/gaits/trot.py
+    ├── walk.py    # from src/gaits/walk.py
+    └── trot.py    # from src/gaits/trot.py (optional)
 ```
 
 ```bash
@@ -250,7 +280,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs mkdir :gaits + \
-    fs cp src/gaits/trot.py :gaits/trot.py + \
+    fs cp src/gaits/walk.py :gaits/walk.py + \
     run src/demos/walk.py
 ```
 
@@ -258,4 +288,4 @@ Note: `fs mkdir :gaits` will error if the directory already exists on the device
 
 ---
 
-**Last Updated:** 2026-02-19
+**Last Updated:** 2026-02-28
