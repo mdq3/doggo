@@ -91,7 +91,7 @@ _FRAMES = (
 
 
 def _to_commanded(raw):
-    return {_CH[i]: _ZERO[i] + _RD[i] * raw[i] for i in range(8)}
+    return {_CH[i]: _ZERO[i] + _RD[i] * raw[i] for i in range(8)}  # float, no int()
 
 
 def trot(steps=None):

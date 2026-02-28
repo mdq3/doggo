@@ -29,7 +29,7 @@ _CH   = (CH_FL_SHOULDER, CH_FR_SHOULDER, CH_RR_SHOULDER, CH_RL_SHOULDER,
 _RD   = (1, -1, -1, 1, -1, 1, 1, -1)
 _ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
 
-_FRAME_DELAY = 0.008   # seconds between frames (~0.9s cycle at 116 frames)
+_FRAME_DELAY = 0.016   # seconds between frames — plays every 2nd frame, ~0.9s cycle
 _SHOULDER_SQUEEZE = 0.85  # compress shoulder sweep around balance (raw=30); reduce to fix foot clash
 _SHOULDER_MID = 30        # OpenCat balance pose shoulder angle
 
@@ -161,7 +161,7 @@ def _to_commanded(raw):
         r = raw[i]
         if i < 4:  # shoulder: compress sweep around balance pose
             r = _SHOULDER_MID + (r - _SHOULDER_MID) * _SHOULDER_SQUEEZE
-        result[_CH[i]] = int(_ZERO[i] + _RD[i] * r)
+        result[_CH[i]] = _ZERO[i] + _RD[i] * r  # keep float — int() at PWM level
     return result
 
 
@@ -181,8 +181,8 @@ def walk(steps=None):
     count = 0
     try:
         while steps is None or count < steps:
-            for raw in _FRAMES:
-                play_frame(_to_commanded(raw))
+            for i in range(0, len(_FRAMES), 2):  # every 2nd frame → larger steps, above servo deadband
+                play_frame(_to_commanded(_FRAMES[i]))
                 time.sleep(_FRAME_DELAY)
             count += 1
     except KeyboardInterrupt:

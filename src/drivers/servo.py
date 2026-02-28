@@ -21,13 +21,15 @@ BIBOARD_V1_PINS = [18, 5, 14, 27, 23, 4, 12, 33, 19, 15, 13, 32]
 class Servos:
     """BiBoard V1 Direct PWM Servo Driver"""
 
-    def __init__(self, pins=None, freq=50):
+    def __init__(self, pins=None, freq=200):
         """
         Initialize servo driver
 
         Args:
             pins: List of GPIO pins (default: BiBoard V1 mapping)
-            freq: PWM frequency in Hz (default: 50Hz for servos)
+            freq: PWM frequency in Hz (200Hz for digital servos — 8x finer duty
+                  resolution than 50Hz within the same 10-bit LEDC timer;
+                  drop to 100 or 50 if servos behave erratically)
         """
         self.pins = pins or BIBOARD_V1_PINS
         self.freq = freq
@@ -46,31 +48,23 @@ class Servos:
             pin = Pin(self.pins[channel])
             self.pwm[channel] = PWM(pin, freq=self.freq)
 
-    def _angle_to_duty(self, angle):
+    def _angle_to_duty_u16(self, angle):
         """
-        Convert angle to duty cycle
+        Convert angle to 16-bit duty cycle value.
 
-        At 50Hz, period = 20ms = 20000us
-        MicroPython duty is 0-1023 (10-bit)
+        At 50Hz, period = 20000us. duty_u16 range is 0-65535.
+        Gives ~6500 steps across the servo range vs 103 with 10-bit duty().
 
         Args:
             angle: 0-180 degrees
 
         Returns:
-            Duty cycle value (0-1023)
+            Duty cycle value (0-65535)
         """
-        # Clamp angle
         angle = max(0, min(180, angle))
-
-        # Calculate pulse width in microseconds
         pulse_us = self.min_us + (angle / 180.0) * (self.max_us - self.min_us)
-
-        # Convert to duty cycle (0-1023)
-        # duty = pulse_us / period_us * 1023
         period_us = 1000000 / self.freq  # 20000us at 50Hz
-        duty = int(pulse_us / period_us * 1023)
-
-        return duty
+        return int(pulse_us / period_us * 65535)
 
     def set_servo(self, channel, angle):
         """
@@ -84,8 +78,7 @@ class Servos:
             raise ValueError(f"Channel must be 0-{self.num_channels - 1}")
 
         self._init_channel(channel)
-        duty = self._angle_to_duty(angle)
-        self.pwm[channel].duty(duty)
+        self.pwm[channel].duty_u16(self._angle_to_duty_u16(angle))
 
     def set_servo_us(self, channel, pulse_us):
         """
@@ -99,11 +92,10 @@ class Servos:
             raise ValueError(f"Channel must be 0-{self.num_channels - 1}")
 
         self._init_channel(channel)
-
         period_us = 1000000 / self.freq
-        duty = int(pulse_us / period_us * 1023)
-        duty = max(0, min(1023, duty))
-        self.pwm[channel].duty(duty)
+        duty = int(pulse_us / period_us * 65535)
+        duty = max(0, min(65535, duty))
+        self.pwm[channel].duty_u16(duty)
 
     def off(self, channel):
         """Turn off a servo channel"""
