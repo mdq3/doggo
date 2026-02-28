@@ -95,17 +95,22 @@ mpremote run src/demos/stand.py
 doggo/
 ├── src/
 │   ├── drivers/
-│   │   └── servo.py                # Direct PWM servo driver (ESP32 LEDC)
+│   │   └── servo.py                # Direct PWM servo driver (ESP32 LEDC, 200Hz)
 │   │
 │   ├── configuration/
+│   │   ├── calibrate.py            # Interactive REPL calibration tool
 │   │   ├── identify_servos.py      # Identify channel-to-joint mapping
 │   │   └── verify_servos_working.py # Verify all servos move correctly
 │   │
-│   ├── demos/
-│   │   └── stand.py                # Stand demo script
+│   ├── gaits/
+│   │   ├── trot.py                 # Trot gait (diagonal pairs, 48 frames from OpenCat)
+│   │   └── walk.py                 # Walk gait (one foot at a time, 116 frames from OpenCat)
 │   │
-│   ├── calibrate.py                # Interactive REPL calibration tool
-│   └── poses.py                    # Pose library (move_to, stand, sit, rest)
+│   ├── demos/
+│   │   ├── stand.py                # Stand demo: stand → sit → stand → rest
+│   │   └── walk.py                 # Walk demo: stand → walk → rest
+│   │
+│   └── poses.py                    # Pose library (move_to, play_frame, stand, sit, rest)
 │
 ├── docs/
 │   ├── file-reference-guide.md
@@ -184,25 +189,23 @@ Exit: `Ctrl+]`
 
 ### ✅ Phase 1: Basic Control (Complete)
 - [x] Flash MicroPython
-- [x] Servo control via direct PWM
+- [x] Servo control via direct PWM (200Hz for smooth motion)
 - [x] Calibration helper
 - [x] Basic poses (stand, sit, rest)
 
-### 🔄 Phase 2: Kinematics (In Progress)
-- [ ] Port inverse kinematics from OpenCat
-- [ ] Create Leg class
-- [ ] Test IK with foot positions
+### ✅ Phase 2: Gaits (Complete)
+- [x] Trot gait — diagonal pairs (FL+RR, FR+RL), 48 frames from OpenCat
+- [x] Walk gait — one foot at a time, 116 frames from OpenCat
+- [x] Smooth servo motion via 200Hz PWM and 16-bit duty cycle
 
-### 📋 Phase 3: Gaits (Next)
-- [ ] Simple sequential walk
-- [ ] Trot gait (diagonal pairs)
+### 📋 Phase 3: Advanced Motion (Next)
+- [ ] Inverse kinematics
 - [ ] Crawl gait
-- [ ] Balance improvements
+- [ ] IMU-assisted balance
 
-### 🚀 Phase 4: Advanced Features (Future)
-- [ ] IMU integration (gyro/accelerometer)
+### 🚀 Phase 4: Autonomy (Future)
 - [ ] WiFi control interface
-- [ ] Autonomous behaviors
+- [ ] Autonomous behaviours
 - [ ] Computer vision (ESP32-CAM)
 - [ ] Sensor fusion
 
@@ -374,7 +377,7 @@ See `docs/micropython-getting-started.md` for detailed troubleshooting.
 - Educational and fun!
 
 ### ⚠️ Limitations
-- Must reimplement gaits (OpenCat gaits gone)
+- OpenCat behaviour library not available (gaits must be ported individually)
 - Limited RAM (~520KB) vs Raspberry Pi
 - No full OpenCV (use lightweight alternatives)
 - Steeper learning curve
@@ -393,10 +396,9 @@ See `docs/micropython-getting-started.md` for detailed troubleshooting.
 ## Contributing
 
 Contributions welcome! Ideas:
-- Port OpenCat gaits to Python
+- Port additional OpenCat gaits (crawl, gallop, bound)
 - Implement inverse kinematics
 - Add IMU balance control
-- Create new gaits
 - Improve documentation
 - Share your projects
 
@@ -412,4 +414,4 @@ This project uses MicroPython (MIT License) and builds on concepts from Petoi's 
 
 Happy hacking!
 
-**Last Updated:** 2026-02-18
+**Last Updated:** 2026-02-28
