@@ -369,6 +369,7 @@ cp src/configuration/wifi_config_template.py wifi_config.py
 
 ```bash
 mpremote fs cp src/drivers/servo.py :servo.py + \
+    fs cp src/battery.py :battery.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs cp wifi_config.py :wifi_config.py + \
@@ -404,6 +405,8 @@ curl http://192.168.1.x/stand
 curl http://192.168.1.x/sit
 curl http://192.168.1.x/rest
 curl http://192.168.1.x/walk?steps=3
+curl http://192.168.1.x/walk_back?steps=3
+curl http://192.168.1.x/battery
 ```
 
 ### 11e: Run scripts and transfer files over WiFi
@@ -438,6 +441,30 @@ python src/webrepl_proxy.py 192.168.1.x doggo
 mpremote connect /dev/ttys003 repl
 mpremote connect /dev/ttys003 run src/demos/walk.py
 ```
+
+### 11f: Deploy code updates over WiFi
+
+After uploading new source files, use `/restart` to reload them without a hardware reset. Servo PWM keeps running throughout — the dog does not move.
+
+```bash
+# Upload a changed file
+dog fs cp src/poses.py :poses.py
+dog fs cp src/server.py :server.py
+
+# Reload immediately — no power cycle, no servo movement
+curl http://192.168.1.x/restart
+```
+
+`/restart` reloads these modules from flash:
+- `server.py`
+- `poses.py`
+- `battery.py`
+- `gaits/walk.py`
+
+The following files require a **physical power cycle** because they run before the server starts:
+- `servo.py`
+- `boot.py`
+- `main.py`
 
 ### Disconnect USB
 
@@ -474,12 +501,13 @@ BiBoard:/
 ├── boot.py        # src/boot.py — WiFi connect + WebREPL
 ├── main.py        # src/main.py — HTTP server loop
 ├── server.py      # src/server.py — command routes
-├── servo.py
-├── poses.py
-├── config.py
+├── battery.py     # src/battery.py — voltage monitoring
+├── servo.py       # src/drivers/servo.py — PWM driver
+├── poses.py       # src/poses.py — pose library
+├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
 └── gaits/
-    └── walk.py
+    └── walk.py    # src/gaits/walk.py — walk gait
 ```
 
 ---
@@ -621,4 +649,4 @@ mpremote fs cp src/gaits/walk.py :gaits/walk.py
 
 ---
 
-**Last Updated:** 2026-02-28
+**Last Updated:** 2026-03-03
