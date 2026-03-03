@@ -16,6 +16,7 @@ Usage:
     from poses import stand, sit, rest, zero_position
 """
 
+from machine import ADC, Pin
 from servo import Servos
 import time
 
@@ -119,6 +120,13 @@ def move_to(targets, speed=2, delay=0.015):
             break
 
         time.sleep(delay)
+
+_battery_adc = ADC(Pin(37))  # GPIO 37 on BiBoard V1.0 rev D (OpenCat OpenCat.h)
+_battery_adc.atten(ADC.ATTN_11DB)
+
+def battery_voltage():
+    """Return battery voltage in volts (BiBoard V1.0 formula from OpenCat reaction.h)."""
+    return _battery_adc.read() / 515 + 1.9
 
 def zero_position():
     """All servos to calibrated neutral (90° commanded)."""

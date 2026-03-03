@@ -5,13 +5,19 @@ Creates a pseudo-terminal (PTY) that mpremote connects to as if it were a
 real serial port, and bridges it to the device WebREPL WebSocket. This avoids
 any library patching — mpremote sees a proper tty device with a real fd.
 
+File copies (fs cp) are handled directly via the WebREPL binary protocol so
+that mpremote's raw-REPL soft-reset path (which tears down the WebSocket) is
+never invoked.
+
 Usage:
+    # File copy host → device (WebREPL binary protocol, no mpremote):
+    python webrepl_proxy.py <host> <password> fs cp local.py :remote.py
+
     # Single command — proxy connects, runs mpremote, then exits:
     python webrepl_proxy.py <host> <password> repl
     python webrepl_proxy.py <host> <password> run src/demos/walk.py
-    python webrepl_proxy.py <host> <password> fs cp src/poses.py :poses.py
 
-    # Daemon mode — proxy stays running, print PTY path for manual mpremote use:
+    # Daemon mode — proxy stays running, prints PTY path for manual mpremote:
     python webrepl_proxy.py <host> <password>
 
     # Custom WebREPL port (default 8266) — pass as a numeric third argument:
@@ -26,6 +32,11 @@ import sys
 
 _FRAME_TXT = 0x81
 _FRAME_BIN = 0x82
+
+# WebREPL binary file-transfer protocol
+_WR_REQ_S = "<2sBBQLH64s"
+_WR_PUT = 1
+_WR_GET = 2
 
 
 class _WS:
@@ -70,22 +81,27 @@ class _WS:
             if fl in (_FRAME_TXT, _FRAME_BIN):
                 return data
 
-    def send_frame(self, data):
+    def send_frame(self, data, binary=False):
+        ft = _FRAME_BIN if binary else _FRAME_TXT
         l = len(data)
         if l < 126:
-            self._sock.sendall(struct.pack(">BB", _FRAME_TXT, l) + data)
+            self._sock.sendall(struct.pack(">BB", ft, l) + data)
         else:
-            self._sock.sendall(struct.pack(">BBH", _FRAME_TXT, 126, l) + data)
+            self._sock.sendall(struct.pack(">BBH", ft, 126, l) + data)
 
     def login(self, password):
         buf = b""
         while b":" not in buf:
             buf += self.recv_frame()
         self.send_frame(password.encode() + b"\r\n")
-        self._sock.settimeout(0.5)
+        # Wait for the REPL prompt rather than a fixed drain — boot messages
+        # (e.g. "HTTP server on port 80") may arrive well after 0.5 s and
+        # would otherwise leak into the bridge and confuse mpremote.
+        self._sock.settimeout(5)
+        buf = b""
         try:
-            while True:
-                self.recv_frame()
+            while b">>> " not in buf:
+                buf += self.recv_frame()
         except (socket.timeout, OSError):
             pass
         self._sock.settimeout(None)
@@ -96,6 +112,77 @@ class _WS:
     def close(self):
         self._sock.close()
 
+
+# ---------------------------------------------------------------------------
+# WebREPL binary file-transfer protocol
+# ---------------------------------------------------------------------------
+
+def _wr_read_resp(ws):
+    """Read a 4-byte WebREPL binary response; raise on non-zero status."""
+    frame = ws.recv_frame()
+    sig, code = struct.unpack("<2sH", frame[:4])
+    if sig != b"WB" or code != 0:
+        raise ConnectionError(f"WebREPL error response: sig={sig!r} code={code}")
+
+
+def _put_file(ws, local_path, remote_path):
+    """Upload local_path to remote_path using WebREPL binary PUT protocol."""
+    with open(local_path, "rb") as f:
+        data = f.read()
+    sz = len(data)
+    fname = remote_path.encode()
+    req = struct.pack(_WR_REQ_S, b"WA", _WR_PUT, 0, 0, sz, len(fname), fname)
+    # The reference client splits the header into two sends to work around
+    # firmware buffering issues; do the same.
+    ws.send_frame(req[:10], binary=True)
+    ws.send_frame(req[10:], binary=True)
+    _wr_read_resp(ws)
+    for i in range(0, sz, 1024):
+        ws.send_frame(data[i : i + 1024], binary=True)
+    _wr_read_resp(ws)
+    print(f"Copied {local_path} → :{remote_path} ({sz} bytes)")
+    return 0
+
+
+def _get_file(ws, remote_path, local_path):
+    """Download remote_path to local_path using WebREPL binary GET protocol."""
+    fname = remote_path.encode()
+    req = struct.pack(_WR_REQ_S, b"WA", _WR_GET, 0, 0, 0, len(fname), fname)
+    ws.send_frame(req[:10], binary=True)
+    ws.send_frame(req[10:], binary=True)
+    _wr_read_resp(ws)
+    with open(local_path, "wb") as f:
+        while True:
+            ws.send_frame(b"\x00", binary=True)   # trigger next chunk
+            chunk = ws.recv_frame()
+            (chunk_sz,) = struct.unpack("<H", chunk[:2])
+            if chunk_sz == 0:
+                break
+            f.write(chunk[2 : 2 + chunk_sz])
+    _wr_read_resp(ws)
+    print(f"Copied :{remote_path} → {local_path}")
+    return 0
+
+
+def _handle_fs_cp(ws, args):
+    """Dispatch a 'fs cp' command via WebREPL binary protocol.
+
+    Returns an exit code (0 on success) or None if the pattern doesn't match
+    (fall through to mpremote).
+    """
+    if len(args) < 4 or args[0] != "fs" or args[1] != "cp":
+        return None
+    src, dst = args[2], args[3]
+    if not src.startswith(":") and dst.startswith(":"):
+        return _put_file(ws, src, dst[1:])
+    if src.startswith(":") and not dst.startswith(":"):
+        return _get_file(ws, src[1:], dst)
+    return None   # both or neither have ':', fall through to mpremote
+
+
+# ---------------------------------------------------------------------------
+# PTY bridge (for repl / run / other mpremote commands)
+# ---------------------------------------------------------------------------
 
 def _bridge(ws, master_fd):
     """Forward bytes between PTY master fd and WebREPL WebSocket."""
@@ -132,10 +219,13 @@ def _run_command(ws, cmd_args):
     """Open a PTY, run mpremote connect <pty> <cmd_args>, wait for exit."""
     master_fd, slave_fd = os.openpty()
     slave_path = os.ttyname(slave_fd)
-    os.close(slave_fd)
+    # Keep slave_fd open until mpremote exits: closing it prematurely causes
+    # os.read(master_fd) to return EIO before mpremote opens the slave end,
+    # which kills the bridge and prevents mpremote from entering raw REPL.
     bridge = threading.Thread(target=_bridge, args=(ws, master_fd), daemon=True)
     bridge.start()
     returncode = subprocess.call(["mpremote", "connect", slave_path] + cmd_args)
+    os.close(slave_fd)  # now safe to close; signals bridge to stop via EIO
     bridge.join(timeout=2)
     return returncode
 
@@ -148,7 +238,7 @@ def main():
     host = sys.argv[1]
     password = sys.argv[2]
 
-    # Optional numeric third arg is the WebREPL port; everything after is the mpremote command.
+    # Optional numeric third arg is the WebREPL port; everything after is cmd.
     if len(sys.argv) > 3 and sys.argv[3].isdigit():
         ws_port = int(sys.argv[3])
         cmd_args = sys.argv[4:]
@@ -167,6 +257,9 @@ def main():
 
     try:
         if cmd_args:
+            rc = _handle_fs_cp(ws, cmd_args)
+            if rc is not None:
+                sys.exit(rc)
             sys.exit(_run_command(ws, cmd_args))
         else:
             while True:
