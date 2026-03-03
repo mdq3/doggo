@@ -350,19 +350,6 @@ Note: `fs mkdir :gaits` will error if the directory already exists — safe to i
 
 stand → walk (5 cycles, one foot at a time) → rest
 
-### Trot gait (alternative)
-
-A faster diagonal-pair gait is available in `src/gaits/trot.py`:
-
-```bash
-mpremote fs cp src/gaits/trot.py :gaits/trot.py
-```
-
-```python
-from gaits.trot import trot
-trot(steps=5)
-```
-
 ---
 
 ## Step 11: Enable WiFi Control
@@ -389,7 +376,6 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/server.py :server.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
-    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
 ```
 
@@ -418,7 +404,6 @@ curl http://192.168.1.x/stand
 curl http://192.168.1.x/sit
 curl http://192.168.1.x/rest
 curl http://192.168.1.x/walk?steps=3
-curl http://192.168.1.x/trot?steps=5
 ```
 
 ### 11e: Run scripts and transfer files over WiFi
@@ -471,7 +456,7 @@ BiBoard:/
 └── config.py      # generated locally, gitignored
 ```
 
-### For walk/trot
+### For walk
 
 ```
 BiBoard:/
@@ -479,8 +464,7 @@ BiBoard:/
 ├── poses.py
 ├── config.py
 └── gaits/
-    ├── walk.py    # src/gaits/walk.py
-    └── trot.py    # src/gaits/trot.py (optional)
+    └── walk.py    # src/gaits/walk.py
 ```
 
 ### With WiFi control
@@ -495,8 +479,7 @@ BiBoard:/
 ├── config.py
 ├── wifi_config.py # gitignored, credentials
 └── gaits/
-    ├── walk.py
-    └── trot.py
+    └── walk.py
 ```
 
 ---
@@ -551,7 +534,6 @@ doggo/
 │   │   ├── verify_servos_working.py # Verify all servos move correctly
 │   │   └── wifi_config_template.py # Copy → wifi_config.py, fill in credentials
 │   ├── gaits/
-│   │   ├── trot.py                 # Trot gait (diagonal pairs, 48 frames)
 │   │   └── walk.py                 # Walk gait (one foot at a time, 116 frames)
 │   ├── demos/
 │   │   ├── stand.py                # Stand demo: stand → sit → stand → rest

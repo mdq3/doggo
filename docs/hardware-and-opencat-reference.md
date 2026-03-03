@@ -117,7 +117,6 @@ commanded_angle = 90 + rotationDirection[joint] * opencat_angle
 
 | OpenCat array | Python file | Notes |
 |---------------|-------------|-------|
-| `trF` | `src/gaits/trot.py` | 48-frame diagonal-pair gait |
 | `wkF` | `src/gaits/walk.py` | 116-frame one-foot-at-a-time gait |
 
 ### What's Not Ported Yet

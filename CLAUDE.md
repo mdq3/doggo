@@ -13,7 +13,6 @@ Replaces the stock OpenCat firmware with hand-written Python.
 src/drivers/servo.py        — hardware only: PWM/GPIO, no calibration knowledge
 src/poses.py                — poses layer: calibration, motion, named poses
 src/battery.py              — battery voltage monitoring (GPIO 37, BiBoard V1.0)
-src/gaits/trot.py           — trot gait: 48-frame OpenCat keyframe sequence
 src/gaits/walk.py           — walk gait: 116-frame OpenCat keyframe sequence
 src/demos/stand.py          — demo: stand → sit → stand → rest
 src/demos/walk.py           — demo: stand → walk → rest
@@ -33,9 +32,8 @@ src/configuration/wifi_config_template.py — credential template (copy → wifi
 | `src/drivers/servo.py` | Direct PWM servo driver (ESP32 LEDC, 200Hz) | `servo.py` |
 | `src/poses.py` | Pose library — channel consts, calibration, `move_to`, `play_frame`, `stand`, `sit`, `rest`, `zero_position` | `poses.py` |
 | `src/battery.py` | Battery voltage monitoring — GPIO 37 ADC, BiBoard V1.0 formula | `battery.py` |
-| `src/gaits/trot.py` | Trot gait — 48-frame diagonal-pair sequence from OpenCat `trF` | `gaits/trot.py` |
 | `src/gaits/walk.py` | Walk gait — 116-frame one-foot-at-a-time sequence from OpenCat `wkF` | `gaits/walk.py` |
-| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/trot` `/battery` | `server.py` |
+| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/battery` `/restart` | `server.py` |
 | `src/boot.py` | Runs on boot: WiFi connect + WebREPL start | `boot.py` |
 | `src/main.py` | Runs after boot: starts HTTP server loop | `main.py` |
 | `src/webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL | n/a (host only) |
@@ -133,7 +131,6 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/server.py :server.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
-    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
 ```
 

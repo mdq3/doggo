@@ -421,7 +421,7 @@ Safe to experiment!
 ## Which Firmware Should You Use?
 
 ### Use OpenCat If You Want:
-- ✓ Pre-built gaits (walk, trot, crawl, etc.)
+- ✓ Pre-built gaits (walk, crawl, etc.)
 - ✓ Petoi Mobile App control
 - ✓ Easy calibration via Desktop App
 - ✓ Official support
