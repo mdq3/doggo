@@ -7,15 +7,18 @@ Routes:
   GET /walk?steps=N
   GET /trot?steps=N
   GET /battery
+  GET /restart
 
 Returns 200 OK on success, 404 for unknown routes.
 Runs in a background _thread using raw sockets so the main thread
 stays free for WebREPL / interactive REPL access.
 """
+import machine
 import socket
+import time
 import _thread
 from poses import stand, sit, rest
-from battery import battery_voltage
+from battery import battery_status
 from gaits.walk import walk
 from gaits.trot import trot
 
@@ -49,15 +52,23 @@ def _handle(conn):
         elif path == "/trot":
             trot(steps=_parse_steps(qs))
         elif path == "/battery":
-            v = battery_voltage()
-            body = f"{v:.2f}V".encode()
+            v, pct, low = battery_status()
+            body = f"{v:.2f}V ({pct}%)"
+            if low:
+                body += " - please charge"
+            body = (body + "\n").encode()
             conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: " + str(len(body)).encode() + b"\r\n\r\n" + body)
             return
+        elif path == "/restart":
+            conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nRestarting\n")
+            conn.close()
+            time.sleep_ms(100)
+            machine.reset()  # never returns; finally block is not reached
         else:
-            conn.send(b"HTTP/1.1 404 Not Found\r\nContent-Length: 9\r\n\r\nNot found")
+            conn.send(b"HTTP/1.1 404 Not Found\r\nContent-Length: 10\r\n\r\nNot found\n")
             return
 
-        conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\nOK")
+        conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nOK\n")
     except Exception as e:
         print("Request error:", e)
     finally:
