@@ -14,7 +14,8 @@ stays free for WebREPL / interactive REPL access.
 """
 import socket
 import _thread
-from poses import stand, sit, rest, battery_voltage
+from poses import stand, sit, rest
+from battery import battery_voltage
 from gaits.walk import walk
 from gaits.trot import trot
 
