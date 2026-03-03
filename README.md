@@ -104,6 +104,7 @@ cp src/configuration/wifi_config_template.py wifi_config.py
 
 ```bash
 mpremote fs cp src/drivers/servo.py :servo.py + \
+    fs cp src/battery.py :battery.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs cp wifi_config.py :wifi_config.py + \
@@ -138,6 +139,9 @@ curl http://192.168.1.x/stand
 curl http://192.168.1.x/sit
 curl http://192.168.1.x/rest
 curl http://192.168.1.x/walk?steps=3
+curl http://192.168.1.x/walk_back?steps=3
+curl http://192.168.1.x/battery
+curl http://192.168.1.x/restart   # reload code without touching servos
 ```
 
 ### 5. Run scripts and transfer files over WiFi
@@ -156,7 +160,23 @@ A shell alias makes this even shorter:
 alias dog='python src/webrepl_proxy.py 192.168.1.x doggo'
 dog repl
 dog run src/demos/walk.py
+dog fs cp src/poses.py :poses.py
 ```
+
+### 6. Deploy code updates
+
+After uploading new files, reload them without a hardware reset (servos stay still):
+
+```bash
+# Upload changed files, then reload
+dog fs cp src/poses.py :poses.py
+dog fs cp src/server.py :server.py
+curl http://192.168.1.x/restart
+```
+
+`/restart` reloads `server.py`, `poses.py`, `battery.py`, and `gaits/walk.py` from flash. Servo PWM stays running throughout — no movement.
+
+Changes to `servo.py`, `boot.py`, or `main.py` require a physical power cycle.
 
 ---
 
@@ -174,6 +194,7 @@ doggo/
 │   │   └── wifi_config_template.py # Copy → wifi_config.py
 │   ├── gaits/
 │   │   └── walk.py                 # Walk gait (one foot at a time, 116 frames)
+│   ├── battery.py                  # Battery voltage monitoring (GPIO 37, BiBoard formula)
 │   ├── demos/
 │   │   ├── stand.py                # stand → sit → stand → rest
 │   │   └── walk.py                 # stand → walk → rest
@@ -201,4 +222,4 @@ doggo/
 
 ---
 
-**Last Updated:** 2026-02-28
+**Last Updated:** 2026-03-03

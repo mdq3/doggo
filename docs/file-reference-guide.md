@@ -167,8 +167,28 @@ mpremote run src/configuration/verify_servos_working.py
 | `GET /sit` | Call `sit()` |
 | `GET /rest` | Call `rest()` |
 | `GET /walk?steps=N` | Call `walk(steps=N)` |
+| `GET /walk_back?steps=N` | Call `walk_back(steps=N)` |
+| `GET /battery` | Report voltage, percentage, charge warning |
+| `GET /restart` | Reload modules from flash (see below) |
 
 Returns `200 OK` on success, `404 Not found` for unknown routes.
+
+**`/restart` — software module reload**
+
+Reloads `server.py`, `poses.py`, `battery.py`, and `gaits/walk.py` from flash without a hardware reset. Servo PWM keeps running throughout — no movement, no spaz.
+
+Use this after uploading updated files via `webrepl_proxy.py`:
+
+```bash
+# Upload a changed file, then reload it without touching the servos
+python src/webrepl_proxy.py 192.168.1.x <password> fs cp src/poses.py :poses.py
+curl http://192.168.1.x/restart
+```
+
+Files that `/restart` **cannot** reload (require a physical power cycle):
+- `servo.py` — driver loaded before the server starts
+- `boot.py` — runs before main.py
+- `main.py` — starts the server; restart would need to restart itself
 
 **What it provides:**
 - `run(port)` — starts a background `_thread` that listens on port 80 (called by `main.py`, returns immediately)
@@ -369,20 +389,22 @@ Note: `fs mkdir :gaits` will error if the directory already exists on the device
 
 ```
 BiBoard:/
-├── boot.py        # boot.py — WiFi connect + WebREPL
-├── main.py        # main.py — HTTP server loop
+├── boot.py        # src/boot.py — WiFi connect + WebREPL
+├── main.py        # src/main.py — HTTP server loop
 ├── server.py      # src/server.py — command routes
-├── servo.py
-├── poses.py
-├── config.py
+├── battery.py     # src/battery.py — voltage monitoring
+├── servo.py       # src/drivers/servo.py — PWM driver
+├── poses.py       # src/poses.py — pose library
+├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
 └── gaits/
-    └── walk.py
+    └── walk.py    # src/gaits/walk.py — walk gait
 ```
 
 ```bash
 # First-time USB upload (one-time setup):
 mpremote fs cp src/drivers/servo.py :servo.py + \
+    fs cp src/battery.py :battery.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs cp wifi_config.py :wifi_config.py + \
@@ -397,9 +419,14 @@ mpremote reset
 
 # Then wireless:
 curl http://192.168.1.x/stand
-python src/webrepl_proxy.py 192.168.1.x <password>   # then mpremote connect /dev/ttysNNN
+curl http://192.168.1.x/battery
+python src/webrepl_proxy.py 192.168.1.x <password> fs ls   # list device files
+python src/webrepl_proxy.py 192.168.1.x <password> repl    # interactive REPL
+
+# After uploading updated files, reload without touching servos:
+curl http://192.168.1.x/restart
 ```
 
 ---
 
-**Last Updated:** 2026-02-28
+**Last Updated:** 2026-03-03
