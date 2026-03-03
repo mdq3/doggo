@@ -5,17 +5,23 @@ Creates a pseudo-terminal (PTY) that mpremote connects to as if it were a
 real serial port, and bridges it to the device WebREPL WebSocket. This avoids
 any library patching — mpremote sees a proper tty device with a real fd.
 
-File copies (fs cp) are handled directly via the WebREPL binary protocol so
-that mpremote's raw-REPL soft-reset path (which tears down the WebSocket) is
-never invoked.
+mpremote is invoked with "resume" to disable its auto soft-reset. Without this,
+mpremote sends Ctrl+D which causes MicroPython to soft-reboot and tear down the
+WebSocket. The "resume" command sets _auto_soft_reset=False so raw REPL is
+entered with Ctrl+A only — no Ctrl+D, no reboot.
+
+File copies (fs cp) are handled directly via the WebREPL binary protocol,
+bypassing mpremote entirely for faster transfers.
 
 Usage:
     # File copy host → device (WebREPL binary protocol, no mpremote):
     python webrepl_proxy.py <host> <password> fs cp local.py :remote.py
 
-    # Single command — proxy connects, runs mpremote, then exits:
+    # Any mpremote command — all subcommands work (fs ls, fs tree, exec, etc.):
     python webrepl_proxy.py <host> <password> repl
     python webrepl_proxy.py <host> <password> run src/demos/walk.py
+    python webrepl_proxy.py <host> <password> fs ls
+    python webrepl_proxy.py <host> <password> fs tree
 
     # Daemon mode — proxy stays running, prints PTY path for manual mpremote:
     python webrepl_proxy.py <host> <password>
@@ -224,7 +230,9 @@ def _run_command(ws, cmd_args):
     # which kills the bridge and prevents mpremote from entering raw REPL.
     bridge = threading.Thread(target=_bridge, args=(ws, master_fd), daemon=True)
     bridge.start()
-    returncode = subprocess.call(["mpremote", "connect", slave_path] + cmd_args)
+    # "resume" disables mpremote's auto soft-reset, preventing the Ctrl+D that
+    # would tear down the WebSocket connection (soft reboot goes to UART, not WS).
+    returncode = subprocess.call(["mpremote", "connect", slave_path, "resume"] + cmd_args)
     os.close(slave_fd)  # now safe to close; signals bridge to stop via EIO
     bridge.join(timeout=2)
     return returncode
