@@ -111,7 +111,6 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/server.py :server.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
-    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
 ```
 
@@ -139,7 +138,6 @@ curl http://192.168.1.x/stand
 curl http://192.168.1.x/sit
 curl http://192.168.1.x/rest
 curl http://192.168.1.x/walk?steps=3
-curl http://192.168.1.x/trot?steps=5
 ```
 
 ### 5. Run scripts and transfer files over WiFi
@@ -175,7 +173,6 @@ doggo/
 │   │   ├── verify_servos_working.py # Quick servo sanity check
 │   │   └── wifi_config_template.py # Copy → wifi_config.py
 │   ├── gaits/
-│   │   ├── trot.py                 # Trot gait (diagonal pairs, 48 frames)
 │   │   └── walk.py                 # Walk gait (one foot at a time, 116 frames)
 │   ├── demos/
 │   │   ├── stand.py                # stand → sit → stand → rest

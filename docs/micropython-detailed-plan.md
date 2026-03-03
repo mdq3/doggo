@@ -108,14 +108,11 @@ print(f"Shoulder: {shoulder_deg}°, Knee: {knee_deg}°")
 
 ### Example: Porting a Gait
 
-**Trot Gait Concept (simplified):**
+**IK-based Gait Concept (simplified):**
 
 ```python
-class TrotGait:
-    """
-    Trot gait: Diagonal legs move together
-    FL + RR move, then FR + RL move
-    """
+class WalkGait:
+    """Walk gait using IK — feet follow smooth arcs"""
 
     def __init__(self, ik, servo_controller):
         self.ik = ik
@@ -126,48 +123,27 @@ class TrotGait:
 
     def update(self, dt):
         """Update gait (call periodically)"""
-        # Frequency
-        freq = 2.0  # Hz
+        freq = 1.0  # Hz
         self.phase += dt * freq * 2 * math.pi
 
-        # Leg positions (simplified)
         t = self.phase
 
-        # Front-left & Rear-right (diagonal pair 1)
-        if math.sin(t) > 0:  # Swing phase
-            fl_x = self.step_length * math.cos(t)
-            fl_y = -40 + self.step_height * math.sin(t)
-            rr_x = fl_x
-            rr_y = fl_y
-        else:  # Stance phase
-            fl_x = self.step_length * math.cos(t)
-            fl_y = -40
-            rr_x = fl_x
-            rr_y = fl_y
+        # Compute foot positions and IK angles for each leg
+        fl_x = self.step_length * math.cos(t)
+        fl_y = -40 + (self.step_height * math.sin(t) if math.sin(t) > 0 else 0)
 
-        # Front-right & Rear-left (diagonal pair 2) - opposite phase
-        fr_x = self.step_length * math.cos(t + math.pi)
-        fr_y = -40
-        if math.sin(t + math.pi) > 0:
-            fr_y += self.step_height * math.sin(t + math.pi)
-
-        # Compute angles
         fl_shoulder, fl_knee = self.ik.compute_leg_angles(fl_x, fl_y)
-        fr_shoulder, fr_knee = self.ik.compute_leg_angles(fr_x, fr_y)
-        # ... repeat for rear legs
-
-        # Convert to degrees and send to servos
         fl_s, fl_k = self.ik.angles_to_degrees(fl_shoulder, fl_knee)
         self.servos.set_servo(0, int(fl_s))  # FL shoulder
         self.servos.set_servo(1, int(fl_k))  # FL knee
-        # ... set other servos
+        # ... repeat for other legs
 
 # Use it
-trot = TrotGait(ik, servo_controller)
+gait = WalkGait(ik, servo_controller)
 
 # Main loop
 while True:
-    trot.update(0.02)  # 50Hz update rate
+    gait.update(0.02)  # 50Hz update rate
     time.sleep(0.02)
 ```
 
@@ -188,7 +164,7 @@ cd OpenCatEsp32
 ```
 
 Look for:
-- Gait generators (trot, walk, crawl)
+- Gait generators (walk, crawl)
 - IK functions
 - Servo mapping
 - Calibration data
@@ -229,8 +205,8 @@ def walk_with_ik():
     # Smoother motion
 
 # Phase 4: Proper gaits
-def trot():
-    """Diagonal pairs moving together"""
+def smooth_walk():
+    """IK-based smooth walking gait"""
     # Implement phase-based control
     # Like example above
 ```
@@ -570,7 +546,7 @@ def command_server():
         elif cmd == 'turn_right':
             execute_turn(15)
         elif cmd == 'walk_forward':
-            trot_gait.step()
+            walk_gait.step()
 ```
 
 **Advantages:**
@@ -700,11 +676,10 @@ More RAM = Better CV possibilities
 2. Test servo control
 3. Implement basic poses (stand, sit)
 
-### Phase 2: Port Gaits ✅ (trot done)
+### Phase 2: Port Gaits ✅
 1. ~~Study OpenCat source~~ ✅
 2. Port IK functions (TODO — `kinematics/`)
-3. ~~Implement simple walk~~ ✅ (`src/demos/walk.py`)
-4. ~~Add trot gait~~ ✅ (`src/gaits/trot.py`) — discrete-keyframe diagonal-pair trot, ~2.4 Hz
+3. ~~Implement simple walk~~ ✅ (`src/gaits/walk.py`)
 
 ### Phase 3: Add Basic Vision (Week 4)
 **Choose ONE:**

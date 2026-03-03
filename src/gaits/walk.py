@@ -2,7 +2,7 @@
 Walk Gait — ported from OpenCatEsp32 InstinctBittleESP.h (wkF array).
 
 116 frames per cycle. One-foot-at-a-time gait: three feet always on the ground,
-body stays level. Much more stable than trot.
+body stays level.
 
 Gait array column order (OpenCat joint indices 8-15):
   [FL_sh, FR_sh, RR_sh, RL_sh, FL_leg, FR_leg, RR_leg, RL_leg]

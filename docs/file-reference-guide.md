@@ -67,39 +67,9 @@ Device must already have `servo.py`, `poses.py`, and `config.py` uploaded.
 
 ---
 
-### `src/gaits/trot.py`
-
-**Purpose:** Trot gait — diagonal leg pairs (FL+RR, FR+RL) move simultaneously. Ported directly from OpenCat `trF` array in `InstinctBittleESP.h`.
-
-**What it provides:**
-- `_FRAMES` — 48 raw OpenCat keyframes per cycle
-- `_ZERO` — per-joint mechanical neutral positions (accounts for OpenCat `middleShift[]`)
-- `trot(steps=None)` — runs the gait for a fixed number of 48-frame cycles, or indefinitely until `KeyboardInterrupt`; returns to stand on completion
-
-**Conversion formula:**
-```
-commanded = ZERO_POS[joint] + rotDir[joint] * opencat_raw
-```
-
-**Frame delay:** `_FRAME_DELAY = 0.012` (~1.7 Hz cycle at 48 frames)
-
-**Upload to device:**
-```bash
-mpremote fs mkdir :gaits
-mpremote fs cp src/gaits/trot.py :gaits/trot.py
-```
-
-**Import in scripts:**
-```python
-from gaits.trot import trot
-trot(steps=10)
-```
-
----
-
 ### `src/gaits/walk.py`
 
-**Purpose:** Walk gait — one foot at a time, three feet always on the ground. Much more stable than trot; body stays level. Ported from OpenCat `wkF` array in `InstinctBittleESP.h`.
+**Purpose:** Walk gait — one foot at a time, three feet always on the ground. Body stays level. Ported from OpenCat `wkF` array in `InstinctBittleESP.h`.
 
 **What it provides:**
 - `_FRAMES` — 116 raw OpenCat keyframes per cycle
@@ -197,7 +167,6 @@ mpremote run src/configuration/verify_servos_working.py
 | `GET /sit` | Call `sit()` |
 | `GET /rest` | Call `rest()` |
 | `GET /walk?steps=N` | Call `walk(steps=N)` |
-| `GET /trot?steps=N` | Call `trot(steps=N)` |
 
 Returns `200 OK` on success, `404 Not found` for unknown routes.
 
@@ -382,8 +351,7 @@ BiBoard:/
 ├── poses.py
 ├── config.py
 └── gaits/
-    ├── walk.py    # from src/gaits/walk.py
-    └── trot.py    # from src/gaits/trot.py (optional)
+    └── walk.py    # from src/gaits/walk.py
 ```
 
 ```bash
@@ -409,8 +377,7 @@ BiBoard:/
 ├── config.py
 ├── wifi_config.py # gitignored, credentials
 └── gaits/
-    ├── walk.py
-    └── trot.py
+    └── walk.py
 ```
 
 ```bash
@@ -423,7 +390,6 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/server.py :server.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
-    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
 
 # Reboot and read IP from serial:

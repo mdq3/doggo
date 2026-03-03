@@ -5,7 +5,6 @@ Routes:
   GET /sit
   GET /rest
   GET /walk?steps=N
-  GET /trot?steps=N
   GET /battery
   GET /restart
 
@@ -20,7 +19,6 @@ import _thread
 from poses import stand, sit, rest
 from battery import battery_status
 from gaits.walk import walk
-from gaits.trot import trot
 
 
 def _parse_steps(qs):
@@ -49,8 +47,6 @@ def _handle(conn):
             rest()
         elif path == "/walk":
             walk(steps=_parse_steps(qs))
-        elif path == "/trot":
-            trot(steps=_parse_steps(qs))
         elif path == "/battery":
             v, pct, low = battery_status()
             body = f"{v:.2f}V ({pct}%)"
