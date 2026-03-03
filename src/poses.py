@@ -176,3 +176,5 @@ def rest():
     print("\nLying down...")
     move_to(_REST_COMMANDED, speed=1)
     print("✓ Resting position")
+
+
