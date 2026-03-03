@@ -190,3 +190,33 @@ def walk(steps=None):
 
     print("Returning to stand...")
     stand()
+
+
+def walk_back(steps=None):
+    """
+    Walk backwards (one foot at a time, 3-point support).
+
+    Plays the forward walk keyframe sequence in reverse, causing the body
+    to move backward.
+
+    Args:
+        steps: Number of full cycles to run.
+               None = run until KeyboardInterrupt.
+    """
+    print("\nStarting walk back...")
+
+    # Entry: last even-indexed frame of forward walk (first of reversed sequence)
+    move_to(_to_commanded(_FRAMES[len(_FRAMES) - 2]), speed=2)
+
+    count = 0
+    try:
+        while steps is None or count < steps:
+            for i in range(len(_FRAMES) - 2, -1, -2):
+                play_frame(_to_commanded(_FRAMES[i]))
+                time.sleep(_FRAME_DELAY)
+            count += 1
+    except KeyboardInterrupt:
+        print("\n\nWalk back interrupted.")
+
+    print("Returning to stand...")
+    stand()
