@@ -92,6 +92,22 @@ walk(steps=5)
 
 ---
 
+### `src/gaits/walk_back.py`
+
+Backward walk gait ported from OpenCat `bkF` (back walk fast). 43 frames per cycle.
+
+**Tuning constants** (top of file):
+- `_FRAME_DELAY` — seconds per frame; increase if feet slide
+- `_SQUEEZE` — shoulder sweep compression (1.0 = none)
+- `_TRIM` — left-side shoulder offset to correct sideways drift; positive corrects rightward curve
+
+**Upload:**
+```bash
+mpremote fs cp src/gaits/walk_back.py :gaits/walk_back.py
+```
+
+---
+
 ### `src/demos/walk.py`
 
 **Purpose:** Walk demo script. Runs stand → walk → rest sequence.
@@ -175,7 +191,7 @@ Returns `200 OK` on success, `404 Not found` for unknown routes.
 
 **`/restart` — software module reload**
 
-Reloads `server.py`, `poses.py`, `battery.py`, and `gaits/walk.py` from flash without a hardware reset. Servo PWM keeps running throughout — no movement, no spaz.
+Reloads `server.py`, `poses.py`, `battery.py`, `gaits/walk.py`, and `gaits/walk_back.py` from flash without a hardware reset. Servo PWM keeps running throughout — no movement, no spaz.
 
 Use this after uploading updated files via `webrepl_proxy.py`:
 
@@ -371,7 +387,8 @@ BiBoard:/
 ├── poses.py
 ├── config.py
 └── gaits/
-    └── walk.py    # from src/gaits/walk.py
+    ├── walk.py         # from src/gaits/walk.py
+    └── walk_back.py    # from src/gaits/walk_back.py
 ```
 
 ```bash
@@ -398,7 +415,8 @@ BiBoard:/
 ├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
 └── gaits/
-    └── walk.py    # src/gaits/walk.py — walk gait
+    ├── walk.py         # src/gaits/walk.py — walk forward gait
+    └── walk_back.py    # src/gaits/walk_back.py — walk backward gait
 ```
 
 ```bash
@@ -412,6 +430,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/server.py :server.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
+    fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
     fs cp src/main.py :main.py
 
 # Reboot and read IP from serial:

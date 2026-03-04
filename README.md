@@ -112,6 +112,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/server.py :server.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
+    fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
     fs cp src/main.py :main.py
 ```
 
@@ -174,7 +175,7 @@ dog fs cp src/server.py :server.py
 curl http://192.168.1.x/restart
 ```
 
-`/restart` reloads `server.py`, `poses.py`, `battery.py`, and `gaits/walk.py` from flash. Servo PWM stays running throughout — no movement.
+`/restart` reloads `server.py`, `poses.py`, `battery.py`, `gaits/walk.py`, and `gaits/walk_back.py` from flash. Servo PWM stays running throughout — no movement.
 
 Changes to `servo.py`, `boot.py`, or `main.py` require a physical power cycle.
 
@@ -193,7 +194,8 @@ doggo/
 │   │   ├── verify_servos_working.py # Quick servo sanity check
 │   │   └── wifi_config_template.py # Copy → wifi_config.py
 │   ├── gaits/
-│   │   └── walk.py                 # Walk gait (one foot at a time, 116 frames)
+│   │   ├── walk.py                 # Walk forward gait (one foot at a time, 116 frames)
+│   │   └── walk_back.py            # Walk backward gait (43 frames)
 │   ├── battery.py                  # Battery voltage monitoring (GPIO 37, BiBoard formula)
 │   ├── demos/
 │   │   ├── stand.py                # stand → sit → stand → rest
