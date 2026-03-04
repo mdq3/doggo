@@ -29,11 +29,65 @@ _CH   = (CH_FL_SHOULDER, CH_FR_SHOULDER, CH_RR_SHOULDER, CH_RL_SHOULDER,
 _RD   = (1, -1, -1, 1, -1, 1, 1, -1)
 _ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
 
-_FRAME_DELAY = 0.016   # seconds between frames — plays every 2nd frame, ~0.9s cycle
-_SHOULDER_SQUEEZE = 0.85  # compress shoulder sweep around balance (raw=30); reduce to fix foot clash
-_SHOULDER_MID = 30        # OpenCat balance pose shoulder angle
+_FRAME_DELAY = 0.016         # seconds between frames (forward) — plays every 2nd frame, ~0.9s cycle
+_SHOULDER_SQUEEZE = 0.85     # compress shoulder sweep around balance (raw=30); reduce to fix foot clash
+_SHOULDER_MID = 30           # OpenCat balance pose shoulder angle
 
-# Raw OpenCat angles from wkF in InstinctBittleESP.h.
+_BACK_FRAME_DELAY = 0.020    # seconds between frames (backward) — tune if sliding or unstable
+_BACK_SHOULDER_SQUEEZE = 1.0 # 1.0 = no compression; bkF is purpose-built so squeeze may not be needed
+_BACK_TRIM = 7              # raw degrees added to left shoulders (FL + RL); tune to correct curve:
+                             #   positive → longer left strides (corrects curving right)
+                             #   negative → longer right strides (corrects curving left)
+
+# Raw OpenCat angles from bkF in InstinctBittleESP.h (backward walk fast).
+# Columns: [FL_sh, FR_sh, RR_sh, RL_sh, FL_leg, FR_leg, RR_leg, RL_leg]
+_FRAMES_BACK = (
+    ( 38,  42,  36,  64,   2,  -6,   3,  -3),
+    ( 36,  45,  34,  65,   3,  -6,   3,  -2),
+    ( 34,  48,  32,  65,   3,  -7,   4,   0),
+    ( 32,  51,  30,  64,   4,  -7,   5,   2),
+    ( 30,  53,  28,  62,   5,  -7,   6,   6),
+    ( 28,  56,  25,  60,   6,  -6,   9,   7),
+    ( 26,  58,  25,  60,   7,  -6,   8,   7),
+    ( 24,  58,  26,  59,   8,  -4,   4,   6),
+    ( 21,  59,  28,  58,  10,  -2,   2,   5),
+    ( 19,  57,  31,  57,  11,   2,  -1,   3),
+    ( 18,  55,  32,  55,  12,   5,  -3,   3),
+    ( 15,  54,  35,  54,  14,   5,  -4,   2),
+    ( 16,  54,  39,  52,  12,   2,  -5,   2),
+    ( 17,  52,  42,  51,   9,   2,  -6,   2),
+    ( 20,  51,  45,  49,   3,   2,  -6,   1),
+    ( 21,  49,  48,  48,   3,   1,  -7,   2),
+    ( 25,  48,  51,  46,   1,   2,  -7,   1),
+    ( 28,  46,  53,  44,  -1,   1,  -7,   1),
+    ( 31,  44,  56,  43,  -2,   1,  -6,   1),
+    ( 35,  43,  58,  41,  -4,   1,  -6,   2),
+    ( 38,  41,  60,  39,  -5,   2,  -5,   2),
+    ( 41,  39,  62,  37,  -6,   2,  -4,   2),
+    ( 44,  37,  64,  35,  -6,   2,  -3,   3),
+    ( 47,  35,  65,  33,  -7,   3,  -2,   4),
+    ( 50,  33,  65,  31,  -7,   4,   1,   5),
+    ( 52,  31,  63,  29,  -7,   5,   4,   6),
+    ( 55,  29,  61,  27,  -6,   6,   8,   7),
+    ( 57,  27,  60,  24,  -6,   7,   7,   9),
+    ( 58,  25,  59,  26,  -4,   8,   6,   6),
+    ( 59,  23,  58,  27,  -4,   9,   5,   3),
+    ( 58,  21,  57,  30,   0,  10,   4,  -1),
+    ( 57,  18,  56,  31,   2,  12,   3,  -1),
+    ( 54,  16,  54,  35,   5,  13,   3,  -4),
+    ( 54,  16,  53,  38,   3,  12,   2,  -5),
+    ( 53,  16,  52,  41,   2,  10,   2,  -6),
+    ( 52,  18,  50,  44,   2,   7,   1,  -6),
+    ( 50,  21,  49,  47,   1,   3,   1,  -7),
+    ( 49,  22,  47,  50,   1,   2,   1,  -7),
+    ( 47,  26,  45,  52,   1,   1,   1,  -7),
+    ( 45,  29,  44,  55,   1,  -2,   1,  -6),
+    ( 44,  32,  42,  57,   1,  -3,   1,  -6),
+    ( 42,  35,  40,  60,   1,  -4,   2,  -5),
+    ( 40,  39,  38,  62,   2,  -5,   2,  -4),
+)
+
+# Raw OpenCat angles from wkF in InstinctBittleESP.h (forward walk).
 # Columns: [FL_sh, FR_sh, RR_sh, RL_sh, FL_leg, FR_leg, RR_leg, RL_leg]
 _FRAMES = (
     ( 21,  58,  61,  55,   1,   8,  -7,   5),
@@ -155,12 +209,14 @@ _FRAMES = (
 )
 
 
-def _to_commanded(raw):
+def _to_commanded(raw, squeeze=_SHOULDER_SQUEEZE, mid=_SHOULDER_MID, trim=0):
     result = {}
     for i in range(8):
         r = raw[i]
-        if i < 4:  # shoulder: compress sweep around balance pose
-            r = _SHOULDER_MID + (r - _SHOULDER_MID) * _SHOULDER_SQUEEZE
+        if i < 4:  # shoulder
+            if trim and i in (0, 3):  # FL and RL — left side
+                r += trim
+            r = mid + (r - mid) * squeeze
         result[_CH[i]] = _ZERO[i] + _RD[i] * r  # keep float — int() at PWM level
     return result
 
@@ -196,24 +252,23 @@ def walk_back(steps=None):
     """
     Walk backwards (one foot at a time, 3-point support).
 
-    Plays the forward walk keyframe sequence in reverse, causing the body
-    to move backward.
+    Uses the OpenCat bkF (back walk fast) keyframe sequence — a dedicated
+    backward gait, not a reversal of the forward walk.
 
     Args:
-        steps: Number of full cycles to run.
+        steps: Number of full 43-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
     print("\nStarting walk back...")
 
-    # Entry: last even-indexed frame of forward walk (first of reversed sequence)
-    move_to(_to_commanded(_FRAMES[len(_FRAMES) - 2]), speed=2)
+    move_to(_to_commanded(_FRAMES_BACK[0], squeeze=_BACK_SHOULDER_SQUEEZE, trim=_BACK_TRIM), speed=2)
 
     count = 0
     try:
         while steps is None or count < steps:
-            for i in range(len(_FRAMES) - 2, -1, -2):
-                play_frame(_to_commanded(_FRAMES[i]))
-                time.sleep(_FRAME_DELAY)
+            for frame in _FRAMES_BACK:
+                play_frame(_to_commanded(frame, squeeze=_BACK_SHOULDER_SQUEEZE, trim=_BACK_TRIM))
+                time.sleep(_BACK_FRAME_DELAY)
             count += 1
     except KeyboardInterrupt:
         print("\n\nWalk back interrupted.")
