@@ -377,6 +377,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/server.py :server.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
+    fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
     fs cp src/main.py :main.py
 ```
 
@@ -460,6 +461,7 @@ curl http://192.168.1.x/restart
 - `poses.py`
 - `battery.py`
 - `gaits/walk.py`
+- `gaits/walk_back.py`
 
 The following files require a **physical power cycle** because they run before the server starts:
 - `servo.py`
@@ -491,7 +493,8 @@ BiBoard:/
 ├── poses.py
 ├── config.py
 └── gaits/
-    └── walk.py    # src/gaits/walk.py
+    ├── walk.py         # src/gaits/walk.py
+    └── walk_back.py    # src/gaits/walk_back.py
 ```
 
 ### With WiFi control
@@ -507,7 +510,8 @@ BiBoard:/
 ├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
 └── gaits/
-    └── walk.py    # src/gaits/walk.py — walk gait
+    ├── walk.py         # src/gaits/walk.py — walk forward gait
+    └── walk_back.py    # src/gaits/walk_back.py — walk backward gait
 ```
 
 ---
@@ -562,7 +566,8 @@ doggo/
 │   │   ├── verify_servos_working.py # Verify all servos move correctly
 │   │   └── wifi_config_template.py # Copy → wifi_config.py, fill in credentials
 │   ├── gaits/
-│   │   └── walk.py                 # Walk gait (one foot at a time, 116 frames)
+│   │   ├── walk.py                 # Walk forward gait (one foot at a time, 116 frames)
+│   │   └── walk_back.py            # Walk backward gait (43 frames)
 │   ├── demos/
 │   │   ├── stand.py                # Stand demo: stand → sit → stand → rest
 │   │   └── walk.py                 # Walk demo: stand → walk → rest
@@ -620,10 +625,11 @@ doggo/
 `poses.py` not uploaded — run `mpremote fs cp src/poses.py :poses.py`
 
 ### `No module named 'gaits.walk'`
-`gaits/walk.py` not uploaded:
+`gaits/walk.py` not uploaded. For the HTTP server, both walk files are needed:
 ```bash
 mpremote fs mkdir :gaits
 mpremote fs cp src/gaits/walk.py :gaits/walk.py
+mpremote fs cp src/gaits/walk_back.py :gaits/walk_back.py
 ```
 
 ### Servo doesn't move

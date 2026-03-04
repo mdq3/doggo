@@ -13,9 +13,9 @@ Returns 200 OK on success, 404 for unknown routes.
 Runs in a background _thread using raw sockets so the main thread
 stays free for WebREPL / interactive REPL access.
 
-/restart reloads server.py, battery.py, and gaits/walk.py from flash
-without a hardware reset. poses.py is intentionally kept loaded — it
-holds the live Servos object, and reimporting it disrupts LEDC state.
+/restart reloads server.py, battery.py, gaits/walk.py, and
+gaits/walk_back.py from flash without a hardware reset. poses.py is
+intentionally kept loaded — reimporting it disrupts LEDC state.
 Changes to poses.py or servo.py require a power cycle.
 """
 import socket
@@ -23,7 +23,8 @@ import sys
 import _thread
 from poses import stand, sit, rest
 from battery import battery_status
-from gaits.walk import walk, walk_back
+from gaits.walk import walk
+from gaits.walk_back import walk_back
 
 _reload_flag = False
 
@@ -89,11 +90,11 @@ def _reload(port):
     disrupts LEDC state and causes servo spaz. poses.py changes require
     a power cycle.
 
-    Reloads: server.py, battery.py, gaits/walk.py
-    gaits.walk imports from the already-loaded poses, so it gets the live
+    Reloads: server.py, battery.py, gaits/walk.py, gaits/walk_back.py
+    Gait modules import from the already-loaded poses, so they get the live
     servos automatically.
     """
-    for mod in ("server", "battery", "gaits.walk", "gaits"):
+    for mod in ("server", "battery", "gaits.walk", "gaits.walk_back", "gaits"):
         sys.modules.pop(mod, None)
 
     try:
