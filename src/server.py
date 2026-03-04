@@ -13,11 +13,10 @@ Returns 200 OK on success, 404 for unknown routes.
 Runs in a background _thread using raw sockets so the main thread
 stays free for WebREPL / interactive REPL access.
 
-/restart reloads all modules from flash without a hardware reset.
-machine.reset() is intentionally avoided: the ESP32 reset clears the
-GPIO output-enable register so pins go to INPUT, pull-ups drive them
-HIGH, and servos interpret that as a max-position command — violent
-movement. A software reload keeps servo PWM running throughout.
+/restart reloads server.py, battery.py, and gaits/walk.py from flash
+without a hardware reset. poses.py is intentionally kept loaded — it
+holds the live Servos object, and reimporting it disrupts LEDC state.
+Changes to poses.py or servo.py require a power cycle.
 """
 import socket
 import sys
@@ -85,22 +84,17 @@ def _handle(conn):
 def _reload(port):
     """Reload changed modules from flash without touching hardware.
 
-    Servo PWM keeps running throughout — no GPIO disruption, no spaz.
-    The live servos object and current_pos are transplanted into the
-    freshly-imported poses module so motion state is preserved.
+    poses is intentionally NOT reloaded — it holds the live Servos object
+    and current_pos. Reimporting it (even with a no-op Servos.__init__)
+    disrupts LEDC state and causes servo spaz. poses.py changes require
+    a power cycle.
+
+    Reloads: server.py, battery.py, gaits/walk.py
+    gaits.walk imports from the already-loaded poses, so it gets the live
+    servos automatically.
     """
-    import poses as _old
-    saved_servos = _old.servos
-    saved_pos = dict(_old.current_pos)
-
-    for mod in ("server", "poses", "battery", "gaits.walk", "gaits"):
+    for mod in ("server", "battery", "gaits.walk", "gaits"):
         sys.modules.pop(mod, None)
-
-    # Reimport poses; immediately replace the new empty Servos object
-    # (no channels initialised, safe to discard) with the live one.
-    import poses as _new
-    _new.servos = saved_servos
-    _new.current_pos = saved_pos
 
     try:
         import server as _new_srv
