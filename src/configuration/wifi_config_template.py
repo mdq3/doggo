@@ -4,3 +4,4 @@
 SSID = "your_network_name"
 PASSWORD = "your_password"
 WEBREPL_PASSWORD = "doggo"   # password for mpremote/WebREPL connections
+HOSTNAME = "doggo"           # mDNS hostname — device reachable as http://doggo.local/
