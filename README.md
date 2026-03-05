@@ -95,10 +95,12 @@ Remove the USB tether and control Bittle wirelessly.
 
 ```bash
 cp src/configuration/wifi_config_template.py wifi_config.py
-# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD
+# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD, and optionally HOSTNAME
 ```
 
 `wifi_config.py` is gitignored. Never commit it.
+
+`HOSTNAME` defaults to `"doggo"` — the device will be reachable as `http://doggo.local/`. For faster responses, use the IP address directly or `curl -4` (skips IPv6 resolution timeout).
 
 ### 2. Upload WiFi files (USB, one-time)
 
@@ -143,6 +145,11 @@ curl http://192.168.1.x/walk?steps=3
 curl http://192.168.1.x/walk_back?steps=3
 curl http://192.168.1.x/battery
 curl http://192.168.1.x/restart   # reload code without touching servos
+```
+
+Or use the hostname (may be slower — see note in WiFi Control section):
+```bash
+curl -4 http://doggo.local/stand
 ```
 
 ### 5. Run scripts and transfer files over WiFi
@@ -192,7 +199,7 @@ doggo/
 │   │   ├── calibrate.py            # Interactive REPL calibration tool
 │   │   ├── identify_servos.py      # Map channel numbers to joints
 │   │   ├── verify_servos_working.py # Quick servo sanity check
-│   │   └── wifi_config_template.py # Copy → wifi_config.py
+│   │   └── wifi_config_template.py # Copy → wifi_config.py, fill in credentials + hostname
 │   ├── gaits/
 │   │   ├── walk.py                 # Walk forward gait (one foot at a time, 116 frames)
 │   │   └── walk_back.py            # Walk backward gait (43 frames)
@@ -200,7 +207,7 @@ doggo/
 │   ├── demos/
 │   │   ├── stand.py                # stand → sit → stand → rest
 │   │   └── walk.py                 # stand → walk → rest
-│   ├── boot.py                     # WiFi connect + WebREPL (deployed as :boot.py)
+│   ├── boot.py                     # WiFi connect + mDNS hostname + WebREPL (deployed as :boot.py)
 │   ├── main.py                     # HTTP server start (deployed as :main.py)
 │   ├── server.py                   # HTTP command server (port 80)
 │   ├── webrepl_proxy.py            # Host-side PTY bridge for mpremote over WiFi

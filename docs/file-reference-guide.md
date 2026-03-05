@@ -229,7 +229,8 @@ curl http://192.168.1.x/walk?steps=3
 **Purpose:** Runs on every device boot (before `main.py`). Connects to WiFi and starts WebREPL.
 
 **Behaviour:**
-- Reads credentials from `wifi_config.py` (gitignored)
+- Reads credentials and hostname from `wifi_config.py` (gitignored); hostname defaults to `"doggo"`
+- Registers mDNS hostname via `network.hostname()` before WiFi activation — device reachable as `{hostname}.local`
 - On success: prints `WiFi connected: <ip>`, starts WebREPL on port 8266
 - On failure or missing file: prints status and continues (USB REPL still works)
 
@@ -264,15 +265,17 @@ mpremote fs cp src/main.py :main.py
 
 ### `src/configuration/wifi_config_template.py` (checked in)
 
-**Purpose:** Template showing the format for WiFi credentials.
+**Purpose:** Template showing the format for WiFi credentials and hostname.
 
 **Usage:**
 ```bash
 cp src/configuration/wifi_config_template.py wifi_config.py
-# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD
+# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD, and optionally HOSTNAME
 ```
 
 `wifi_config.py` is gitignored. `src/configuration/wifi_config_template.py` is safe to commit (no real credentials).
+
+`HOSTNAME` defaults to `"doggo"` — device reachable as `http://doggo.local/`. `.local` resolution via mDNS may be slow on some networks; use `curl -4` to force IPv4 and avoid the IPv6 timeout.
 
 ---
 

@@ -12,9 +12,16 @@ try:
 except ImportError:
     SSID = PASSWORD = WEBREPL_PASSWORD = None
 
+HOSTNAME = "doggo"
+try:
+    from wifi_config import HOSTNAME
+except ImportError:
+    pass
+
 
 def connect_wifi(ssid, password, timeout=15):
     wlan = network.WLAN(network.STA_IF)
+    network.hostname(HOSTNAME)  # must be set before active() for mDNS
     wlan.active(True)
     if not wlan.isconnected():
         wlan.connect(ssid, password)
@@ -29,7 +36,7 @@ def connect_wifi(ssid, password, timeout=15):
 if SSID:
     ok, ip = connect_wifi(SSID, PASSWORD)
     if ok:
-        print("WiFi connected:", ip)
+        print("WiFi connected:", ip, f"({HOSTNAME}.local)")
         webrepl.start(password=WEBREPL_PASSWORD or "bittle")
     else:
         print("WiFi failed — continuing without network")

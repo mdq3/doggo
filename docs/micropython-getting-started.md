@@ -360,10 +360,15 @@ Remove the USB tether. After this step you can run scripts and send commands wir
 
 ```bash
 cp src/configuration/wifi_config_template.py wifi_config.py
-# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD
+# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD, and optionally HOSTNAME
 ```
 
 `wifi_config.py` is gitignored. Never commit it.
+
+`HOSTNAME` defaults to `"doggo"`. After connecting, the device is reachable as `http://doggo.local/`. If `.local` responses feel slow, use `curl -4` to force IPv4 resolution (skips the IPv6 timeout):
+```bash
+curl -4 http://doggo.local/stand
+```
 
 ### 11b: Upload WiFi files (USB, one-time)
 
@@ -409,6 +414,8 @@ curl http://192.168.1.x/walk?steps=3
 curl http://192.168.1.x/walk_back?steps=3
 curl http://192.168.1.x/battery
 ```
+
+You can also use the hostname: `curl -4 http://doggo.local/stand` (the `-4` flag avoids IPv6 resolution delay).
 
 ### 11e: Run scripts and transfer files over WiFi
 
