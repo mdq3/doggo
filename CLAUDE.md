@@ -15,6 +15,7 @@ src/poses.py                — poses layer: calibration, motion, named poses
 src/battery.py              — battery voltage monitoring (GPIO 37, BiBoard V1.0)
 src/gaits/walk.py           — walk forward gait: 116-frame OpenCat wkF keyframe sequence
 src/gaits/walk_back.py      — walk backward gait: 43-frame OpenCat bkF keyframe sequence
+src/gaits/turn.py           — turn left/right gaits: 116-frame OpenCat wkL keyframe sequence
 src/demos/stand.py          — demo: stand → sit → stand → rest
 src/demos/walk.py           — demo: stand → walk → rest
 src/server.py               — HTTP command server (_thread + raw sockets, port 80)
@@ -35,7 +36,8 @@ src/configuration/wifi_config_template.py — credential template (copy → wifi
 | `src/battery.py` | Battery voltage monitoring — GPIO 37 ADC, BiBoard V1.0 formula | `battery.py` |
 | `src/gaits/walk.py` | Walk gait — 116-frame one-foot-at-a-time sequence from OpenCat `wkF` | `gaits/walk.py` |
 | `src/gaits/walk_back.py` | Walk backward gait — 43-frame one-foot-at-a-time sequence from OpenCat `bkF` | `gaits/walk_back.py` |
-| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/battery` `/restart` | `server.py` |
+| `src/gaits/turn.py` | Turn left/right gaits — 116-frame arc-turn sequence from OpenCat `wkL`; right = L/R mirror | `gaits/turn.py` |
+| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/turn_left` `/turn_right` `/battery` `/restart` | `server.py` |
 | `src/boot.py` | Runs on boot: WiFi connect + mDNS hostname registration + WebREPL start | `boot.py` |
 | `src/main.py` | Runs after boot: starts HTTP server loop | `main.py` |
 | `src/webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL | n/a (host only) |
