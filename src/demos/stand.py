@@ -6,7 +6,8 @@ Usage:
 """
 
 import time
-from poses import stand, sit, rest
+
+from poses import rest, sit, stand
 
 print("\n" + "=" * 60)
 print("Bittle Stand Demo")

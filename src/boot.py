@@ -4,8 +4,9 @@ Scans visible APs and connects to the first network in NETWORKS that
 is currently in range. Falls through gracefully if wifi_config.py is
 missing or no configured network is found.
 """
-import network
 import time
+
+import network
 import webrepl
 
 NETWORKS = []
@@ -13,7 +14,7 @@ WEBREPL_PASSWORD = None
 HOSTNAME = "doggo"
 
 try:
-    from wifi_config import NETWORKS, WEBREPL_PASSWORD, HOSTNAME
+    from wifi_config import HOSTNAME, NETWORKS, WEBREPL_PASSWORD
 except ImportError:
     pass
 

@@ -3,10 +3,11 @@
 import gc
 import os
 import sys
+import time
+
+import esp
 import machine
 import network
-import time
-import esp
 
 
 def device_info():
@@ -31,6 +32,7 @@ def device_info():
         rssi = 'N/A'
 
     uptime_s = time.ticks_ms() // 1000
+    used_pct = flash_used * 100 // flash_total
     lines = [
         'platform:    ' + sys.platform,
         'micropython: ' + sys.version,
@@ -41,8 +43,8 @@ def device_info():
         'ram_total:   ' + str((mem_used + mem_free) // 1024) + ' KB',
         'flash_chip:  ' + str(esp.flash_size() // 1024) + ' KB  (total ESP32 flash)',
         'flash_total: ' + str(flash_total // 1024) + ' KB  (filesystem partition)',
-        'flash_used:  ' + str(flash_used // 1024) + ' KB (' + str(flash_used * 100 // flash_total) + '%)',
-        'flash_free:  ' + str(flash_free // 1024) + ' KB (' + str(100 - flash_used * 100 // flash_total) + '%)',
+        'flash_used:  ' + str(flash_used // 1024) + ' KB (' + str(used_pct) + '%)',
+        'flash_free:  ' + str(flash_free // 1024) + ' KB (' + str(100 - used_pct) + '%)',
         'wifi_ip:     ' + ip,
         'wifi_rssi:   ' + rssi,
         'uptime:      ' + str(uptime_s // 3600) + 'h '

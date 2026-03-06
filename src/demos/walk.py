@@ -14,8 +14,9 @@ Deploy:
 """
 
 import time
-from poses import stand, rest
+
 from gaits.walk import walk
+from poses import rest, stand
 
 print("\n" + "=" * 60)
 print("Bittle Walk Demo")

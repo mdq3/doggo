@@ -10,8 +10,9 @@ Upload and run in REPL:
     >>> test(4)   # Next channel...
 """
 
-from servo import Servos
 import time
+
+from servo import Servos
 
 servos = Servos()
 

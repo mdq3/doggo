@@ -16,8 +16,9 @@ Usage:
     from poses import stand, sit, rest, zero_position
 """
 
-from servo import Servos
 import time
+
+from servo import Servos
 
 # BiBoard V1 channel mapping
 CH_HEAD = 0

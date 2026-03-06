@@ -25,9 +25,20 @@ Tuning:
 """
 
 import time
-from poses import (play_frame, move_to, stand,
-                   CH_FL_SHOULDER, CH_FR_SHOULDER, CH_RR_SHOULDER, CH_RL_SHOULDER,
-                   CH_FL_LEG, CH_FR_LEG, CH_RR_LEG, CH_RL_LEG)
+
+from poses import (
+    CH_FL_LEG,
+    CH_FL_SHOULDER,
+    CH_FR_LEG,
+    CH_FR_SHOULDER,
+    CH_RL_LEG,
+    CH_RL_SHOULDER,
+    CH_RR_LEG,
+    CH_RR_SHOULDER,
+    move_to,
+    play_frame,
+    stand,
+)
 
 # Gait array index -> (channel, rotationDirection, zero_position)
 _CH   = (CH_FL_SHOULDER, CH_FR_SHOULDER, CH_RR_SHOULDER, CH_RL_SHOULDER,
@@ -188,7 +199,7 @@ def turn_left(steps=None):
     count = 0
     try:
         while steps is None or count < steps:
-            for i in range(0, len(_FRAMES), 2):  # every 2nd frame → larger steps, above servo deadband
+            for i in range(0, len(_FRAMES), 2):  # every 2nd frame — above servo deadband
                 play_frame(_to_commanded(_FRAMES[i]))
                 time.sleep(_FRAME_DELAY)
             count += 1
@@ -214,7 +225,7 @@ def turn_right(steps=None):
     count = 0
     try:
         while steps is None or count < steps:
-            for i in range(0, len(_FRAMES), 2):  # every 2nd frame → larger steps, above servo deadband
+            for i in range(0, len(_FRAMES), 2):  # every 2nd frame — above servo deadband
                 play_frame(_to_commanded(_mirror(_FRAMES[i])))
                 time.sleep(_FRAME_DELAY)
             count += 1
