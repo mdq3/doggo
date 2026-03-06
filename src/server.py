@@ -9,6 +9,7 @@ Routes:
   GET /turn_left?steps=N
   GET /turn_right?steps=N
   GET /battery
+  GET /info
   GET /restart
 
 Returns 200 OK on success, 404 for unknown routes.
@@ -28,6 +29,7 @@ from battery import battery_status
 from gaits.walk import walk
 from gaits.walk_back import walk_back
 from gaits.turn import turn_left, turn_right
+from device_info import device_info
 
 _reload_flag = False
 
@@ -73,6 +75,10 @@ def _handle(conn):
             body = (body + "\n").encode()
             conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: " + str(len(body)).encode() + b"\r\n\r\n" + body)
             return
+        elif path == "/info":
+            body = device_info().encode()
+            conn.send(b'HTTP/1.1 200 OK\r\nContent-Length: ' + str(len(body)).encode() + b'\r\n\r\n' + body)
+            return
         elif path == "/restart":
             conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nRestarting\n")
             conn.close()
@@ -101,7 +107,7 @@ def _reload(port):
     Gait modules import from the already-loaded poses, so they get the live
     servos automatically.
     """
-    for mod in ("server", "battery", "gaits.walk", "gaits.walk_back", "gaits.turn", "gaits"):
+    for mod in ("server", "battery", "device_info", "gaits.walk", "gaits.walk_back", "gaits.turn", "gaits"):
         sys.modules.pop(mod, None)
 
     try:
