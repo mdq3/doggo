@@ -36,6 +36,7 @@ MANIFEST = [
     ("src/gaits/walk.py",      "gaits/walk.py"),
     ("src/gaits/walk_back.py", "gaits/walk_back.py"),
     ("src/gaits/turn.py",      "gaits/turn.py"),
+    ("src/gaits/pivot.py",     "gaits/pivot.py"),
 ]
 
 # Deployed only if present locally (machine-specific, gitignored)
