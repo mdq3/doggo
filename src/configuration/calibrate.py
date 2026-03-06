@@ -15,8 +15,8 @@ Usage:
        >>> done()           # Print config.py content
 """
 
+
 from servo import Servos
-import time
 
 # Initialize
 servos = Servos()

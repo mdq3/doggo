@@ -13,7 +13,7 @@ Usage:
     servos.set_servo(0, 90)
 """
 
-from machine import Pin, PWM
+from machine import PWM, Pin
 
 # BiBoard V1.0 PWM pin mapping (channel -> GPIO)
 BIBOARD_V1_PINS = [18, 5, 14, 27, 23, 4, 12, 33, 19, 15, 13, 32]

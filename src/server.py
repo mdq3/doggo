@@ -21,15 +21,16 @@ gaits/walk_back.py, and gaits/turn.py from flash without a hardware
 reset. poses.py is intentionally kept loaded — reimporting it disrupts
 LEDC state. Changes to poses.py or servo.py require a power cycle.
 """
+import _thread
 import socket
 import sys
-import _thread
-from poses import stand, sit, rest
+
 from battery import battery_status
+from device_info import device_info
+from gaits.turn import turn_left, turn_right
 from gaits.walk import walk
 from gaits.walk_back import walk_back
-from gaits.turn import turn_left, turn_right
-from device_info import device_info
+from poses import rest, sit, stand
 
 _reload_flag = False
 
@@ -42,6 +43,10 @@ def _parse_steps(qs):
             except ValueError:
                 pass
     return None
+
+
+def _send_body(conn, body):
+    conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: " + str(len(body)).encode() + b"\r\n\r\n" + body)
 
 
 def _handle(conn):
@@ -73,11 +78,10 @@ def _handle(conn):
             if low:
                 body += " - please charge"
             body = (body + "\n").encode()
-            conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: " + str(len(body)).encode() + b"\r\n\r\n" + body)
+            _send_body(conn, body)
             return
         elif path == "/info":
-            body = device_info().encode()
-            conn.send(b'HTTP/1.1 200 OK\r\nContent-Length: ' + str(len(body)).encode() + b'\r\n\r\n' + body)
+            _send_body(conn, device_info().encode())
             return
         elif path == "/restart":
             conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 11\r\n\r\nRestarting\n")
@@ -107,7 +111,8 @@ def _reload(port):
     Gait modules import from the already-loaded poses, so they get the live
     servos automatically.
     """
-    for mod in ("server", "battery", "device_info", "gaits.walk", "gaits.walk_back", "gaits.turn", "gaits"):
+    for mod in ("server", "battery", "device_info",
+                "gaits.walk", "gaits.walk_back", "gaits.turn", "gaits"):
         sys.modules.pop(mod, None)
 
     try:

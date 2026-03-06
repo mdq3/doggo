@@ -1,0 +1,21 @@
+[tool.ruff]
+target-version = "py38"
+line-length = 100
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes (undefined names, unused imports, etc.)
+    "W",   # pycodestyle warnings
+    "I",   # isort
+]
+ignore = [
+    # MicroPython uses try/except ImportError for optional config — suppress
+    # "imported but unused" for that pattern handled per-file below.
+]
+
+[tool.ruff.lint.per-file-ignores]
+# boot.py imports webrepl at module level but only calls it conditionally
+"src/boot.py" = ["F401"]
+# Template file is not executable code
+"src/configuration/wifi_config_template.py" = ["F401"]

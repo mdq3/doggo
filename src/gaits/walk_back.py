@@ -21,9 +21,20 @@ Tuning:
 """
 
 import time
-from poses import (play_frame, move_to, stand,
-                   CH_FL_SHOULDER, CH_FR_SHOULDER, CH_RR_SHOULDER, CH_RL_SHOULDER,
-                   CH_FL_LEG, CH_FR_LEG, CH_RR_LEG, CH_RL_LEG)
+
+from poses import (
+    CH_FL_LEG,
+    CH_FL_SHOULDER,
+    CH_FR_LEG,
+    CH_FR_SHOULDER,
+    CH_RL_LEG,
+    CH_RL_SHOULDER,
+    CH_RR_LEG,
+    CH_RR_SHOULDER,
+    move_to,
+    play_frame,
+    stand,
+)
 
 # Gait array index → (channel, rotationDirection, zero_position)
 _CH   = (CH_FL_SHOULDER, CH_FR_SHOULDER, CH_RR_SHOULDER, CH_RL_SHOULDER,

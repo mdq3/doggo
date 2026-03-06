@@ -33,8 +33,8 @@ import os
 import socket
 import struct
 import subprocess
-import threading
 import sys
+import threading
 
 _FRAME_TXT = 0x81
 _FRAME_BIN = 0x82
@@ -89,11 +89,11 @@ class _WS:
 
     def send_frame(self, data, binary=False):
         ft = _FRAME_BIN if binary else _FRAME_TXT
-        l = len(data)
-        if l < 126:
-            self._sock.sendall(struct.pack(">BB", ft, l) + data)
+        n = len(data)
+        if n < 126:
+            self._sock.sendall(struct.pack(">BB", ft, n) + data)
         else:
-            self._sock.sendall(struct.pack(">BBH", ft, 126, l) + data)
+            self._sock.sendall(struct.pack(">BBH", ft, 126, n) + data)
 
     def login(self, password):
         buf = b""
