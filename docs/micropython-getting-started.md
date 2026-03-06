@@ -30,6 +30,9 @@ pip install esptool
 
 # Install mpremote (for REPL and file transfers)
 pip install mpremote
+
+# Install ruff (for linting, host-side only)
+pip install ruff
 ```
 
 ---
@@ -360,8 +363,20 @@ Remove the USB tether. After this step you can run scripts and send commands wir
 
 ```bash
 cp src/configuration/wifi_config_template.py wifi_config.py
-# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD, and optionally HOSTNAME
 ```
+
+Edit `wifi_config.py` and fill in your credentials using the NETWORKS list format:
+
+```python
+NETWORKS = [
+    ("home_network",   "home_password"),
+    ("office_network", "office_password"),
+]
+WEBREPL_PASSWORD = "doggo"
+HOSTNAME = "doggo"
+```
+
+`boot.py` scans visible APs on boot and connects to the first network from NETWORKS that is in range — add as many networks as needed for different locations.
 
 `wifi_config.py` is gitignored. Never commit it.
 
@@ -375,6 +390,7 @@ curl -4 http://doggo.local/stand
 ```bash
 mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/battery.py :battery.py + \
+    fs cp src/device_info.py :device_info.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs cp wifi_config.py :wifi_config.py + \
@@ -383,6 +399,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
+    fs cp src/gaits/turn.py :gaits/turn.py + \
     fs cp src/main.py :main.py
 ```
 
@@ -412,8 +429,13 @@ curl http://192.168.1.x/sit
 curl http://192.168.1.x/rest
 curl http://192.168.1.x/walk?steps=3
 curl http://192.168.1.x/walk_back?steps=3
+curl http://192.168.1.x/turn_left?steps=1
+curl http://192.168.1.x/turn_right?steps=1
 curl http://192.168.1.x/battery
+curl http://192.168.1.x/info
 ```
+
+`/info` returns device diagnostics (RAM, flash, CPU freq, chip ID, WiFi RSSI, uptime).
 
 You can also use the hostname: `curl -4 http://doggo.local/stand` (the `-4` flag avoids IPv6 resolution delay).
 
@@ -467,8 +489,10 @@ curl http://192.168.1.x/restart
 - `server.py`
 - `poses.py`
 - `battery.py`
+- `device_info.py`
 - `gaits/walk.py`
 - `gaits/walk_back.py`
+- `gaits/turn.py`
 
 The following files require a **physical power cycle** because they run before the server starts:
 - `servo.py`
@@ -512,13 +536,15 @@ BiBoard:/
 ├── main.py        # src/main.py — HTTP server loop
 ├── server.py      # src/server.py — command routes
 ├── battery.py     # src/battery.py — voltage monitoring
+├── device_info.py # src/device_info.py — device diagnostics
 ├── servo.py       # src/drivers/servo.py — PWM driver
 ├── poses.py       # src/poses.py — pose library
 ├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
 └── gaits/
     ├── walk.py         # src/gaits/walk.py — walk forward gait
-    └── walk_back.py    # src/gaits/walk_back.py — walk backward gait
+    ├── walk_back.py    # src/gaits/walk_back.py — walk backward gait
+    └── turn.py         # src/gaits/turn.py — turn left/right gait
 ```
 
 ---
@@ -558,6 +584,24 @@ mpremote fs ls :gaits
 3. Port: your BiBoard port
 4. Write code in editor, click Run
 
+### Lint the codebase
+
+[Ruff](https://docs.astral.sh/ruff/) is configured in `pyproject.toml`. Install it once:
+
+```bash
+pip install ruff
+```
+
+Run the linter:
+```bash
+ruff check src/
+```
+
+Fix auto-fixable issues:
+```bash
+ruff check --fix src/
+```
+
 ---
 
 ## Project Structure
@@ -574,7 +618,8 @@ doggo/
 │   │   └── wifi_config_template.py # Copy → wifi_config.py, fill in credentials
 │   ├── gaits/
 │   │   ├── walk.py                 # Walk forward gait (one foot at a time, 116 frames)
-│   │   └── walk_back.py            # Walk backward gait (43 frames)
+│   │   ├── walk_back.py            # Walk backward gait (43 frames)
+│   │   └── turn.py                 # Turn left/right gait (arc turn, 116 frames)
 │   ├── demos/
 │   │   ├── stand.py                # Stand demo: stand → sit → stand → rest
 │   │   └── walk.py                 # Walk demo: stand → walk → rest
@@ -582,6 +627,7 @@ doggo/
 │   ├── main.py                     # HTTP server start (deployed as :main.py)
 │   ├── server.py                   # HTTP command server (_thread, port 80)
 │   ├── webrepl_proxy.py            # Host-side PTY bridge for mpremote over WiFi
+│   ├── device_info.py              # Device diagnostics (/info endpoint)
 │   └── poses.py                    # Pose library (move_to, stand, sit, rest)
 ├── docs/
 │   ├── micropython-getting-started.md   # This file
@@ -589,6 +635,7 @@ doggo/
 │   ├── micropython-detailed-plan.md
 │   └── restore-original-opencat-firmware.md
 ├── config.py                       # Calibration offsets (gitignored — generate locally)
+├── pyproject.toml                  # Ruff linting config
 ├── CLAUDE.md                       # Architecture notes for Claude Code
 └── README.md
 ```
@@ -604,8 +651,9 @@ doggo/
 - Stand, sit, rest poses
 
 ### ✅ Phase 2: Gaits (Complete)
-- Walk gait — one foot at a time, 116 frames from OpenCat `wkF`
-- Trot gait — diagonal pairs, 48 frames from OpenCat `trF`
+- Walk forward — one foot at a time, 116 frames from OpenCat `wkF`
+- Walk backward — 43 frames from OpenCat `bkF`
+- Turn left/right — arc turn, 116 frames from OpenCat `vtL`
 
 ### ✅ Phase 3: WiFi Control (Complete)
 - WebREPL — wireless REPL + file transfer via `src/webrepl_proxy.py` PTY bridge
@@ -662,4 +710,4 @@ mpremote fs cp src/gaits/walk_back.py :gaits/walk_back.py
 
 ---
 
-**Last Updated:** 2026-03-03
+**Last Updated:** 2026-03-06
