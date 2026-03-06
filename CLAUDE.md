@@ -39,7 +39,7 @@ src/configuration/wifi_config_template.py — credential template (copy → wifi
 | `src/gaits/walk.py` | Walk gait — 116-frame one-foot-at-a-time sequence from OpenCat `wkF` | `gaits/walk.py` |
 | `src/gaits/walk_back.py` | Walk backward gait — 43-frame one-foot-at-a-time sequence from OpenCat `bkF` | `gaits/walk_back.py` |
 | `src/gaits/turn.py` | Turn left/right gaits — 116-frame arc-turn sequence from OpenCat `wkL`; right = L/R mirror | `gaits/turn.py` |
-| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/turn_left` `/turn_right` `/battery` `/restart` | `server.py` |
+| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/turn_left` `/turn_right` `/battery` `/info` `/restart` | `server.py` |
 | `src/boot.py` | Runs on boot: WiFi connect + mDNS hostname registration + WebREPL start | `boot.py` |
 | `src/main.py` | Runs after boot: starts HTTP server loop | `main.py` |
 | `src/webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL | n/a (host only) |
@@ -131,6 +131,7 @@ Note: `fs mkdir :gaits` will error if the directory already exists — safe to i
 mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp src/battery.py :battery.py + \
+    fs cp src/device_info.py :device_info.py + \
     fs cp config.py :config.py + \
     fs cp wifi_config.py :wifi_config.py + \
     fs cp src/boot.py :boot.py + \
@@ -138,6 +139,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
+    fs cp src/gaits/turn.py :gaits/turn.py + \
     fs cp src/main.py :main.py
 ```
 
@@ -148,6 +150,15 @@ python src/webrepl_proxy.py 192.168.1.x <password>
 # Terminal 2 — use the PTY path printed by the proxy
 mpremote connect /dev/ttysNNN repl
 mpremote connect /dev/ttysNNN run src/demos/walk.py
+```
+
+## Linting
+
+Ruff is configured in `pyproject.toml` (E/F/W/I rules, 100-char line limit).
+
+```bash
+ruff check src/          # show issues
+ruff check --fix src/    # auto-fix import ordering etc.
 ```
 
 ## What's not implemented yet

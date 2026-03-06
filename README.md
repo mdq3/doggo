@@ -17,7 +17,10 @@ Replaces the stock OpenCat firmware with hand-written Python. Gaits are ported f
 ```bash
 pip install esptool    # for flashing firmware
 pip install mpremote   # for REPL and file transfers
+pip install ruff       # for linting
 ```
+
+Run `ruff check src/` to lint. Config is in `pyproject.toml`.
 
 ---
 
@@ -95,8 +98,21 @@ Remove the USB tether and control Bittle wirelessly.
 
 ```bash
 cp src/configuration/wifi_config_template.py wifi_config.py
-# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD, and optionally HOSTNAME
+# edit wifi_config.py — fill in NETWORKS, WEBREPL_PASSWORD, and optionally HOSTNAME
 ```
+
+`wifi_config.py` uses a `NETWORKS` list so the robot automatically connects wherever it is:
+
+```python
+NETWORKS = [
+    ("home_network", "home_password"),
+    ("office_network", "office_password"),
+]
+WEBREPL_PASSWORD = "doggo"
+HOSTNAME = "doggo"
+```
+
+`boot.py` scans visible APs and connects to the first matching network in range — no need to manually switch networks when moving locations.
 
 `wifi_config.py` is gitignored. Never commit it.
 
@@ -107,6 +123,7 @@ cp src/configuration/wifi_config_template.py wifi_config.py
 ```bash
 mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/battery.py :battery.py + \
+    fs cp src/device_info.py :device_info.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs cp wifi_config.py :wifi_config.py + \
@@ -115,6 +132,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
+    fs cp src/gaits/turn.py :gaits/turn.py + \
     fs cp src/main.py :main.py
 ```
 
@@ -143,7 +161,10 @@ curl http://192.168.1.x/sit
 curl http://192.168.1.x/rest
 curl http://192.168.1.x/walk?steps=3
 curl http://192.168.1.x/walk_back?steps=3
+curl http://192.168.1.x/turn_left?steps=1
+curl http://192.168.1.x/turn_right?steps=1
 curl http://192.168.1.x/battery
+curl http://192.168.1.x/info      # device diagnostics: RAM, flash, CPU freq, chip ID, WiFi IP/RSSI, uptime
 curl http://192.168.1.x/restart   # reload code without touching servos
 ```
 
@@ -182,7 +203,7 @@ dog fs cp src/server.py :server.py
 curl http://192.168.1.x/restart
 ```
 
-`/restart` reloads `server.py`, `poses.py`, `battery.py`, `gaits/walk.py`, and `gaits/walk_back.py` from flash. Servo PWM stays running throughout — no movement.
+`/restart` reloads `server.py`, `poses.py`, `battery.py`, `device_info.py`, `gaits/walk.py`, `gaits/walk_back.py`, and `gaits/turn.py` from flash. Servo PWM stays running throughout — no movement.
 
 Changes to `servo.py`, `boot.py`, or `main.py` require a physical power cycle.
 
@@ -202,8 +223,10 @@ doggo/
 │   │   └── wifi_config_template.py # Copy → wifi_config.py, fill in credentials + hostname
 │   ├── gaits/
 │   │   ├── walk.py                 # Walk forward gait (one foot at a time, 116 frames)
-│   │   └── walk_back.py            # Walk backward gait (43 frames)
+│   │   ├── walk_back.py            # Walk backward gait (43 frames)
+│   │   └── turn.py                 # Turn left/right gaits (arc turn, 116 frames)
 │   ├── battery.py                  # Battery voltage monitoring (GPIO 37, BiBoard formula)
+│   ├── device_info.py              # Device diagnostics (RAM, flash, CPU, WiFi, uptime)
 │   ├── demos/
 │   │   ├── stand.py                # stand → sit → stand → rest
 │   │   └── walk.py                 # stand → walk → rest
@@ -218,6 +241,7 @@ doggo/
 │   ├── hardware-and-opencat-reference.md # Hardware pinout, porting OpenCat, restoring firmware
 │   └── ...
 ├── config.py                       # Servo calibration offsets (gitignored — generate locally)
+├── pyproject.toml                  # Ruff linting config
 └── README.md
 ```
 
@@ -231,4 +255,4 @@ doggo/
 
 ---
 
-**Last Updated:** 2026-03-03
+**Last Updated:** 2026-03-06

@@ -108,6 +108,30 @@ mpremote fs cp src/gaits/walk_back.py :gaits/walk_back.py
 
 ---
 
+### `src/gaits/turn.py`
+
+Turn left and right gaits. Ported from OpenCat `wkL` (walk-left) array — same stable 3-point support pattern as `walk.py` and `walk_back.py`. Produces a wide arc turn rather than an in-place pivot. Right turn is derived by swapping L/R joint column pairs before conversion.
+
+**What it provides:**
+- `_FRAMES` — 116 raw OpenCat keyframes per cycle (every 2nd frame played)
+- `turn_left(steps=None)` — arc turn left for N cycles (or indefinitely)
+- `turn_right(steps=None)` — arc turn right (L/R mirrored from turn_left)
+
+**Frame delay:** `_FRAME_DELAY = 0.016`, plays every 2nd frame for decisive steps above servo deadband.
+
+**Upload to device:**
+```bash
+mpremote fs cp src/gaits/turn.py :gaits/turn.py
+```
+
+**Import in scripts:**
+```python
+from gaits.turn import turn_left, turn_right
+turn_left(steps=2)
+```
+
+---
+
 ### `src/demos/walk.py`
 
 **Purpose:** Walk demo script. Runs stand → walk → rest sequence.
@@ -171,6 +195,36 @@ mpremote run src/configuration/verify_servos_working.py
 
 ---
 
+### `src/device_info.py`
+
+**Purpose:** Device diagnostics for the `/info` HTTP endpoint.
+
+**What it provides:**
+- `device_info()` — returns a formatted multi-line string with:
+  - `platform` — MicroPython platform identifier
+  - `micropython` — version string
+  - `cpu_freq` — CPU frequency in MHz
+  - `chip_id` — unique ESP32 chip ID (hex)
+  - `ram_used` / `ram_free` / `ram_total` — heap memory in KB
+  - `flash_chip` — total ESP32 flash size (4096 KB for BiBoard)
+  - `flash_total` — filesystem partition size (2048 KB)
+  - `flash_used` / `flash_free` — filesystem usage in KB with percentage
+  - `wifi_ip` — current IP address
+  - `wifi_rssi` — WiFi signal strength in dBm
+  - `uptime` — time since boot in h/m/s
+
+**Upload to device:**
+```bash
+mpremote fs cp src/device_info.py :device_info.py
+```
+
+**Use from host:**
+```bash
+curl http://192.168.1.x/info
+```
+
+---
+
 ### `src/server.py`
 
 **Purpose:** HTTP command server for wireless Bittle control. Runs in a background `_thread` using raw sockets so the main thread stays free for WebREPL.
@@ -184,14 +238,17 @@ mpremote run src/configuration/verify_servos_working.py
 | `GET /rest` | Call `rest()` |
 | `GET /walk?steps=N` | Call `walk(steps=N)` |
 | `GET /walk_back?steps=N` | Call `walk_back(steps=N)` |
+| `GET /turn_left?steps=N` | Call `turn_left(steps=N)` |
+| `GET /turn_right?steps=N` | Call `turn_right(steps=N)` |
 | `GET /battery` | Report voltage, percentage, charge warning |
+| `GET /info` | Return device diagnostics from `device_info()` |
 | `GET /restart` | Reload modules from flash (see below) |
 
 Returns `200 OK` on success, `404 Not found` for unknown routes.
 
 **`/restart` — software module reload**
 
-Reloads `server.py`, `poses.py`, `battery.py`, `gaits/walk.py`, and `gaits/walk_back.py` from flash without a hardware reset. Servo PWM keeps running throughout — no movement, no spaz.
+Reloads `server.py`, `battery.py`, `device_info.py`, `gaits/walk.py`, `gaits/walk_back.py`, and `gaits/turn.py` from flash without a hardware reset. Servo PWM keeps running throughout — no movement, no spaz.
 
 Use this after uploading updated files via `webrepl_proxy.py`:
 
@@ -229,7 +286,7 @@ curl http://192.168.1.x/walk?steps=3
 **Purpose:** Runs on every device boot (before `main.py`). Connects to WiFi and starts WebREPL.
 
 **Behaviour:**
-- Reads credentials and hostname from `wifi_config.py` (gitignored); hostname defaults to `"doggo"`
+- Reads `NETWORKS` list and hostname from `wifi_config.py`. On boot, scans visible APs and connects to the first network in `NETWORKS` that is currently in range — allows the robot to work at multiple locations without reconfiguration.
 - Registers mDNS hostname via `network.hostname()` before WiFi activation — device reachable as `{hostname}.local`
 - On success: prints `WiFi connected: <ip>`, starts WebREPL on port 8266
 - On failure or missing file: prints status and continues (USB REPL still works)
@@ -270,7 +327,17 @@ mpremote fs cp src/main.py :main.py
 **Usage:**
 ```bash
 cp src/configuration/wifi_config_template.py wifi_config.py
-# edit wifi_config.py — fill in SSID, PASSWORD, WEBREPL_PASSWORD, and optionally HOSTNAME
+# edit wifi_config.py — fill in NETWORKS list, WEBREPL_PASSWORD, and optionally HOSTNAME
+```
+
+Example format:
+```python
+NETWORKS = [
+    ("home_network",   "home_password"),
+    ("office_network", "office_password"),
+]
+WEBREPL_PASSWORD = "doggo"
+HOSTNAME = "doggo"
 ```
 
 `wifi_config.py` is gitignored. `src/configuration/wifi_config_template.py` is safe to commit (no real credentials).
@@ -324,6 +391,27 @@ def apply_calibration(angle, channel):
 ```bash
 mpremote fs cp config.py :config.py
 ```
+
+---
+
+## Linting
+
+### `pyproject.toml`
+
+**Purpose:** Ruff linting configuration (host-side only, not deployed to device).
+
+**Install:**
+```bash
+pip install ruff
+```
+
+**Run:**
+```bash
+ruff check src/          # show all issues
+ruff check --fix src/    # auto-fix what can be fixed
+```
+
+Rules enabled: `E` (pycodestyle errors), `F` (pyflakes), `W` (warnings), `I` (import order). Line length: 100.
 
 ---
 
@@ -417,9 +505,11 @@ BiBoard:/
 ├── poses.py       # src/poses.py — pose library
 ├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
+├── device_info.py # src/device_info.py — device diagnostics
 └── gaits/
     ├── walk.py         # src/gaits/walk.py — walk forward gait
-    └── walk_back.py    # src/gaits/walk_back.py — walk backward gait
+    ├── walk_back.py    # src/gaits/walk_back.py — walk backward gait
+    └── turn.py         # src/gaits/turn.py — turn left/right gaits
 ```
 
 ```bash
@@ -451,4 +541,4 @@ curl http://192.168.1.x/restart
 
 ---
 
-**Last Updated:** 2026-03-03
+**Last Updated:** 2026-03-06
