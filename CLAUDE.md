@@ -13,6 +13,7 @@ Replaces the stock OpenCat firmware with hand-written Python.
 src/drivers/servo.py        — hardware only: PWM/GPIO, no calibration knowledge
 src/poses.py                — poses layer: calibration, motion, named poses
 src/battery.py              — battery voltage monitoring (GPIO 37, BiBoard V1.0)
+src/device_info.py          — device diagnostics: RAM, flash, CPU, WiFi, uptime
 src/gaits/walk.py           — walk forward gait: 116-frame OpenCat wkF keyframe sequence
 src/gaits/walk_back.py      — walk backward gait: 43-frame OpenCat bkF keyframe sequence
 src/gaits/turn.py           — turn left/right gaits: 116-frame OpenCat wkL keyframe sequence
@@ -34,6 +35,7 @@ src/configuration/wifi_config_template.py — credential template (copy → wifi
 | `src/drivers/servo.py` | Direct PWM servo driver (ESP32 LEDC, 200Hz) | `servo.py` |
 | `src/poses.py` | Pose library — channel consts, calibration, `move_to`, `play_frame`, `stand`, `sit`, `rest`, `zero_position` | `poses.py` |
 | `src/battery.py` | Battery voltage monitoring — GPIO 37 ADC, BiBoard V1.0 formula | `battery.py` |
+| `src/device_info.py` | Device diagnostics — RAM, flash, CPU freq, chip ID, WiFi, uptime | `device_info.py` |
 | `src/gaits/walk.py` | Walk gait — 116-frame one-foot-at-a-time sequence from OpenCat `wkF` | `gaits/walk.py` |
 | `src/gaits/walk_back.py` | Walk backward gait — 43-frame one-foot-at-a-time sequence from OpenCat `bkF` | `gaits/walk_back.py` |
 | `src/gaits/turn.py` | Turn left/right gaits — 116-frame arc-turn sequence from OpenCat `wkL`; right = L/R mirror | `gaits/turn.py` |
