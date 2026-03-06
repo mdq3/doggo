@@ -188,8 +188,8 @@ def turn_left(steps=None):
     count = 0
     try:
         while steps is None or count < steps:
-            for frame in _FRAMES:
-                play_frame(_to_commanded(frame))
+            for i in range(0, len(_FRAMES), 2):  # every 2nd frame → larger steps, above servo deadband
+                play_frame(_to_commanded(_FRAMES[i]))
                 time.sleep(_FRAME_DELAY)
             count += 1
     except KeyboardInterrupt:
@@ -214,8 +214,8 @@ def turn_right(steps=None):
     count = 0
     try:
         while steps is None or count < steps:
-            for frame in _FRAMES:
-                play_frame(_to_commanded(_mirror(frame)))
+            for i in range(0, len(_FRAMES), 2):  # every 2nd frame → larger steps, above servo deadband
+                play_frame(_to_commanded(_mirror(_FRAMES[i])))
                 time.sleep(_FRAME_DELAY)
             count += 1
     except KeyboardInterrupt:
