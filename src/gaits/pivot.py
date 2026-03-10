@@ -23,11 +23,14 @@ Right pivot: L/R column pairs are swapped before conversion:
   Index 6 (RR_leg) <-> 7 (RL_leg)
 
 Tuning:
-  Falls backward      -> reduce _SHOULDER_CAP (e.g. 30) or make _LEG_OFFSET more negative
+  Falls backward      -> raise _SHOULDER_CAP (e.g. 45) so rear legs plant further forward
+                         OR make _LEG_OFFSET more negative (e.g. -25) to raise body height
   Legs too bent       -> make _LEG_OFFSET more negative (e.g. -25)
   Legs too extended   -> make _LEG_OFFSET less negative (e.g. -15)
-  Shuffles / no pivot -> raise _SHOULDER_CAP (e.g. 40) for more rotation
-  Too slow            -> decrease _FRAME_DELAY (e.g. 0.020)
+  Shuffles / no pivot -> raise _SHOULDER_CAP (e.g. 45) for more rotation
+  Hobbling / uneven   -> reduce _LEG_CAP (e.g. 6) to keep body height more constant
+                         OR raise _LEG_MIN (e.g. 2) to reduce swing-leg fold
+  Too slow            -> decrease _FRAME_DELAY (e.g. 0.010)
 """
 
 import time
@@ -52,10 +55,11 @@ _CH   = (CH_FL_SHOULDER, CH_FR_SHOULDER, CH_RR_SHOULDER, CH_RL_SHOULDER,
 _RD   = (1, -1, -1, 1, -1, 1, 1, -1)
 _ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
 
-_FRAME_DELAY = 0.025   # seconds between frames — tune if unstable
-_SHOULDER_CAP = 35     # cap raw shoulder excursion; prevents rear foot tucking too far forward
+_FRAME_DELAY = 0.014   # seconds between frames — tune if unstable
+_SHOULDER_CAP = 28     # tight cap → small step arc → in-place rotation (raise for wider pivot circle)
 _LEG_OFFSET = -20      # shift vtL legs toward standing neutral (vtL is all-positive = crouched)
-_LEG_CAP = 20          # cap raw leg excursion after offset is applied
+_LEG_CAP = 10          # cap raw leg excursion after offset; tighter = less body-height bobbing
+_LEG_MIN = 0           # floor after offset; 0 = swing leg stays at neutral height (no over-folding)
 
 # Raw OpenCat angles from vtL in InstinctBittleESP.h.
 # Columns: [FL_sh, FR_sh, RR_sh, RL_sh, FL_leg, FR_leg, RR_leg, RL_leg]
@@ -142,8 +146,8 @@ def _to_commanded(raw):
         r = raw[i]
         if i < 4:           # shoulder joints
             r = min(r, _SHOULDER_CAP)
-        else:               # leg joints: shift toward standing neutral then cap
-            r = min(r + _LEG_OFFSET, _LEG_CAP)
+        else:               # leg joints: shift toward standing neutral then clamp both ends
+            r = max(_LEG_MIN, min(r + _LEG_OFFSET, _LEG_CAP))
         result[_CH[i]] = _ZERO[i] + _RD[i] * r
     return result
 
@@ -169,8 +173,8 @@ def pivot_left(steps=None):
     count = 0
     try:
         while steps is None or count < steps:
-            for frame in _FRAMES:
-                play_frame(_to_commanded(frame))
+            for i in range(0, len(_FRAMES), 2):  # every 2nd frame — above servo deadband
+                play_frame(_to_commanded(_FRAMES[i]))
                 time.sleep(_FRAME_DELAY)
             count += 1
     except KeyboardInterrupt:
@@ -195,8 +199,8 @@ def pivot_right(steps=None):
     count = 0
     try:
         while steps is None or count < steps:
-            for frame in _FRAMES:
-                play_frame(_to_commanded(_mirror(frame)))
+            for i in range(0, len(_FRAMES), 2):  # every 2nd frame — above servo deadband
+                play_frame(_to_commanded(_mirror(_FRAMES[i])))
                 time.sleep(_FRAME_DELAY)
             count += 1
     except KeyboardInterrupt:

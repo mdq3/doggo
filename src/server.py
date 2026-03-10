@@ -10,6 +10,8 @@ Routes:
   GET /turn_right?steps=N
   GET /pivot_left?steps=N
   GET /pivot_right?steps=N
+  GET /bound_left?steps=N
+  GET /bound_right?steps=N
   GET /battery
   GET /info
   GET /restart
@@ -19,7 +21,7 @@ Runs in a background _thread using raw sockets so the main thread
 stays free for WebREPL / interactive REPL access.
 
 /restart reloads server.py, battery.py, gaits/walk.py,
-gaits/walk_back.py, gaits/turn.py, and gaits/pivot.py from flash
+gaits/walk_back.py, gaits/turn.py, gaits/pivot.py, and gaits/bound_turn.py from flash
 without a hardware reset. poses.py is intentionally kept loaded —
 reimporting it disrupts LEDC state. Changes to poses.py or servo.py
 require a power cycle.
@@ -30,6 +32,7 @@ import sys
 
 from battery import battery_status
 from device_info import device_info
+from gaits.bound_turn import bound_left, bound_right
 from gaits.pivot import pivot_left, pivot_right
 from gaits.turn import turn_left, turn_right
 from gaits.walk import walk
@@ -80,6 +83,10 @@ def _handle(conn):
             pivot_left(steps=_parse_steps(qs))
         elif path == "/pivot_right":
             pivot_right(steps=_parse_steps(qs))
+        elif path == "/bound_left":
+            bound_left(steps=_parse_steps(qs))
+        elif path == "/bound_right":
+            bound_right(steps=_parse_steps(qs))
         elif path == "/battery":
             v, pct, low = battery_status()
             body = f"{v:.2f}V ({pct}%)"
@@ -120,7 +127,7 @@ def _reload(port):
     servos automatically.
     """
     for mod in ("server", "battery", "device_info",
-                "gaits.walk", "gaits.walk_back", "gaits.turn", "gaits.pivot", "gaits"):
+                "gaits.walk", "gaits.walk_back", "gaits.turn", "gaits.pivot", "gaits.bound_turn", "gaits"):
         sys.modules.pop(mod, None)
 
     try:
