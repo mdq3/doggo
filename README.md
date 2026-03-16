@@ -129,11 +129,20 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp wifi_config.py :wifi_config.py + \
     fs cp src/boot.py :boot.py + \
     fs cp src/server.py :server.py + \
+    fs cp src/imu.py :imu.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
     fs cp src/gaits/turn.py :gaits/turn.py + \
+    fs cp src/gaits/pivot.py :gaits/pivot.py + \
+    fs cp src/gaits/bound_turn.py :gaits/bound_turn.py + \
+    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
+```
+
+After first-time USB setup, subsequent deploys over WiFi are easier with:
+```bash
+python deploy.py doggo.local <password> --restart
 ```
 
 ### 3. Find the robot's IP address
@@ -163,6 +172,11 @@ curl http://192.168.1.x/walk?steps=3
 curl http://192.168.1.x/walk_back?steps=3
 curl http://192.168.1.x/turn_left?steps=1
 curl http://192.168.1.x/turn_right?steps=1
+curl http://192.168.1.x/pivot_left?steps=1   # in-place rotation
+curl http://192.168.1.x/pivot_right?steps=1
+curl http://192.168.1.x/bound_left?steps=1   # tight arc turn
+curl http://192.168.1.x/bound_right?steps=1
+curl http://192.168.1.x/trot?steps=2         # fast diagonal-pair trot with IMU stabilization
 curl http://192.168.1.x/battery
 curl http://192.168.1.x/info      # device diagnostics: RAM, flash, CPU freq, chip ID, WiFi IP/RSSI, uptime
 curl http://192.168.1.x/restart   # reload code without touching servos
@@ -203,7 +217,7 @@ dog fs cp src/server.py :server.py
 curl http://192.168.1.x/restart
 ```
 
-`/restart` reloads `server.py`, `poses.py`, `battery.py`, `device_info.py`, `gaits/walk.py`, `gaits/walk_back.py`, and `gaits/turn.py` from flash. Servo PWM stays running throughout — no movement.
+`/restart` reloads `server.py`, `battery.py`, `device_info.py`, and all gait modules from flash. Servo PWM stays running throughout — no movement.
 
 Changes to `servo.py`, `boot.py`, or `main.py` require a physical power cycle.
 
@@ -222,11 +236,15 @@ doggo/
 │   │   ├── verify_servos_working.py # Quick servo sanity check
 │   │   └── wifi_config_template.py # Copy → wifi_config.py, fill in credentials + hostname
 │   ├── gaits/
-│   │   ├── walk.py                 # Walk forward gait (one foot at a time, 116 frames)
-│   │   ├── walk_back.py            # Walk backward gait (43 frames)
-│   │   └── turn.py                 # Turn left/right gaits (arc turn, 116 frames)
+│   │   ├── walk.py                 # Walk forward (one foot at a time, 116 frames, wkF)
+│   │   ├── walk_back.py            # Walk backward (43 frames, bkF)
+│   │   ├── turn.py                 # Turn left/right arc (116 frames, wkL)
+│   │   ├── pivot.py                # Pivot left/right in-place (72 frames, vtL)
+│   │   ├── bound_turn.py           # Bound left/right tight arc (42 frames, trL)
+│   │   └── trot.py                 # Trot forward (48 frames, trF) + IMU stabilization
 │   ├── battery.py                  # Battery voltage monitoring (GPIO 37, BiBoard formula)
 │   ├── device_info.py              # Device diagnostics (RAM, flash, CPU, WiFi, uptime)
+│   ├── imu.py                      # ICM-42670-P IMU driver (I2C 0x69); complementary filter
 │   ├── demos/
 │   │   ├── stand.py                # stand → sit → stand → rest
 │   │   └── walk.py                 # stand → walk → rest
@@ -255,4 +273,4 @@ doggo/
 
 ---
 
-**Last Updated:** 2026-03-06
+**Last Updated:** 2026-03-16

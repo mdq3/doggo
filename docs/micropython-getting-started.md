@@ -137,7 +137,7 @@ BiBoard V1 controls servos **directly via ESP32 PWM (LEDC)** — there is no ext
 >>> from machine import Pin, I2C
 >>> i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=400000)
 >>> print([hex(d) for d in i2c.scan()])
-# Expected: ['0x69']  — ICM20600 gyro/accelerometer
+# Expected: ['0x69']  — ICM-42670-P gyro/accelerometer (labelled ICM-20600 in Petoi docs but different chip)
 ```
 
 ---
@@ -396,14 +396,23 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp wifi_config.py :wifi_config.py + \
     fs cp src/boot.py :boot.py + \
     fs cp src/server.py :server.py + \
+    fs cp src/imu.py :imu.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
     fs cp src/gaits/turn.py :gaits/turn.py + \
+    fs cp src/gaits/pivot.py :gaits/pivot.py + \
+    fs cp src/gaits/bound_turn.py :gaits/bound_turn.py + \
+    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
 ```
 
 Note: `fs mkdir :gaits` errors if the directory already exists — safe to ignore.
+
+After first-time USB setup, subsequent deploys over WiFi are easier with:
+```bash
+python deploy.py doggo.local <password> --restart
+```
 
 ### 11c: Reboot and find the IP address
 
@@ -431,6 +440,11 @@ curl http://192.168.1.x/walk?steps=3
 curl http://192.168.1.x/walk_back?steps=3
 curl http://192.168.1.x/turn_left?steps=1
 curl http://192.168.1.x/turn_right?steps=1
+curl http://192.168.1.x/pivot_left?steps=1
+curl http://192.168.1.x/pivot_right?steps=1
+curl http://192.168.1.x/bound_left?steps=1
+curl http://192.168.1.x/bound_right?steps=1
+curl http://192.168.1.x/trot?steps=2
 curl http://192.168.1.x/battery
 curl http://192.168.1.x/info
 ```
@@ -487,12 +501,10 @@ curl http://192.168.1.x/restart
 
 `/restart` reloads these modules from flash:
 - `server.py`
-- `poses.py`
 - `battery.py`
 - `device_info.py`
-- `gaits/walk.py`
-- `gaits/walk_back.py`
-- `gaits/turn.py`
+- `gaits/walk.py`, `gaits/walk_back.py`, `gaits/turn.py`
+- `gaits/pivot.py`, `gaits/bound_turn.py`, `gaits/trot.py`
 
 The following files require a **physical power cycle** because they run before the server starts:
 - `servo.py`
@@ -537,14 +549,18 @@ BiBoard:/
 ├── server.py      # src/server.py — command routes
 ├── battery.py     # src/battery.py — voltage monitoring
 ├── device_info.py # src/device_info.py — device diagnostics
+├── imu.py         # src/imu.py — ICM-42670-P IMU driver
 ├── servo.py       # src/drivers/servo.py — PWM driver
 ├── poses.py       # src/poses.py — pose library
 ├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
 └── gaits/
-    ├── walk.py         # src/gaits/walk.py — walk forward gait
-    ├── walk_back.py    # src/gaits/walk_back.py — walk backward gait
-    └── turn.py         # src/gaits/turn.py — turn left/right gait
+    ├── walk.py         # src/gaits/walk.py — walk forward
+    ├── walk_back.py    # src/gaits/walk_back.py — walk backward
+    ├── turn.py         # src/gaits/turn.py — turn left/right arc
+    ├── pivot.py        # src/gaits/pivot.py — pivot in-place
+    ├── bound_turn.py   # src/gaits/bound_turn.py — tight arc turn
+    └── trot.py         # src/gaits/trot.py — fast trot + IMU
 ```
 
 ---
@@ -617,9 +633,12 @@ doggo/
 │   │   ├── verify_servos_working.py # Verify all servos move correctly
 │   │   └── wifi_config_template.py # Copy → wifi_config.py, fill in credentials
 │   ├── gaits/
-│   │   ├── walk.py                 # Walk forward gait (one foot at a time, 116 frames)
-│   │   ├── walk_back.py            # Walk backward gait (43 frames)
-│   │   └── turn.py                 # Turn left/right gait (arc turn, 116 frames)
+│   │   ├── walk.py                 # Walk forward (116 frames, wkF)
+│   │   ├── walk_back.py            # Walk backward (43 frames, bkF)
+│   │   ├── turn.py                 # Turn left/right arc (116 frames, wkL)
+│   │   ├── pivot.py                # Pivot in-place (72 frames, vtL)
+│   │   ├── bound_turn.py           # Tight arc turn (42 frames, trL)
+│   │   └── trot.py                 # Fast trot + IMU stabilization (48 frames, trF)
 │   ├── demos/
 │   │   ├── stand.py                # Stand demo: stand → sit → stand → rest
 │   │   └── walk.py                 # Walk demo: stand → walk → rest
@@ -628,6 +647,7 @@ doggo/
 │   ├── server.py                   # HTTP command server (_thread, port 80)
 │   ├── webrepl_proxy.py            # Host-side PTY bridge for mpremote over WiFi
 │   ├── device_info.py              # Device diagnostics (/info endpoint)
+│   ├── imu.py                      # ICM-42670-P IMU driver (deployed as :imu.py)
 │   └── poses.py                    # Pose library (move_to, stand, sit, rest)
 ├── docs/
 │   ├── micropython-getting-started.md   # This file
@@ -653,19 +673,25 @@ doggo/
 ### ✅ Phase 2: Gaits (Complete)
 - Walk forward — one foot at a time, 116 frames from OpenCat `wkF`
 - Walk backward — 43 frames from OpenCat `bkF`
-- Turn left/right — arc turn, 116 frames from OpenCat `vtL`
+- Turn left/right arc — 116 frames from OpenCat `wkL`
+- Pivot left/right in-place — 72 frames from OpenCat `vtL`
+- Bound left/right tight arc — 42 frames from OpenCat `trL`
+- Trot forward — 48-frame diagonal-pair gait from OpenCat `trF`
 
 ### ✅ Phase 3: WiFi Control (Complete)
 - WebREPL — wireless REPL + file transfer via `src/webrepl_proxy.py` PTY bridge
-- HTTP command server — `curl /stand`, `/walk?steps=N`, etc.
+- HTTP command server — `curl /stand`, `/walk?steps=N`, `/trot?steps=N`, etc.
 - `src/boot.py` + `src/main.py` + `src/server.py`
+- `deploy.py` — single-command WiFi deploy + restart
 
-### 📋 Phase 4: Advanced Motion (Next)
-- Inverse kinematics
-- Crawl gait
-- IMU-assisted balance (ICM20600 at I2C 0x69)
+### ✅ Phase 4: IMU (Complete)
+- ICM-42670-P driver (`src/imu.py`) — I2C 0x69, complementary filter
+- Trot IMU stabilization — per-frame roll/pitch correction during trot
 
-### 🚀 Phase 5: Autonomy (Future)
+### 📋 Phase 5: Advanced Motion (Next)
+- Inverse kinematics (`kinematics/`)
+
+### 🚀 Phase 6: Autonomy (Future)
 - Autonomous behaviours
 - Computer vision (ESP32-CAM)
 
@@ -710,4 +736,4 @@ mpremote fs cp src/gaits/walk_back.py :gaits/walk_back.py
 
 ---
 
-**Last Updated:** 2026-03-06
+**Last Updated:** 2026-03-16

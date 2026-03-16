@@ -124,10 +124,76 @@ Turn left and right gaits. Ported from OpenCat `wkL` (walk-left) array — same 
 mpremote fs cp src/gaits/turn.py :gaits/turn.py
 ```
 
-**Import in scripts:**
+---
+
+### `src/gaits/pivot.py`
+
+In-place pivot left and right. Ported from OpenCat `vtL` (vturn-left) — 72-frame crawl that rotates the body in place rather than arcing. Right pivot = L/R column mirror.
+
+**What it provides:**
+- `pivot_left(steps=None)`, `pivot_right(steps=None)`
+
+**Upload to device:**
+```bash
+mpremote fs cp src/gaits/pivot.py :gaits/pivot.py
+```
+
+---
+
+### `src/gaits/bound_turn.py`
+
+Tight arc turn left and right. Same `vtL` crawl sequence as `pivot.py` but with a higher shoulder cap, producing a tight-radius arc rather than in-place rotation. Use this for nimble turns; use `pivot.py` when turning on the spot.
+
+**What it provides:**
+- `bound_left(steps=None)`, `bound_right(steps=None)`
+
+**Upload to device:**
+```bash
+mpremote fs cp src/gaits/bound_turn.py :gaits/bound_turn.py
+```
+
+---
+
+### `src/gaits/trot.py`
+
+Fast forward trot. Ported from OpenCat `trF` — 48-frame diagonal-pair gait (FL+RR, FR+RL move together). Faster than crawl gaits but dynamically less stable; IMU correction actively counteracts roll and pitch each frame.
+
+**What it provides:**
+- `trot_forward(steps=2)` — trot for N cycles (default 2)
+
+**Tuning constants** (top of file):
+- `_FRAME_DELAY` — 8ms/frame; increase if unstable
+- `_FRONT_SHOULDER_SQUEEZE` / `_REAR_SHOULDER_SQUEEZE` — compress stride length
+- `_LEG_PUSH_SCALE` / `_LEG_LIFT_SCALE` — scale push stride vs lift height independently
+- `_USE_IMU` — enable IMU roll/pitch correction (requires `imu.py` deployed)
+- `_K_PITCH`, `_K_ROLL`, `_IMU_CLAMP` — IMU correction gains
+
+**Upload to device:**
+```bash
+mpremote fs cp src/gaits/trot.py :gaits/trot.py
+```
+
+---
+
+### `src/imu.py`
+
+ICM-42670-P IMU driver with complementary filter. The BiBoard V1 IMU is labelled ICM-20600 in Petoi docs but the actual chip returns WHO_AM_I = 0x67 (ICM-42670-P) — different register map.
+
+**Hardware:** I2C address 0x69, SDA=GPIO21, SCL=GPIO22, 400kHz.
+
+**What it provides:**
+- `init()` — configure chip, seed filter from accelerometer
+- `read()` → `(pitch_deg, roll_deg)` — ~0.3ms per call; nose-up = +pitch, roll right = +roll
+
+**Smoke test:**
 ```python
-from gaits.turn import turn_left, turn_right
-turn_left(steps=2)
+import imu; imu.init(); print(imu.read())
+# Flat: (0±2, 0±2)
+```
+
+**Upload to device:**
+```bash
+mpremote fs cp src/imu.py :imu.py
 ```
 
 ---
@@ -240,6 +306,11 @@ curl http://192.168.1.x/info
 | `GET /walk_back?steps=N` | Call `walk_back(steps=N)` |
 | `GET /turn_left?steps=N` | Call `turn_left(steps=N)` |
 | `GET /turn_right?steps=N` | Call `turn_right(steps=N)` |
+| `GET /pivot_left?steps=N` | Call `pivot_left(steps=N)` — in-place rotation |
+| `GET /pivot_right?steps=N` | Call `pivot_right(steps=N)` |
+| `GET /bound_left?steps=N` | Call `bound_left(steps=N)` — tight arc turn |
+| `GET /bound_right?steps=N` | Call `bound_right(steps=N)` |
+| `GET /trot?steps=N` | Call `trot_forward(steps=N)` — default 2 cycles |
 | `GET /battery` | Report voltage, percentage, charge warning |
 | `GET /info` | Return device diagnostics from `device_info()` |
 | `GET /restart` | Reload modules from flash (see below) |
@@ -248,7 +319,7 @@ Returns `200 OK` on success, `404 Not found` for unknown routes.
 
 **`/restart` — software module reload**
 
-Reloads `server.py`, `battery.py`, `device_info.py`, `gaits/walk.py`, `gaits/walk_back.py`, and `gaits/turn.py` from flash without a hardware reset. Servo PWM keeps running throughout — no movement, no spaz.
+Reloads `server.py`, `battery.py`, `device_info.py`, and all gait modules (`gaits/walk.py`, `gaits/walk_back.py`, `gaits/turn.py`, `gaits/pivot.py`, `gaits/bound_turn.py`, `gaits/trot.py`) from flash without a hardware reset. Servo PWM keeps running throughout — no movement, no spaz.
 
 Use this after uploading updated files via `webrepl_proxy.py`:
 
@@ -501,29 +572,39 @@ BiBoard:/
 ├── main.py        # src/main.py — HTTP server loop
 ├── server.py      # src/server.py — command routes
 ├── battery.py     # src/battery.py — voltage monitoring
+├── device_info.py # src/device_info.py — device diagnostics
+├── imu.py         # src/imu.py — ICM-42670-P IMU driver
 ├── servo.py       # src/drivers/servo.py — PWM driver
 ├── poses.py       # src/poses.py — pose library
 ├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
-├── device_info.py # src/device_info.py — device diagnostics
 └── gaits/
-    ├── walk.py         # src/gaits/walk.py — walk forward gait
-    ├── walk_back.py    # src/gaits/walk_back.py — walk backward gait
-    └── turn.py         # src/gaits/turn.py — turn left/right gaits
+    ├── walk.py         # src/gaits/walk.py — walk forward
+    ├── walk_back.py    # src/gaits/walk_back.py — walk backward
+    ├── turn.py         # src/gaits/turn.py — turn left/right arc
+    ├── pivot.py        # src/gaits/pivot.py — pivot in-place
+    ├── bound_turn.py   # src/gaits/bound_turn.py — tight arc turn
+    └── trot.py         # src/gaits/trot.py — fast trot + IMU
 ```
 
 ```bash
 # First-time USB upload (one-time setup):
 mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp src/battery.py :battery.py + \
+    fs cp src/device_info.py :device_info.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs cp wifi_config.py :wifi_config.py + \
     fs cp src/boot.py :boot.py + \
     fs cp src/server.py :server.py + \
+    fs cp src/imu.py :imu.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
+    fs cp src/gaits/turn.py :gaits/turn.py + \
+    fs cp src/gaits/pivot.py :gaits/pivot.py + \
+    fs cp src/gaits/bound_turn.py :gaits/bound_turn.py + \
+    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
 
 # Reboot and read IP from serial:
@@ -541,4 +622,4 @@ curl http://192.168.1.x/restart
 
 ---
 
-**Last Updated:** 2026-03-06
+**Last Updated:** 2026-03-16
