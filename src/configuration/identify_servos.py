@@ -2,7 +2,7 @@
 Identify which channel controls which servo.
 
 Upload and run in REPL:
-    mpremote fs cp src/drivers/servo.py :servo.py
+    mpremote fs mkdir :drivers && mpremote fs cp src/drivers/servo.py :drivers/servo.py
     mpremote fs cp src/configuration/identify_servos.py :identify_servos.py
     mpremote repl
     >>> from identify_servos import *
@@ -12,7 +12,7 @@ Upload and run in REPL:
 
 import time
 
-from servo import Servos
+from drivers.servo import Servos
 
 servos = Servos()
 

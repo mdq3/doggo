@@ -12,10 +12,10 @@ import time
 
 # Import servo driver
 try:
-    from servo import Servos
+    from drivers.servo import Servos
 except ImportError:
-    print("ERROR: servo.py not found!")
-    print("Upload it first: mpremote fs cp drivers/servo.py :servo.py")
+    print("ERROR: drivers/servo.py not found!")
+    print("Upload it first: mpremote fs mkdir :drivers && mpremote fs cp src/drivers/servo.py :drivers/servo.py")
     import sys
     sys.exit(1)
 

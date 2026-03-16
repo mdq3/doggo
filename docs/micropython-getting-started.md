@@ -149,10 +149,11 @@ BiBoard V1 controls servos **directly via ESP32 PWM (LEDC)** — there is no ext
 ### Upload the driver
 
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py
+mpremote fs mkdir :drivers
+mpremote fs cp src/drivers/servo.py :drivers/servo.py
 
 # Verify upload
-mpremote fs ls
+mpremote fs ls :drivers
 # → servo.py
 ```
 
@@ -178,7 +179,7 @@ SUCCESS! All servos working!
 ### Manual test
 
 ```python
->>> from servo import Servos
+>>> from drivers.servo import Servos
 >>> s = Servos()
 >>> s.set_servo(0, 90)   # center
 >>> s.set_servo(0, 45)   # left
@@ -278,7 +279,7 @@ mpremote fs cp config.py :config.py
 
 Upload the pose library and run the stand demo.
 
-**Device must have:** `servo.py`, `config.py` (uploaded in previous steps), and `poses.py` (uploaded now).
+**Device must have:** `drivers/servo.py`, `config.py` (uploaded in previous steps), and `poses.py` (uploaded now).
 
 ```bash
 mpremote fs cp src/poses.py :poses.py
@@ -288,7 +289,8 @@ mpremote run src/demos/stand.py
 Or upload everything at once:
 
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
+mpremote fs mkdir :drivers + \
+    fs cp src/drivers/servo.py :drivers/servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     run src/demos/stand.py
@@ -328,7 +330,7 @@ Angles in `poses.py` are *commanded* values (before calibration). `move_to()` ap
 
 ## Step 10: Make Bittle Walk
 
-**Device must have:** `servo.py`, `poses.py`, `config.py` (from previous steps), plus `gaits/walk.py` (uploaded now).
+**Device must have:** `drivers/servo.py`, `poses.py`, `config.py` (from previous steps), plus `gaits/walk.py` (uploaded now).
 
 ```bash
 mpremote fs mkdir :gaits
@@ -339,7 +341,8 @@ mpremote run src/demos/walk.py
 Or upload everything at once from scratch:
 
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
+mpremote fs mkdir :drivers + \
+    fs cp src/drivers/servo.py :drivers/servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs mkdir :gaits + \
@@ -387,32 +390,21 @@ curl -4 http://doggo.local/stand
 
 ### 11b: Upload WiFi files (USB, one-time)
 
+Bootstrap WiFi by uploading just enough to get the robot onto the network:
+
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
-    fs cp src/battery.py :battery.py + \
-    fs cp src/device_info.py :device_info.py + \
-    fs cp src/poses.py :poses.py + \
-    fs cp config.py :config.py + \
-    fs cp wifi_config.py :wifi_config.py + \
+mpremote fs cp wifi_config.py :wifi_config.py + \
     fs cp src/boot.py :boot.py + \
-    fs cp src/server.py :server.py + \
-    fs cp src/imu.py :imu.py + \
-    fs mkdir :gaits + \
-    fs cp src/gaits/walk.py :gaits/walk.py + \
-    fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
-    fs cp src/gaits/turn.py :gaits/turn.py + \
-    fs cp src/gaits/pivot.py :gaits/pivot.py + \
-    fs cp src/gaits/bound_turn.py :gaits/bound_turn.py + \
-    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
 ```
 
-Note: `fs mkdir :gaits` errors if the directory already exists — safe to ignore.
+Press reset. Once WiFi is up, deploy everything else over the air:
 
-After first-time USB setup, subsequent deploys over WiFi are easier with:
 ```bash
 python deploy.py doggo.local <password>
 ```
+
+Press reset again to load the deployed files.
 
 ### 11c: Reboot and find the IP address
 
@@ -513,7 +505,8 @@ Once verified, unplug the cable. `curl` and `webrepl_proxy.py` + mpremote both w
 
 ```
 BiBoard:/
-├── servo.py       # src/drivers/servo.py
+├── drivers/
+│   └── servo.py   # src/drivers/servo.py
 ├── poses.py       # src/poses.py
 └── config.py      # generated locally, gitignored
 ```
@@ -522,7 +515,8 @@ BiBoard:/
 
 ```
 BiBoard:/
-├── servo.py
+├── drivers/
+│   └── servo.py
 ├── poses.py
 ├── config.py
 └── gaits/
@@ -540,10 +534,11 @@ BiBoard:/
 ├── battery.py     # src/battery.py — voltage monitoring
 ├── device_info.py # src/device_info.py — device diagnostics
 ├── imu.py         # src/imu.py — ICM-42670-P IMU driver
-├── servo.py       # src/drivers/servo.py — PWM driver
 ├── poses.py       # src/poses.py — pose library
 ├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
+├── drivers/
+│   └── servo.py   # src/drivers/servo.py — PWM driver
 └── gaits/
     ├── walk.py         # src/gaits/walk.py — walk forward
     ├── walk_back.py    # src/gaits/walk_back.py — walk backward
@@ -689,8 +684,8 @@ doggo/
 
 ## Troubleshooting
 
-### `No module named 'servo'`
-`servo.py` not uploaded — run `mpremote fs cp src/drivers/servo.py :servo.py`
+### `No module named 'drivers.servo'`
+`drivers/servo.py` not uploaded — run `mpremote fs mkdir :drivers && mpremote fs cp src/drivers/servo.py :drivers/servo.py`
 
 ### `No module named 'poses'`
 `poses.py` not uploaded — run `mpremote fs cp src/poses.py :poses.py`

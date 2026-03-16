@@ -48,7 +48,8 @@ esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 \
 ### 2. Calibrate Servos
 
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py
+mpremote fs mkdir :drivers
+mpremote fs cp src/drivers/servo.py :drivers/servo.py
 mpremote fs cp src/configuration/calibrate.py :calibrate.py
 mpremote repl
 ```
@@ -71,7 +72,8 @@ See `docs/micropython-getting-started.md` for the full calibration walkthrough.
 ### 3. Make Bittle Stand
 
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
+mpremote fs mkdir :drivers + \
+    fs cp src/drivers/servo.py :drivers/servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     run src/demos/stand.py
@@ -80,7 +82,8 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
 ### 4. Make Bittle Walk
 
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
+mpremote fs mkdir :drivers + \
+    fs cp src/drivers/servo.py :drivers/servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs mkdir :gaits + \
@@ -120,30 +123,21 @@ HOSTNAME = "doggo"
 
 ### 2. Upload WiFi files (USB, one-time)
 
+Bootstrap WiFi by uploading just enough to get the robot onto the network:
+
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
-    fs cp src/battery.py :battery.py + \
-    fs cp src/device_info.py :device_info.py + \
-    fs cp src/poses.py :poses.py + \
-    fs cp config.py :config.py + \
-    fs cp wifi_config.py :wifi_config.py + \
+mpremote fs cp wifi_config.py :wifi_config.py + \
     fs cp src/boot.py :boot.py + \
-    fs cp src/server.py :server.py + \
-    fs cp src/imu.py :imu.py + \
-    fs mkdir :gaits + \
-    fs cp src/gaits/walk.py :gaits/walk.py + \
-    fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
-    fs cp src/gaits/turn.py :gaits/turn.py + \
-    fs cp src/gaits/pivot.py :gaits/pivot.py + \
-    fs cp src/gaits/bound_turn.py :gaits/bound_turn.py + \
-    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
 ```
 
-After first-time USB setup, subsequent deploys over WiFi are easier with:
+Reboot (press the reset button). Once WiFi is up, deploy everything else over the air:
+
 ```bash
 python deploy.py doggo.local <password>
 ```
+
+Press reset again to load the deployed files.
 
 ### 3. Find the robot's IP address
 
