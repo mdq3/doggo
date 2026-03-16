@@ -313,26 +313,8 @@ curl http://192.168.1.x/info
 | `GET /trot?steps=N` | Call `trot_forward(steps=N)` — default 2 cycles |
 | `GET /battery` | Report voltage, percentage, charge warning |
 | `GET /info` | Return device diagnostics from `device_info()` |
-| `GET /restart` | Reload modules from flash (see below) |
 
 Returns `200 OK` on success, `404 Not found` for unknown routes.
-
-**`/restart` — software module reload**
-
-Reloads `server.py`, `battery.py`, `device_info.py`, and all gait modules (`gaits/walk.py`, `gaits/walk_back.py`, `gaits/turn.py`, `gaits/pivot.py`, `gaits/bound_turn.py`, `gaits/trot.py`) from flash without a hardware reset. Servo PWM keeps running throughout — no movement, no spaz.
-
-Use this after uploading updated files via `webrepl_proxy.py`:
-
-```bash
-# Upload a changed file, then reload it without touching the servos
-python src/webrepl_proxy.py 192.168.1.x <password> fs cp src/poses.py :poses.py
-curl http://192.168.1.x/restart
-```
-
-Files that `/restart` **cannot** reload (require a physical power cycle):
-- `servo.py` — driver loaded before the server starts
-- `boot.py` — runs before main.py
-- `main.py` — starts the server; restart would need to restart itself
 
 **What it provides:**
 - `run(port)` — starts a background `_thread` that listens on port 80 (called by `main.py`, returns immediately)
@@ -615,9 +597,6 @@ curl http://192.168.1.x/stand
 curl http://192.168.1.x/battery
 python src/webrepl_proxy.py 192.168.1.x <password> fs ls   # list device files
 python src/webrepl_proxy.py 192.168.1.x <password> repl    # interactive REPL
-
-# After uploading updated files, reload without touching servos:
-curl http://192.168.1.x/restart
 ```
 
 ---

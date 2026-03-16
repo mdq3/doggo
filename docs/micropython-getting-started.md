@@ -411,7 +411,7 @@ Note: `fs mkdir :gaits` errors if the directory already exists — safe to ignor
 
 After first-time USB setup, subsequent deploys over WiFi are easier with:
 ```bash
-python deploy.py doggo.local <password> --restart
+python deploy.py doggo.local <password>
 ```
 
 ### 11c: Reboot and find the IP address
@@ -488,28 +488,18 @@ mpremote connect /dev/ttys003 run src/demos/walk.py
 
 ### 11f: Deploy code updates over WiFi
 
-After uploading new source files, use `/restart` to reload them without a hardware reset. Servo PWM keeps running throughout — the dog does not move.
+Upload changed files over WiFi, then press the reset button on the robot:
 
 ```bash
-# Upload a changed file
 dog fs cp src/poses.py :poses.py
 dog fs cp src/server.py :server.py
-
-# Reload immediately — no power cycle, no servo movement
-curl http://192.168.1.x/restart
 ```
 
-`/restart` reloads these modules from flash:
-- `server.py`
-- `battery.py`
-- `device_info.py`
-- `gaits/walk.py`, `gaits/walk_back.py`, `gaits/turn.py`
-- `gaits/pivot.py`, `gaits/bound_turn.py`, `gaits/trot.py`
+Or use `deploy.py` to upload everything at once, then press reset:
 
-The following files require a **physical power cycle** because they run before the server starts:
-- `servo.py`
-- `boot.py`
-- `main.py`
+```bash
+python deploy.py doggo.local <password>
+```
 
 ### Disconnect USB
 
@@ -682,7 +672,7 @@ doggo/
 - WebREPL — wireless REPL + file transfer via `src/webrepl_proxy.py` PTY bridge
 - HTTP command server — `curl /stand`, `/walk?steps=N`, `/trot?steps=N`, etc.
 - `src/boot.py` + `src/main.py` + `src/server.py`
-- `deploy.py` — single-command WiFi deploy + restart
+- `deploy.py` — single-command WiFi deploy
 
 ### ✅ Phase 4: IMU (Complete)
 - ICM-42670-P driver (`src/imu.py`) — I2C 0x69, complementary filter
