@@ -36,7 +36,7 @@ src/configuration/wifi_config_template.py — credential template (copy → wifi
 
 | File | Role | Lives on device as |
 |------|------|--------------------|
-| `src/drivers/servo.py` | Direct PWM servo driver (ESP32 LEDC, 200Hz) | `servo.py` |
+| `src/drivers/servo.py` | Direct PWM servo driver (ESP32 LEDC, 200Hz) | `drivers/servo.py` |
 | `src/poses.py` | Pose library — channel consts, calibration, `move_to`, `play_frame`, `stand`, `sit`, `rest`, `zero_position` | `poses.py` |
 | `src/battery.py` | Battery voltage monitoring — GPIO 37 ADC, BiBoard V1.0 formula | `battery.py` |
 | `src/device_info.py` | Device diagnostics — RAM, flash, CPU freq, chip ID, WiFi, uptime | `device_info.py` |
@@ -116,7 +116,8 @@ Scripts run with `mpremote run` execute in device context — imports resolve ag
 
 ### Stand demo
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
+mpremote fs mkdir :drivers + \
+    fs cp src/drivers/servo.py :drivers/servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     run src/demos/stand.py
@@ -124,7 +125,8 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
 
 ### Walk demo
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
+mpremote fs mkdir :drivers + \
+    fs cp src/drivers/servo.py :drivers/servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs mkdir :gaits + \
@@ -132,11 +134,12 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     run src/demos/walk.py
 ```
 
-Note: `fs mkdir :gaits` will error if the directory already exists — safe to ignore.
+Note: `fs mkdir` will error if the directory already exists — safe to ignore.
 
 ### WiFi setup (one-time USB upload)
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
+mpremote fs mkdir :drivers + \
+    fs cp src/drivers/servo.py :drivers/servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp src/battery.py :battery.py + \
     fs cp src/device_info.py :device_info.py + \

@@ -18,7 +18,7 @@ Usage:
 
 import time
 
-from servo import Servos
+from drivers.servo import Servos
 
 # BiBoard V1 channel mapping
 CH_HEAD = 0

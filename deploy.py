@@ -24,7 +24,7 @@ from webrepl_proxy import _WS, _put_file  # noqa: E402
 
 # (local_path, remote_path) pairs — always deployed
 MANIFEST = [
-    ("src/drivers/servo.py",   "servo.py"),
+    ("src/drivers/servo.py",   "drivers/servo.py"),
     ("src/poses.py",           "poses.py"),
     ("src/battery.py",         "battery.py"),
     ("src/device_info.py",     "device_info.py"),
@@ -89,7 +89,7 @@ def main():
 
     ws = _connect(args.host, args.password, args.port)
     try:
-        _repl_exec(ws, "import os; [os.mkdir('gaits') for _ in [0] if 'gaits' not in os.listdir()]")
+        _repl_exec(ws, "import os; [os.mkdir(d) for d in ('drivers', 'gaits') if d not in os.listdir()]")
         for local, remote in files:
             _put_file(ws, local, remote)
     finally:

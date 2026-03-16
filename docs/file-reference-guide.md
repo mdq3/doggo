@@ -20,7 +20,8 @@ Quick reference for every file in the repo: what it does, where it lives, and ho
 
 **Upload to device:**
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py
+mpremote fs mkdir :drivers
+mpremote fs cp src/drivers/servo.py :drivers/servo.py
 ```
 
 **Referenced in:** `src/poses.py`, `src/configuration/calibrate.py`, `src/configuration/identify_servos.py`, `src/configuration/verify_servos_working.py`
@@ -63,7 +64,7 @@ from poses import stand, sit, rest, zero_position
 mpremote run src/demos/stand.py
 ```
 
-Device must already have `servo.py`, `poses.py`, and `config.py` uploaded.
+Device must already have `drivers/servo.py`, `poses.py`, and `config.py` uploaded.
 
 ---
 
@@ -209,7 +210,7 @@ mpremote fs cp src/imu.py :imu.py
 mpremote run src/demos/walk.py
 ```
 
-Device must already have `servo.py`, `poses.py`, `config.py`, and `gaits/walk.py` uploaded.
+Device must already have `drivers/servo.py`, `poses.py`, `config.py`, and `gaits/walk.py` uploaded.
 
 ---
 
@@ -514,20 +515,26 @@ Platform comparison between Raspberry Pi Pico 2 W and ESP32 (historical planning
 
 ```
 BiBoard:/
-├── servo.py       # from src/drivers/servo.py
+├── drivers/
+│   └── servo.py   # from src/drivers/servo.py
 ├── poses.py       # from src/poses.py
 └── config.py      # generated locally, gitignored
 ```
 
 ```bash
-mpremote cp src/drivers/servo.py :servo.py + cp src/poses.py :poses.py + cp config.py :config.py
+mpremote fs mkdir :drivers + \
+    fs cp src/drivers/servo.py :drivers/servo.py + \
+    fs cp src/poses.py :poses.py + \
+    fs cp config.py :config.py + \
+    run src/demos/stand.py
 ```
 
 ### Walk demo
 
 ```
 BiBoard:/
-├── servo.py
+├── drivers/
+│   └── servo.py
 ├── poses.py
 ├── config.py
 └── gaits/
@@ -536,7 +543,8 @@ BiBoard:/
 ```
 
 ```bash
-mpremote fs cp src/drivers/servo.py :servo.py + \
+mpremote fs mkdir :drivers + \
+    fs cp src/drivers/servo.py :drivers/servo.py + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs mkdir :gaits + \
@@ -544,7 +552,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     run src/demos/walk.py
 ```
 
-Note: `fs mkdir :gaits` will error if the directory already exists on the device — safe to ignore on re-deploy.
+Note: `fs mkdir` will error if the directory already exists on the device — safe to ignore on re-deploy.
 
 ### With WiFi control
 
@@ -556,10 +564,11 @@ BiBoard:/
 ├── battery.py     # src/battery.py — voltage monitoring
 ├── device_info.py # src/device_info.py — device diagnostics
 ├── imu.py         # src/imu.py — ICM-42670-P IMU driver
-├── servo.py       # src/drivers/servo.py — PWM driver
 ├── poses.py       # src/poses.py — pose library
 ├── config.py      # generated locally, gitignored
 ├── wifi_config.py # gitignored, credentials
+├── drivers/
+│   └── servo.py   # src/drivers/servo.py — PWM driver
 └── gaits/
     ├── walk.py         # src/gaits/walk.py — walk forward
     ├── walk_back.py    # src/gaits/walk_back.py — walk backward
@@ -570,27 +579,13 @@ BiBoard:/
 ```
 
 ```bash
-# First-time USB upload (one-time setup):
-mpremote fs cp src/drivers/servo.py :servo.py + \
-    fs cp src/battery.py :battery.py + \
-    fs cp src/device_info.py :device_info.py + \
-    fs cp src/poses.py :poses.py + \
-    fs cp config.py :config.py + \
-    fs cp wifi_config.py :wifi_config.py + \
+# First-time USB bootstrap — uploads just enough to get WiFi up:
+mpremote fs cp wifi_config.py :wifi_config.py + \
     fs cp src/boot.py :boot.py + \
-    fs cp src/server.py :server.py + \
-    fs cp src/imu.py :imu.py + \
-    fs mkdir :gaits + \
-    fs cp src/gaits/walk.py :gaits/walk.py + \
-    fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
-    fs cp src/gaits/turn.py :gaits/turn.py + \
-    fs cp src/gaits/pivot.py :gaits/pivot.py + \
-    fs cp src/gaits/bound_turn.py :gaits/bound_turn.py + \
-    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
 
-# Reboot and read IP from serial:
-mpremote reset
+# Press reset, then deploy everything over WiFi:
+python deploy.py doggo.local <password>
 
 # Then wireless:
 curl http://192.168.1.x/stand

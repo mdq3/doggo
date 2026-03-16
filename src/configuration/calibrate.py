@@ -4,7 +4,7 @@ Servo Calibration Helper
 Use interactively in REPL to calibrate servos and generate config.py
 
 Usage:
-    1. Upload: mpremote fs cp src/drivers/servo.py :servo.py
+    1. Upload: mpremote fs mkdir :drivers && mpremote fs cp src/drivers/servo.py :drivers/servo.py
     2. Upload: mpremote fs cp src/configuration/calibrate.py :calibrate.py
     3. Connect: mpremote repl
     4. Run:
@@ -16,7 +16,7 @@ Usage:
 """
 
 
-from servo import Servos
+from drivers.servo import Servos
 
 # Initialize
 servos = Servos()
