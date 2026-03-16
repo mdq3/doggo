@@ -12,6 +12,7 @@ Routes:
   GET /pivot_right?steps=N
   GET /bound_left?steps=N
   GET /bound_right?steps=N
+  GET /trot?steps=N
   GET /battery
   GET /info
   GET /restart
@@ -21,10 +22,10 @@ Runs in a background _thread using raw sockets so the main thread
 stays free for WebREPL / interactive REPL access.
 
 /restart reloads server.py, battery.py, gaits/walk.py,
-gaits/walk_back.py, gaits/turn.py, gaits/pivot.py, and gaits/bound_turn.py from flash
-without a hardware reset. poses.py is intentionally kept loaded —
-reimporting it disrupts LEDC state. Changes to poses.py or servo.py
-require a power cycle.
+gaits/walk_back.py, gaits/turn.py, gaits/pivot.py, gaits/bound_turn.py,
+and gaits/trot.py from flash without a hardware reset. poses.py is
+intentionally kept loaded — reimporting it disrupts LEDC state.
+Changes to poses.py or servo.py require a power cycle.
 """
 import _thread
 import socket
@@ -34,6 +35,7 @@ from battery import battery_status
 from device_info import device_info
 from gaits.bound_turn import bound_left, bound_right
 from gaits.pivot import pivot_left, pivot_right
+from gaits.trot import trot_forward
 from gaits.turn import turn_left, turn_right
 from gaits.walk import walk
 from gaits.walk_back import walk_back
@@ -87,6 +89,8 @@ def _handle(conn):
             bound_left(steps=_parse_steps(qs))
         elif path == "/bound_right":
             bound_right(steps=_parse_steps(qs))
+        elif path == "/trot":
+            trot_forward(steps=_parse_steps(qs) or 2)
         elif path == "/battery":
             v, pct, low = battery_status()
             body = f"{v:.2f}V ({pct}%)"
@@ -127,7 +131,7 @@ def _reload(port):
     servos automatically.
     """
     for mod in ("server", "battery", "device_info",
-                "gaits.walk", "gaits.walk_back", "gaits.turn", "gaits.pivot", "gaits.bound_turn", "gaits"):
+                "gaits.walk", "gaits.walk_back", "gaits.turn", "gaits.pivot", "gaits.bound_turn", "gaits.trot", "gaits"):
         sys.modules.pop(mod, None)
 
     try:
