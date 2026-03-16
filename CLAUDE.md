@@ -17,6 +17,10 @@ src/device_info.py          — device diagnostics: RAM, flash, CPU, WiFi, uptim
 src/gaits/walk.py           — walk forward gait: 116-frame OpenCat wkF keyframe sequence
 src/gaits/walk_back.py      — walk backward gait: 43-frame OpenCat bkF keyframe sequence
 src/gaits/turn.py           — turn left/right gaits: 116-frame OpenCat wkL keyframe sequence
+src/gaits/pivot.py          — pivot left/right in-place gaits: 72-frame OpenCat vtL keyframe sequence
+src/gaits/bound_turn.py     — bound left/right arc-turn gaits: 42-frame OpenCat trL keyframe sequence
+src/gaits/trot.py           — trot forward gait: 48-frame OpenCat trF; IMU roll/pitch stabilization
+src/imu.py                  — ICM-42670-P IMU driver (I2C 0x69, GPIO 21/22); complementary filter → pitch/roll
 src/demos/stand.py          — demo: stand → sit → stand → rest
 src/demos/walk.py           — demo: stand → walk → rest
 src/server.py               — HTTP command server (_thread + raw sockets, port 80)
@@ -39,7 +43,11 @@ src/configuration/wifi_config_template.py — credential template (copy → wifi
 | `src/gaits/walk.py` | Walk gait — 116-frame one-foot-at-a-time sequence from OpenCat `wkF` | `gaits/walk.py` |
 | `src/gaits/walk_back.py` | Walk backward gait — 43-frame one-foot-at-a-time sequence from OpenCat `bkF` | `gaits/walk_back.py` |
 | `src/gaits/turn.py` | Turn left/right gaits — 116-frame arc-turn sequence from OpenCat `wkL`; right = L/R mirror | `gaits/turn.py` |
-| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/turn_left` `/turn_right` `/battery` `/info` `/restart` | `server.py` |
+| `src/gaits/pivot.py` | Pivot left/right in-place — 72-frame crawl from OpenCat `vtL`; right = L/R mirror | `gaits/pivot.py` |
+| `src/gaits/bound_turn.py` | Bound left/right arc turn — 42-frame `vtL` variant with wider shoulder cap | `gaits/bound_turn.py` |
+| `src/gaits/trot.py` | Trot forward — 48-frame diagonal-pair gait from OpenCat `trF`; IMU roll/pitch correction | `gaits/trot.py` |
+| `src/imu.py` | ICM-42670-P IMU driver — I2C 0x69, SDA=GPIO21, SCL=GPIO22; complementary filter → `(pitch, roll)` | `imu.py` |
+| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/turn_left` `/turn_right` `/pivot_left` `/pivot_right` `/bound_left` `/bound_right` `/trot` `/battery` `/info` `/restart` | `server.py` |
 | `src/boot.py` | Runs on boot: WiFi connect + mDNS hostname registration + WebREPL start | `boot.py` |
 | `src/main.py` | Runs after boot: starts HTTP server loop | `main.py` |
 | `src/webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL | n/a (host only) |
@@ -136,11 +144,20 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
     fs cp wifi_config.py :wifi_config.py + \
     fs cp src/boot.py :boot.py + \
     fs cp src/server.py :server.py + \
+    fs cp src/imu.py :imu.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
     fs cp src/gaits/turn.py :gaits/turn.py + \
+    fs cp src/gaits/pivot.py :gaits/pivot.py + \
+    fs cp src/gaits/bound_turn.py :gaits/bound_turn.py + \
+    fs cp src/gaits/trot.py :gaits/trot.py + \
     fs cp src/main.py :main.py
+```
+
+After first-time USB setup, subsequent deploys are easier with:
+```bash
+python deploy.py doggo.local <password> --restart
 ```
 
 ### mpremote over WiFi (after WiFi setup)
@@ -164,4 +181,8 @@ ruff check --fix src/    # auto-fix import ordering etc.
 ## What's not implemented yet
 
 - `kinematics/` — inverse kinematics
-- IMU integration (ICM20600 at I2C 0x69, GPIO 21/22)
+
+## IMU notes
+
+The BiBoard V1 IMU is an **ICM-42670-P** (WHO_AM_I = 0x67), not ICM-20600 as labelled in Petoi docs.
+Different register map — driver is in `src/imu.py`. I2C address 0x69, SDA=GPIO21, SCL=GPIO22.

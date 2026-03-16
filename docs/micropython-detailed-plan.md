@@ -680,6 +680,11 @@ More RAM = Better CV possibilities
 1. ~~Study OpenCat source~~ ✅
 2. Port IK functions (TODO — `kinematics/`)
 3. ~~Implement simple walk~~ ✅ (`src/gaits/walk.py`)
+4. ~~Walk backward~~ ✅ (`src/gaits/walk_back.py`)
+5. ~~Turn left/right arc~~ ✅ (`src/gaits/turn.py`)
+6. ~~Pivot in-place~~ ✅ (`src/gaits/pivot.py`)
+7. ~~Tight arc turn~~ ✅ (`src/gaits/bound_turn.py`)
+8. ~~Fast trot + IMU stabilization~~ ✅ (`src/gaits/trot.py` + `src/imu.py`)
 
 ### Phase 3: Add Basic Vision (Week 4)
 **Choose ONE:**
