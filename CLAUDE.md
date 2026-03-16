@@ -47,7 +47,7 @@ src/configuration/wifi_config_template.py — credential template (copy → wifi
 | `src/gaits/bound_turn.py` | Bound left/right arc turn — 42-frame `vtL` variant with wider shoulder cap | `gaits/bound_turn.py` |
 | `src/gaits/trot.py` | Trot forward — 48-frame diagonal-pair gait from OpenCat `trF`; IMU roll/pitch correction | `gaits/trot.py` |
 | `src/imu.py` | ICM-42670-P IMU driver — I2C 0x69, SDA=GPIO21, SCL=GPIO22; complementary filter → `(pitch, roll)` | `imu.py` |
-| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/turn_left` `/turn_right` `/pivot_left` `/pivot_right` `/bound_left` `/bound_right` `/trot` `/battery` `/info` `/restart` | `server.py` |
+| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/turn_left` `/turn_right` `/pivot_left` `/pivot_right` `/bound_left` `/bound_right` `/trot` `/battery` `/info` | `server.py` |
 | `src/boot.py` | Runs on boot: WiFi connect + mDNS hostname registration + WebREPL start | `boot.py` |
 | `src/main.py` | Runs after boot: starts HTTP server loop | `main.py` |
 | `src/webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL | n/a (host only) |
@@ -157,7 +157,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
 
 After first-time USB setup, subsequent deploys are easier with:
 ```bash
-python deploy.py doggo.local <password> --restart
+python deploy.py doggo.local <password>
 ```
 
 ### mpremote over WiFi (after WiFi setup)

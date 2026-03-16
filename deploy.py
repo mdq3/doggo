@@ -2,24 +2,22 @@
 """Deploy project source files to the Bittle over WebREPL.
 
 Usage:
-    python deploy.py <host> <password> [--port PORT] [--restart]
+    python deploy.py <host> <password> [--port PORT]
 
 Examples:
     python deploy.py doggo.local doggo
-    python deploy.py doggo.local doggo --restart
-    python deploy.py 192.168.1.42 doggo --restart
+    python deploy.py 192.168.1.42 doggo
 
 All source files are uploaded in a single WebREPL session (fast — one
 connection, one login). Optional files (config.py, wifi_config.py) are
 skipped if not present locally — the device keeps its existing copy.
 
-After upload, --restart reloads server modules without a power cycle.
+After upload, press the reset button on the robot to load the new files.
 """
 import argparse
 import os
 import socket
 import sys
-import urllib.request
 
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 from webrepl_proxy import _WS, _put_file  # noqa: E402
@@ -33,13 +31,13 @@ MANIFEST = [
     ("src/server.py",          "server.py"),
     ("src/boot.py",            "boot.py"),
     ("src/main.py",            "main.py"),
+    ("src/imu.py",             "imu.py"),
     ("src/gaits/walk.py",      "gaits/walk.py"),
     ("src/gaits/walk_back.py", "gaits/walk_back.py"),
-    ("src/gaits/turn.py",       "gaits/turn.py"),
-    ("src/gaits/pivot.py",      "gaits/pivot.py"),
-    ("src/gaits/bound_turn.py", "gaits/bound_turn.py"),
-    ("src/gaits/trot.py",       "gaits/trot.py"),
-    ("src/imu.py",              "imu.py"),
+    ("src/gaits/turn.py",      "gaits/turn.py"),
+    ("src/gaits/pivot.py",     "gaits/pivot.py"),
+    ("src/gaits/bound_turn.py","gaits/bound_turn.py"),
+    ("src/gaits/trot.py",      "gaits/trot.py"),
 ]
 
 # Deployed only if present locally (machine-specific, gitignored)
@@ -78,10 +76,8 @@ def main():
     parser = argparse.ArgumentParser(description="Deploy source files to the Bittle over WebREPL.")
     parser.add_argument("host",     help="Device hostname or IP (e.g. doggo.local or 192.168.1.x)")
     parser.add_argument("password", help="WebREPL password")
-    parser.add_argument("--port",    type=int, default=8266, metavar="PORT",
+    parser.add_argument("--port",   type=int, default=8266, metavar="PORT",
                         help="WebREPL port (default: 8266)")
-    parser.add_argument("--restart", action="store_true",
-                        help="Call /restart after upload to reload server modules on the device")
     args = parser.parse_args()
 
     files = list(MANIFEST)
@@ -100,15 +96,7 @@ def main():
         ws.close()
 
     print(f"\nDeployed {len(files)} file(s) to {args.host}.")
-
-    if args.restart:
-        url = f"http://{args.host}/restart"
-        print(f"Restarting server ({url})...")
-        try:
-            urllib.request.urlopen(url, timeout=5)
-            print("Server restarted.")
-        except Exception as e:
-            print(f"Restart call failed: {e}")
+    print("Press the reset button on the robot to load the new files.")
 
 
 if __name__ == "__main__":

@@ -142,7 +142,7 @@ mpremote fs cp src/drivers/servo.py :servo.py + \
 
 After first-time USB setup, subsequent deploys over WiFi are easier with:
 ```bash
-python deploy.py doggo.local <password> --restart
+python deploy.py doggo.local <password>
 ```
 
 ### 3. Find the robot's IP address
@@ -179,7 +179,6 @@ curl http://192.168.1.x/bound_right?steps=1
 curl http://192.168.1.x/trot?steps=2         # fast diagonal-pair trot with IMU stabilization
 curl http://192.168.1.x/battery
 curl http://192.168.1.x/info      # device diagnostics: RAM, flash, CPU freq, chip ID, WiFi IP/RSSI, uptime
-curl http://192.168.1.x/restart   # reload code without touching servos
 ```
 
 Or use the hostname (may be slower — see note in WiFi Control section):
@@ -208,18 +207,18 @@ dog fs cp src/poses.py :poses.py
 
 ### 6. Deploy code updates
 
-After uploading new files, reload them without a hardware reset (servos stay still):
+Upload changed files over WiFi, then press the reset button on the robot:
 
 ```bash
-# Upload changed files, then reload
 dog fs cp src/poses.py :poses.py
 dog fs cp src/server.py :server.py
-curl http://192.168.1.x/restart
 ```
 
-`/restart` reloads `server.py`, `battery.py`, `device_info.py`, and all gait modules from flash. Servo PWM stays running throughout — no movement.
+Or use `deploy.py` to upload everything at once:
 
-Changes to `servo.py`, `boot.py`, or `main.py` require a physical power cycle.
+```bash
+python deploy.py doggo.local <password>
+```
 
 ---
 
