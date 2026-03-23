@@ -135,7 +135,7 @@ def stand():
     print("\nStanding up...")
     move_to({
         CH_HEAD:        90,
-        CH_FL_SHOULDER: 100,   # 90 + 1*10  (opencat=10° backward, tune ±5 as needed)
+        CH_FL_SHOULDER: 100,   # 90 + 1*10  (opencat=10)
         CH_FR_SHOULDER:  80,   # 90 - 1*10
         CH_RR_SHOULDER:  80,   # 90 - 1*10
         CH_RL_SHOULDER: 100,   # 90 + 1*10

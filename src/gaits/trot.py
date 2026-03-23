@@ -55,8 +55,9 @@ _FRAME_DELAY           = 0.008  # seconds per frame — this gait needs ~8ms for
 _FRONT_SHOULDER_SQUEEZE = 0.9   # compress FL/FR sweep — reduce lateral CoM sway
 _REAR_SHOULDER_SQUEEZE  = 0.9   # compress RR/RL sweep — reduce lateral CoM sway
 _SHOULDER_MID           = 30    # OpenCat balance-pose shoulder angle (raw)
-_LEG_PUSH_SCALE         = 1.0   # scale push/stride (raw > 0) — reduce to cut sliding
+_LEG_PUSH_SCALE         = 0.9   # scale push/stride (raw > 0) — reduce to cut sliding
 _LEG_LIFT_SCALE         = 1.0   # scale lift height (raw < 0) — increase for rug clearance
+_TRIM                   = 2     # raw degrees added to left shoulders (FL+RL); positive corrects rightward curve
 
 # IMU stabilization — actively corrects roll/pitch each frame
 _USE_IMU   = True
@@ -132,7 +133,8 @@ def _clamp(v, lo, hi):
     return lo if v < lo else (hi if v > hi else v)
 
 
-def _to_commanded(raw, pitch_adj=0.0, roll_adj=0.0):
+def _to_commanded(raw):
+    """Convert a raw frame to commanded-angle dict. Used only for the startup move_to."""
     result = {}
     for i in range(8):
         r = raw[i]
@@ -141,14 +143,54 @@ def _to_commanded(raw, pitch_adj=0.0, roll_adj=0.0):
             r = _SHOULDER_MID + (r - _SHOULDER_MID) * sq
         else:
             r = r * (_LEG_LIFT_SCALE if r < 0 else _LEG_PUSH_SCALE)
-        angle = _ZERO[i] + _RD[i] * r
-        if i >= 4:
-            if i == _FL_LEG_I or i == _RR_LEG_I:
-                angle += pitch_adj + roll_adj
-            else:
-                angle += -pitch_adj + roll_adj
-        result[_CH[i]] = angle
+        result[_CH[i]] = _ZERO[i] + _RD[i] * r
     return result
+
+
+# Lazy pre-computed base frames: populated on first trot_forward() call, not at
+# module load (avoids crashing the server if computation fails).
+# Each entry: (commanded_angles_tuple, raw_leg_values_tuple)
+# raw_legs is raw[4:] — used to detect stance (>= 0) vs swing (< 0).
+_BASE = None
+_frame_buf = {ch: 0.0 for ch in _CH}  # reusable — avoids dict allocation in the hot loop
+
+
+def _ensure_base():
+    global _BASE
+    if _BASE is not None:
+        return
+    frames = []
+    for raw in _FRAMES:
+        base = []
+        for i in range(8):
+            r = raw[i]
+            if i < 4:
+                sq = _FRONT_SHOULDER_SQUEEZE if i < 2 else _REAR_SHOULDER_SQUEEZE
+                r = _SHOULDER_MID + (r - _SHOULDER_MID) * sq
+                if i == 0 or i == 3:  # FL_sh, RL_sh — left side trim
+                    r += _TRIM
+            else:
+                r = r * (_LEG_LIFT_SCALE if r < 0 else _LEG_PUSH_SCALE)
+            base.append(_ZERO[i] + _RD[i] * r)
+        frames.append((tuple(base), raw[4:]))
+    _BASE = tuple(frames)
+
+
+def _play_base_frame(base, raw_legs, p_adj, r_adj):
+    """Fill _frame_buf from pre-computed base angles + IMU correction, then dispatch.
+
+    IMU correction is applied only to stance legs (raw >= 0 = foot on ground).
+    Swing legs (foot in air) are unaffected — correction there has no physical effect.
+    """
+    for i in range(8):
+        a = base[i]
+        if i >= 4 and raw_legs[i - 4] >= 0:  # stance leg
+            if i == _FL_LEG_I or i == _RR_LEG_I:  # diagonal 1
+                a += p_adj + r_adj
+            else:                                   # diagonal 2 (FR, RL)
+                a += -p_adj + r_adj
+        _frame_buf[_CH[i]] = a
+    play_frame(_frame_buf)
 
 
 def trot_forward(steps=None):
@@ -173,12 +215,13 @@ def trot_forward(steps=None):
     else:
         _USE_IMU_local = False
 
+    _ensure_base()
     move_to(_to_commanded(_FRAMES[0]), speed=2)
 
     count = 0
     try:
         while steps is None or count < steps:
-            for frame in _FRAMES:
+            for base, raw_legs in _BASE:
                 t0 = ticks_us()
                 if _USE_IMU_local:
                     try:
@@ -189,7 +232,7 @@ def trot_forward(steps=None):
                         p_adj = r_adj = 0.0
                 else:
                     p_adj = r_adj = 0.0
-                play_frame(_to_commanded(frame, p_adj, r_adj))
+                _play_base_frame(base, raw_legs, p_adj, r_adj)
                 remaining = _FRAME_US - ticks_diff(ticks_us(), t0)
                 if remaining > 0:
                     time.sleep_us(remaining)
