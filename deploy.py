@@ -22,6 +22,16 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
 from webrepl_proxy import _WS, _put_file  # noqa: E402
 
+# ANSI colour helpers
+_RESET  = "\033[0m"
+_BOLD   = "\033[1m"
+_CYAN   = "\033[36m"
+_GREEN  = "\033[32m"
+_YELLOW = "\033[33m"
+_RED    = "\033[31m"
+
+def _c(colour, text): return f"{colour}{text}{_RESET}"
+
 # (local_path, remote_path) pairs — always deployed
 MANIFEST = [
     ("src/drivers/servo.py",   "drivers/servo.py"),
@@ -48,14 +58,14 @@ OPTIONAL = [
 
 
 def _connect(host, password, port):
-    print(f"Connecting to WebREPL at {host}:{port}...")
+    print(_c(_CYAN, f"Connecting to {host}:{port}..."))
     ws = _WS(socket.socket())
     ws.settimeout(10)
     ws._sock.connect((host, port))
     ws.handshake()
     ws.login(password)
     ws.settimeout(None)
-    print("Connected.")
+    print(_c(_GREEN, "Connected."))
     return ws
 
 
@@ -85,7 +95,7 @@ def main():
         if os.path.exists(local):
             files.append((local, remote))
         else:
-            print(f"Skipping {local} (not found locally — device keeps existing copy)")
+            print(_c(_YELLOW, f"  skipping {local} (not found locally — device keeps existing copy)"))
 
     ws = _connect(args.host, args.password, args.port)
     try:
@@ -95,8 +105,8 @@ def main():
     finally:
         ws.close()
 
-    print(f"\nDeployed {len(files)} file(s) to {args.host}.")
-    print("Press the reset button on the robot to load the new files.")
+    print(_c(_BOLD + _GREEN, f"\n✓ Deployed {len(files)} file(s) to {args.host}."))
+    print(_c(_CYAN, "  Press the reset button on the robot to load the new files."))
 
 
 if __name__ == "__main__":
