@@ -13,19 +13,23 @@ Conversion: commanded = ZERO_POS + rotationDirection[joint] * opencat_angle
   rotDir:   FL_sh=+1, FR_sh=-1, RR_sh=-1, RL_sh=+1
             FL_leg=-1, FR_leg=+1, RR_leg=+1, RL_leg=-1
 
-Phase 2 (IMU): Set _USE_IMU = True after deploying imu.py and verifying
-  imu.init() / imu.read() work correctly in the REPL.
+IMU correction groups legs by diagonal, not left/right:
+  Diagonal 1 (FL+RR): commanded += +pitch_adj + roll_adj
+  Diagonal 2 (FR+RL): commanded += -pitch_adj + roll_adj
+  No rotDir multiplication — these are direct commanded-angle deltas.
 
 Tuning:
   Too fast / toppling   -> increase _FRAME_DELAY (e.g. 0.010 → 0.012)
   Too slow / shuffling  -> decrease _FRAME_DELAY or increase _LEG_PUSH_SCALE
   Feet catching on rug  -> increase _LEG_LIFT_SCALE
   Feet sliding on floor -> decrease _LEG_PUSH_SCALE
+  Too much side wobble  -> reduce _FRONT/_REAR_SHOULDER_SQUEEZE or increase _K_ROLL
   Pitching nose-up/down -> tune _K_PITCH
   Rolling left/right    -> tune _K_ROLL
 """
 
 import time
+from utime import ticks_us, ticks_diff
 
 from poses import (
     CH_FL_LEG,
@@ -47,24 +51,25 @@ _CH   = (CH_FL_SHOULDER, CH_FR_SHOULDER, CH_RR_SHOULDER, CH_RL_SHOULDER,
 _RD   = (1, -1, -1, 1, -1, 1, 1, -1)
 _ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
 
-_FRAME_DELAY           = 0.008  # seconds per frame — increase if unstable
-_FRONT_SHOULDER_SQUEEZE = 1.0   # compress FL/FR sweep — front feet move too far forward
-_REAR_SHOULDER_SQUEEZE  = 1.0   # compress RR/RL sweep — reduce hobble
+_FRAME_DELAY           = 0.008  # seconds per frame — this gait needs ~8ms for dynamic stability
+_FRONT_SHOULDER_SQUEEZE = 0.9   # compress FL/FR sweep — reduce lateral CoM sway
+_REAR_SHOULDER_SQUEEZE  = 0.9   # compress RR/RL sweep — reduce lateral CoM sway
 _SHOULDER_MID           = 30    # OpenCat balance-pose shoulder angle (raw)
 _LEG_PUSH_SCALE         = 1.0   # scale push/stride (raw > 0) — reduce to cut sliding
 _LEG_LIFT_SCALE         = 1.0   # scale lift height (raw < 0) — increase for rug clearance
 
 # IMU stabilization — actively corrects roll/pitch each frame
 _USE_IMU   = True
-_K_PITCH   = 0.4   # pitch correction gain — tune up from 0
+_K_PITCH   = 0.2   # pitch correction gain
 _K_ROLL    = 0.3   # roll correction gain
-_IMU_CLAMP = 10    # max correction degrees per axis
+_IMU_CLAMP = 8     # max correction degrees per axis
 
-# Index constants for IMU correction (legs only, indices 4-7 in _CH)
-_FL_LEG_I = 4
-_FR_LEG_I = 5
-_RR_LEG_I = 6
-_RL_LEG_I = 7
+# Index constants for IMU correction (legs only, indices 4-7 in _CH).
+# Grouped by diagonal pair — pitch correction alternates by diagonal, roll is uniform.
+_FL_LEG_I = 4  # diagonal 1 (FL+RR): +pitch, +roll
+_FR_LEG_I = 5  # diagonal 2 (FR+RL): -pitch, +roll
+_RR_LEG_I = 6  # diagonal 1
+_RL_LEG_I = 7  # diagonal 2
 
 # Raw OpenCat angles from trF in InstinctBittleESP.h.
 # Columns: [FL_sh, FR_sh, RR_sh, RL_sh, FL_leg, FR_leg, RR_leg, RL_leg]
@@ -120,6 +125,9 @@ _FRAMES = (
 )
 
 
+_FRAME_US = int(_FRAME_DELAY * 1_000_000)
+
+
 def _clamp(v, lo, hi):
     return lo if v < lo else (hi if v > hi else v)
 
@@ -128,17 +136,17 @@ def _to_commanded(raw, pitch_adj=0.0, roll_adj=0.0):
     result = {}
     for i in range(8):
         r = raw[i]
-        if i < 4:   # shoulders: compress sweep around balance midpoint
+        if i < 4:
             sq = _FRONT_SHOULDER_SQUEEZE if i < 2 else _REAR_SHOULDER_SQUEEZE
             r = _SHOULDER_MID + (r - _SHOULDER_MID) * sq
-        else:       # legs: scale push and lift independently
+        else:
             r = r * (_LEG_LIFT_SCALE if r < 0 else _LEG_PUSH_SCALE)
         angle = _ZERO[i] + _RD[i] * r
-        if i >= 4:  # IMU correction on legs only
-            if i == _FL_LEG_I or i == _RL_LEG_I:  # left legs
-                angle += _RD[i] * (-pitch_adj + roll_adj)
-            else:                                   # right legs
-                angle += _RD[i] * (pitch_adj - roll_adj)
+        if i >= 4:
+            if i == _FL_LEG_I or i == _RR_LEG_I:
+                angle += pitch_adj + roll_adj
+            else:
+                angle += -pitch_adj + roll_adj
         result[_CH[i]] = angle
     return result
 
@@ -171,6 +179,7 @@ def trot_forward(steps=None):
     try:
         while steps is None or count < steps:
             for frame in _FRAMES:
+                t0 = ticks_us()
                 if _USE_IMU_local:
                     try:
                         pitch, roll = imu.read()
@@ -181,7 +190,9 @@ def trot_forward(steps=None):
                 else:
                     p_adj = r_adj = 0.0
                 play_frame(_to_commanded(frame, p_adj, r_adj))
-                time.sleep(_FRAME_DELAY)
+                remaining = _FRAME_US - ticks_diff(ticks_us(), t0)
+                if remaining > 0:
+                    time.sleep_us(remaining)
             count += 1
     except KeyboardInterrupt:
         print("\n\nTrot interrupted.")
