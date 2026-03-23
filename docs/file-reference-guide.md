@@ -163,11 +163,19 @@ Fast forward trot. Ported from OpenCat `trF` — 48-frame diagonal-pair gait (FL
 - `trot_forward(steps=2)` — trot for N cycles (default 2)
 
 **Tuning constants** (top of file):
-- `_FRAME_DELAY` — 8ms/frame; increase if unstable
-- `_FRONT_SHOULDER_SQUEEZE` / `_REAR_SHOULDER_SQUEEZE` — compress stride length
+- `_FRAME_DELAY` — 8ms/frame hard minimum; the gait needs dynamic momentum and falls at ≥10ms
+- `_FRONT_SHOULDER_SQUEEZE` / `_REAR_SHOULDER_SQUEEZE` — compress stride around `_SHOULDER_MID=30`; 0.9 is the stable sweet spot (0.85 causes falls, 1.0 hobbles excessively)
 - `_LEG_PUSH_SCALE` / `_LEG_LIFT_SCALE` — scale push stride vs lift height independently
 - `_USE_IMU` — enable IMU roll/pitch correction (requires `imu.py` deployed)
 - `_K_PITCH`, `_K_ROLL`, `_IMU_CLAMP` — IMU correction gains
+
+**Timing:** Uses `ticks_us()` to measure per-frame compute time and subtracts it from the sleep, so servo commands fire at consistent 8ms intervals regardless of IMU read overhead (~0.5ms). This matters for foot contact consistency.
+
+**IMU correction formula** groups legs by diagonal (not left/right side) and applies direct commanded-angle deltas without `_RD` multiplication:
+- Diagonal 1 (FL+RR): `angle += pitch_adj + roll_adj`
+- Diagonal 2 (FR+RL): `angle += -pitch_adj + roll_adj`
+
+The hobbling in trot is primarily translational (CoM swaying between support diagonals), not rotational — so shoulder squeeze has more effect than IMU gain on reducing it.
 
 **Upload to device:**
 ```bash
@@ -596,4 +604,4 @@ python src/webrepl_proxy.py 192.168.1.x <password> repl    # interactive REPL
 
 ---
 
-**Last Updated:** 2026-03-16
+**Last Updated:** 2026-03-23

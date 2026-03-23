@@ -686,6 +686,25 @@ More RAM = Better CV possibilities
 7. ~~Tight arc turn~~ ✅ (`src/gaits/bound_turn.py`)
 8. ~~Fast trot + IMU stabilization~~ ✅ (`src/gaits/trot.py` + `src/imu.py`)
 
+### Next Steps: Trot Improvement
+
+The trot is working and noticeably improved but still has some foot slippage vs OpenCat firmware. Known gaps and candidates for further improvement:
+
+**1. Lower centre of gravity (stand pose)**
+The current `stand()` uses `opencat=10` for shoulders vs OpenCat's `balance[]` which uses 30. A more crouched stance lowers CoM, which reduces the pendulum effect during the 2-point support phases and may improve trot stability. Cost: more servo torque / battery draw.
+
+**2. Pre-computed base frames**
+Pre-computing all 48 frames' commanded angles at module load time (once, at import) would eliminate per-frame `_to_commanded()` overhead in the hot loop, reducing jitter further. Attempted once but crashed the server on import — likely needs careful memory profiling first (`gc.mem_free()` before/after to verify headroom).
+
+**3. Reduce `_LEG_PUSH_SCALE`**
+Scaling back push force (e.g. 0.85–0.9) reduces horizontal foot force during stance, which directly reduces slippage. Trade-off: slower forward progress. Worth testing if slippage remains problematic.
+
+**4. IK-based trot**
+Rather than replaying fixed OpenCat keyframes, generate the trot trajectory with inverse kinematics — compute foot positions as smooth sinusoidal arcs, then solve for joint angles each frame. This allows tuning step height, stride length, and timing independently, and can incorporate body-height control for active CoM management.
+
+**5. Stance-phase-aware IMU correction**
+Currently IMU correction is applied to all 4 legs every frame. During a trot, only 2 legs are in stance at any time and the correction only has physical effect on those legs. Detecting which diagonal is in stance (via the sign of leg raw values) and applying 2× gain to the stance legs only would make each unit of `_K_ROLL` twice as effective.
+
 ### Phase 3: Add Basic Vision (Week 4)
 **Choose ONE:**
 
