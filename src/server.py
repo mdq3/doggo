@@ -56,7 +56,27 @@ def _handle(conn):
             return
         path, _, qs = parts[1].partition("?")
 
-        if path == "/stand":
+        if path == "/":
+            _send_body(conn, b"Doggo HTTP API\n\n"
+                b"Poses:\n"
+                b"  GET /stand\n"
+                b"  GET /sit\n"
+                b"  GET /rest\n\n"
+                b"Gaits (optional ?steps=N):\n"
+                b"  GET /walk\n"
+                b"  GET /walk_back\n"
+                b"  GET /turn_left\n"
+                b"  GET /turn_right\n"
+                b"  GET /pivot_left\n"
+                b"  GET /pivot_right\n"
+                b"  GET /bound_left\n"
+                b"  GET /bound_right\n"
+                b"  GET /trot          (default steps=2)\n\n"
+                b"Diagnostics:\n"
+                b"  GET /battery\n"
+                b"  GET /info\n")
+            return
+        elif path == "/stand":
             stand()
         elif path == "/sit":
             sit()
