@@ -36,6 +36,9 @@ import subprocess
 import sys
 import threading
 
+_RESET = "\033[0m"
+_GREEN = "\033[32m"
+
 _FRAME_TXT = 0x81
 _FRAME_BIN = 0x82
 
@@ -146,7 +149,7 @@ def _put_file(ws, local_path, remote_path):
     for i in range(0, sz, 1024):
         ws.send_frame(data[i : i + 1024], binary=True)
     _wr_read_resp(ws)
-    print(f"Copied {local_path} → :{remote_path} ({sz} bytes)")
+    print(f"{_GREEN}✓{_RESET} {local_path} → :{remote_path} ({sz} bytes)")
     return 0
 
 
