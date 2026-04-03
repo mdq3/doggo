@@ -43,7 +43,6 @@ _FRAME_DELAY  = 0.008   # seconds per frame (8ms minimum for dynamic stability)
 _TRIM = 2.0
 
 # --- IMU stabilization -----------------------------------------------------
-_USE_IMU   = True
 _K_PITCH   = 0.2
 _K_ROLL    = 0.3
 _IMU_CLAMP = 8.0
@@ -85,22 +84,22 @@ def _stand_frame():
     )
 
 
-def trot_forward(steps=None):
+def trot_forward(steps=None, use_imu=True):
     """IK-based forward trot.
 
     Args:
-        steps: number of full cycles, or None to run until KeyboardInterrupt.
+        steps:   number of full cycles, or None to run until KeyboardInterrupt.
+        use_imu: Enable IMU roll/pitch stabilization (default True).
     """
     print("\nStarting IK trot forward...")
 
-    use_imu = False
-    if _USE_IMU:
+    if use_imu:
         try:
             import imu
             imu.init()
-            use_imu = True
         except Exception as e:
             print("IMU init failed:", e)
+            use_imu = False
 
     move_to(_stand_frame(), speed=2)
 

@@ -60,7 +60,6 @@ _LEG_LIFT_SCALE         = 1.0   # scale lift height (raw < 0) — increase for r
 _TRIM                   = 2     # raw degrees added to left shoulders (FL+RL); positive corrects rightward curve
 
 # IMU stabilization — actively corrects roll/pitch each frame
-_USE_IMU   = True
 _K_PITCH   = 0.2   # pitch correction gain
 _K_ROLL    = 0.3   # roll correction gain
 _IMU_CLAMP = 8     # max correction degrees per axis
@@ -193,27 +192,24 @@ def _play_base_frame(base, raw_legs, p_adj, r_adj):
     play_frame(_frame_buf)
 
 
-def trot_forward(steps=None):
+def trot_forward(steps=None, use_imu=True):
     """
     Trot forward (48-frame diagonal-pair cycle).
 
     Args:
-        steps: Number of full 48-frame cycles to run.
-               None = run until KeyboardInterrupt.
+        steps:   Number of full 48-frame cycles to run.
+                 None = run until KeyboardInterrupt.
+        use_imu: Enable IMU roll/pitch stabilization (default True).
     """
     print("\nStarting trot forward...")
 
-    if _USE_IMU:
+    if use_imu:
         try:
             import imu
             imu.init()
         except Exception as e:
             print("IMU init failed:", e)
-            _USE_IMU_local = False
-        else:
-            _USE_IMU_local = True
-    else:
-        _USE_IMU_local = False
+            use_imu = False
 
     _ensure_base()
     move_to(_to_commanded(_FRAMES[0]), speed=2)
@@ -223,7 +219,7 @@ def trot_forward(steps=None):
         while steps is None or count < steps:
             for base, raw_legs in _BASE:
                 t0 = ticks_us()
-                if _USE_IMU_local:
+                if use_imu:
                     try:
                         pitch, roll = imu.read()
                         p_adj = _clamp(_K_PITCH * pitch, -_IMU_CLAMP, _IMU_CLAMP)

@@ -28,7 +28,7 @@ try:
     stand()
     time.sleep(1)
 
-    trot_forward(steps=4)
+    trot_forward(steps=4, use_imu=True)
     time.sleep(1)
 
     rest()
