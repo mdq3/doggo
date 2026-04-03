@@ -11,14 +11,21 @@ Replaces the stock OpenCat firmware with hand-written Python. Gaits are ported f
 ### Hardware
 - Petoi Bittle X V2 with BiBoard V1.0
 - USB Type-C cable
-- Fully charged battery (required for servo steps)
 
 ### Software
+
+#### Python tooling
 ```bash
 pip install esptool    # for flashing firmware
 pip install mpremote   # for REPL and file transfers
 pip install ruff       # for linting
 ```
+
+#### Robot dependencies
+
+* Micropython 1.27.0 for ESP32
+
+#### Linting
 
 Run `ruff check src/` to lint. Config is in `pyproject.toml`.
 
