@@ -1,4 +1,4 @@
-# Bittle MicroPython
+# Doggo MicroPython
 
 MicroPython control of a Petoi Bittle X V2 quadruped robot. Runs Python directly on the BiBoard ESP32 — no external computer required for autonomous operation.
 
@@ -69,7 +69,7 @@ mpremote fs cp config.py :config.py
 
 See `docs/micropython-getting-started.md` for the full calibration walkthrough.
 
-### 3. Make Bittle Stand
+### 3. Make Doggo Stand
 
 ```bash
 mpremote fs mkdir :drivers + \
@@ -79,7 +79,7 @@ mpremote fs mkdir :drivers + \
     run src/demos/stand.py
 ```
 
-### 4. Make Bittle Walk
+### 4. Make Doggo Walk
 
 ```bash
 mpremote fs mkdir :drivers + \
@@ -216,54 +216,8 @@ python deploy.py doggo.local <password>
 
 ---
 
-## Project Structure
-
-```
-doggo/
-├── src/
-│   ├── drivers/
-│   │   └── servo.py                # PWM servo driver (ESP32 LEDC, 200Hz)
-│   ├── configuration/
-│   │   ├── calibrate.py            # Interactive REPL calibration tool
-│   │   ├── identify_servos.py      # Map channel numbers to joints
-│   │   ├── verify_servos_working.py # Quick servo sanity check
-│   │   └── wifi_config_template.py # Copy → wifi_config.py, fill in credentials + hostname
-│   ├── gaits/
-│   │   ├── walk.py                 # Walk forward (one foot at a time, 116 frames, wkF)
-│   │   ├── walk_back.py            # Walk backward (43 frames, bkF)
-│   │   ├── turn.py                 # Turn left/right arc (116 frames, wkL)
-│   │   ├── pivot.py                # Pivot left/right in-place (72 frames, vtL)
-│   │   ├── bound_turn.py           # Bound left/right tight arc (42 frames, trL)
-│   │   └── trot.py                 # Trot forward (48 frames, trF) + IMU stabilization
-│   ├── battery.py                  # Battery voltage monitoring (GPIO 37, BiBoard formula)
-│   ├── device_info.py              # Device diagnostics (RAM, flash, CPU, WiFi, uptime)
-│   ├── imu.py                      # ICM-42670-P IMU driver (I2C 0x69); complementary filter
-│   ├── demos/
-│   │   ├── stand.py                # stand → sit → stand → rest
-│   │   └── walk.py                 # stand → walk → rest
-│   ├── boot.py                     # WiFi connect + mDNS hostname + WebREPL (deployed as :boot.py)
-│   ├── main.py                     # HTTP server start (deployed as :main.py)
-│   ├── server.py                   # HTTP command server (port 80)
-│   ├── webrepl_proxy.py            # Host-side PTY bridge for mpremote over WiFi
-│   └── poses.py                    # Pose library (stand, sit, rest, move_to)
-├── docs/
-│   ├── micropython-getting-started.md   # Full step-by-step setup guide
-│   ├── file-reference-guide.md          # Every file: what it does, how to use it
-│   ├── hardware-and-opencat-reference.md # Hardware pinout, porting OpenCat, restoring firmware
-│   └── ...
-├── config.py                       # Servo calibration offsets (gitignored — generate locally)
-├── pyproject.toml                  # Ruff linting config
-└── README.md
-```
-
----
-
 ## Documentation
 
 - **[Getting Started Guide](docs/micropython-getting-started.md)** — full step-by-step setup
 - **[File Reference Guide](docs/file-reference-guide.md)** — every file explained
 - **[Hardware & OpenCat Reference](docs/hardware-and-opencat-reference.md)** — pinout, angle conversion, restoring firmware
-
----
-
-**Last Updated:** 2026-03-16
