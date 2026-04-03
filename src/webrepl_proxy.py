@@ -29,6 +29,7 @@ Usage:
     # Custom WebREPL port (default 8266) — pass as a numeric third argument:
     python webrepl_proxy.py <host> <password> 8266 repl
 """
+
 import os
 import socket
 import struct
@@ -79,7 +80,7 @@ class _WS:
                 raise ConnectionError("WebSocket handshake failed")
             self._buf += chunk
         idx = self._buf.index(b"\r\n\r\n")
-        self._buf = self._buf[idx + 4:]
+        self._buf = self._buf[idx + 4 :]
 
     def recv_frame(self):
         while True:
@@ -126,6 +127,7 @@ class _WS:
 # WebREPL binary file-transfer protocol
 # ---------------------------------------------------------------------------
 
+
 def _wr_read_resp(ws):
     """Read a 4-byte WebREPL binary response; raise on non-zero status."""
     frame = ws.recv_frame()
@@ -162,7 +164,7 @@ def _get_file(ws, remote_path, local_path):
     _wr_read_resp(ws)
     with open(local_path, "wb") as f:
         while True:
-            ws.send_frame(b"\x00", binary=True)   # trigger next chunk
+            ws.send_frame(b"\x00", binary=True)  # trigger next chunk
             chunk = ws.recv_frame()
             (chunk_sz,) = struct.unpack("<H", chunk[:2])
             if chunk_sz == 0:
@@ -186,12 +188,13 @@ def _handle_fs_cp(ws, args):
         return _put_file(ws, src, dst[1:])
     if src.startswith(":") and not dst.startswith(":"):
         return _get_file(ws, src[1:], dst)
-    return None   # both or neither have ':', fall through to mpremote
+    return None  # both or neither have ':', fall through to mpremote
 
 
 # ---------------------------------------------------------------------------
 # PTY bridge (for repl / run / other mpremote commands)
 # ---------------------------------------------------------------------------
+
 
 def _bridge(ws, master_fd):
     """Forward bytes between PTY master fd and WebREPL WebSocket."""

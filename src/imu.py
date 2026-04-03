@@ -18,25 +18,22 @@ Sensitivity after config:
   Gyro ±500dps → 65.5 LSB/dps (GYRO_CONFIG0  = 0x26)
 
 Usage:
-    import imu
-    imu.init()
+    from imu import IMU
+    imu = IMU()
     pitch, roll = imu.read()  # degrees; 0 = level; ~0.3ms per call
 
 Smoke test:
-    import imu; imu.init(); print(imu.read())
+    from imu import IMU; imu = IMU(); print(imu.read())
     # Flat: (0±2, 0±2).  Nose-up → +pitch.  Roll right → +roll.
 """
 
+import time
 from math import atan2, sqrt
+
 from machine import I2C, Pin
-from utime import ticks_ms, ticks_diff
+from utime import ticks_diff, ticks_ms
 
 _ADDR = 0x69
-
-_i2c    = None
-_pitch  = 0.0
-_roll   = 0.0
-_last_t = None
 
 
 def _s16(buf, offset):
@@ -49,45 +46,41 @@ def _accel_angles(buf):
     ay = _s16(buf, 2) / 16384.0
     az = _s16(buf, 4) / 16384.0
     pitch = atan2(ax, sqrt(ay * ay + az * az)) * 57.2958
-    roll  = atan2(ay, sqrt(ax * ax + az * az)) * 57.2958
+    roll = atan2(ay, sqrt(ax * ax + az * az)) * 57.2958
     return pitch, roll, _s16(buf, 6) / 65.5, _s16(buf, 8) / 65.5
 
 
-def init():
-    """Set up I2C, configure ICM-42670-P, seed filter from accelerometer."""
-    global _i2c, _pitch, _roll, _last_t
-    import time
+class IMU:
+    """ICM-42670-P driver. Instantiate once; call read() each frame."""
 
-    _i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=400_000)
+    def __init__(self):
+        self._i2c = I2C(0, scl=Pin(22), sda=Pin(21), freq=400_000)
 
-    _i2c.writeto_mem(_ADDR, 0x1F, b'\x0F')  # accel + gyro, low-noise mode
-    time.sleep_ms(60)                        # gyro LN startup: ~60ms from off
+        self._i2c.writeto_mem(_ADDR, 0x1F, b"\x0f")  # accel + gyro, low-noise mode
+        time.sleep_ms(60)  # gyro LN startup: ~60ms from off
 
-    _i2c.writeto_mem(_ADDR, 0x20, b'\x26')  # gyro  ±500 dps, 100 Hz
-    _i2c.writeto_mem(_ADDR, 0x21, b'\x66')  # accel ±2g,      100 Hz
+        self._i2c.writeto_mem(_ADDR, 0x20, b"\x26")  # gyro  ±500 dps, 100 Hz
+        self._i2c.writeto_mem(_ADDR, 0x21, b"\x66")  # accel ±2g,      100 Hz
 
-    # Seed filter directly from accelerometer (skip 0.98^N convergence)
-    raw = _i2c.readfrom_mem(_ADDR, 0x0B, 10)
-    _pitch, _roll, _, _ = _accel_angles(raw)
-    _last_t = ticks_ms()
+        # Seed filter directly from accelerometer (skip 0.98^N convergence)
+        raw = self._i2c.readfrom_mem(_ADDR, 0x0B, 10)
+        self._pitch, self._roll, _, _ = _accel_angles(raw)
+        self._last_t = ticks_ms()
 
+    def read(self) -> tuple[float, float]:
+        """Return (pitch_deg, roll_deg) via complementary filter.
 
-def read():
-    """Return (pitch_deg, roll_deg) via complementary filter.
+        Nose-up    → positive pitch.
+        Roll right → positive roll.
+        """
+        raw = self._i2c.readfrom_mem(_ADDR, 0x0B, 10)
+        accel_pitch, accel_roll, gx, gy = _accel_angles(raw)
 
-    Nose-up  → positive pitch.
-    Roll right → positive roll.
-    """
-    global _pitch, _roll, _last_t
+        now = ticks_ms()
+        dt = ticks_diff(now, self._last_t) / 1000.0
+        self._last_t = now
 
-    raw = _i2c.readfrom_mem(_ADDR, 0x0B, 10)
-    accel_pitch, accel_roll, gx, gy = _accel_angles(raw)
+        self._pitch = 0.98 * (self._pitch + gy * dt) + 0.02 * accel_pitch
+        self._roll = 0.98 * (self._roll - gx * dt) + 0.02 * accel_roll
 
-    now = ticks_ms()
-    dt  = ticks_diff(now, _last_t) / 1000.0
-    _last_t = now
-
-    _pitch = 0.98 * (_pitch + gy * dt) + 0.02 * accel_pitch
-    _roll  = 0.98 * (_roll  - gx * dt) + 0.02 * accel_roll
-
-    return _pitch, _roll
+        return self._pitch, self._roll

@@ -31,18 +31,30 @@ CH_FR_LEG = 9
 CH_RR_LEG = 10
 CH_RL_LEG = 11
 
-ALL_CHANNELS = [CH_HEAD, CH_FL_SHOULDER, CH_FR_SHOULDER, CH_RR_SHOULDER,
-                CH_RL_SHOULDER, CH_FL_LEG, CH_FR_LEG, CH_RR_LEG, CH_RL_LEG]
+ALL_CHANNELS = [
+    CH_HEAD,
+    CH_FL_SHOULDER,
+    CH_FR_SHOULDER,
+    CH_RR_SHOULDER,
+    CH_RL_SHOULDER,
+    CH_FL_LEG,
+    CH_FR_LEG,
+    CH_RR_LEG,
+    CH_RL_LEG,
+]
 
 # Try to load calibration
 try:
     from config import CALIBRATION, apply_calibration
+
     print("✓ Loaded calibration data")
 except ImportError:
     print("⚠ No calibration data found - using defaults")
     CALIBRATION = {}
+
     def apply_calibration(angle, channel):
         return angle
+
 
 # Initialize hardware
 print("Initializing hardware...")
@@ -60,20 +72,20 @@ print("✓ Hardware ready")
 #   FR_SHOULDER (-33 offset): commanded= 40 → calibrated   7 (limit  ~57)
 #   FL_LEG      (+36 offset): commanded=140 → calibrated 176 (limit ~144)
 _REST_COMMANDED = {
-    CH_HEAD:        90,
-    CH_FL_SHOULDER: 140,   # 90 + 1*50  → calibrated 177
-    CH_FR_SHOULDER:  40,   # 90 - 1*50  → calibrated   7
-    CH_RR_SHOULDER:  40,   # 90 - 1*50  → calibrated  82
-    CH_RL_SHOULDER: 140,   # 90 + 1*50  → calibrated  99
-    CH_FL_LEG:      135,   # rd=-1, opencat=-40: 90+40=130 → calibrated 166
-    CH_FR_LEG:       45,   # rd=+1, opencat=-40: 90-40= 50 → calibrated  18
-    CH_RR_LEG:       45,   # rd=+1, opencat=-40: 90-40= 50 → calibrated  16
-    CH_RL_LEG:      135,   # rd=-1, opencat=-40: 90+40=130 → calibrated 162
+    CH_HEAD: 90,
+    CH_FL_SHOULDER: 140,  # 90 + 1*50  → calibrated 177
+    CH_FR_SHOULDER: 40,  # 90 - 1*50  → calibrated   7
+    CH_RR_SHOULDER: 40,  # 90 - 1*50  → calibrated  82
+    CH_RL_SHOULDER: 140,  # 90 + 1*50  → calibrated  99
+    CH_FL_LEG: 135,  # rd=-1, opencat=-40: 90+40=130 → calibrated 166
+    CH_FR_LEG: 45,  # rd=+1, opencat=-40: 90-40= 50 → calibrated  18
+    CH_RR_LEG: 45,  # rd=+1, opencat=-40: 90-40= 50 → calibrated  16
+    CH_RL_LEG: 135,  # rd=-1, opencat=-40: 90+40=130 → calibrated 162
 }
 
 # Track current positions (calibrated), initialised to rest state
-current_pos = {ch: apply_calibration(_REST_COMMANDED.get(ch, 90), ch)
-               for ch in ALL_CHANNELS}
+current_pos = {ch: apply_calibration(_REST_COMMANDED.get(ch, 90), ch) for ch in ALL_CHANNELS}
+
 
 def play_frame(targets):
     """
@@ -121,11 +133,13 @@ def move_to(targets, speed=2, delay=0.015):
 
         time.sleep(delay)
 
+
 def zero_position():
     """All servos to calibrated neutral (90° commanded)."""
     print("\nMoving to zero position...")
     move_to({ch: 90 for ch in ALL_CHANNELS}, speed=3)
     print("✓ Zero position")
+
 
 def stand():
     """
@@ -133,18 +147,22 @@ def stand():
     OpenCat reference: balance[] — shoulder pitch = 30, knee = 30 (all joints).
     """
     print("\nStanding up...")
-    move_to({
-        CH_HEAD:        90,
-        CH_FL_SHOULDER: 100,   # 90 + 1*10  (opencat=10)
-        CH_FR_SHOULDER:  80,   # 90 - 1*10
-        CH_RR_SHOULDER:  80,   # 90 - 1*10
-        CH_RL_SHOULDER: 100,   # 90 + 1*10
-        CH_FL_LEG:       60,   # 90 - 1*30  (rd=-1, opencat=30)
-        CH_FR_LEG:      120,   # 90 + 1*30  (rd=+1, opencat=30)
-        CH_RR_LEG:      120,   # 90 + 1*30
-        CH_RL_LEG:       60,   # 90 - 1*30  (rd=-1, opencat=30)
-    }, speed=1)
+    move_to(
+        {
+            CH_HEAD: 90,
+            CH_FL_SHOULDER: 100,  # 90 + 1*10  (opencat=10)
+            CH_FR_SHOULDER: 80,  # 90 - 1*10
+            CH_RR_SHOULDER: 80,  # 90 - 1*10
+            CH_RL_SHOULDER: 100,  # 90 + 1*10
+            CH_FL_LEG: 60,  # 90 - 1*30  (rd=-1, opencat=30)
+            CH_FR_LEG: 120,  # 90 + 1*30  (rd=+1, opencat=30)
+            CH_RR_LEG: 120,  # 90 + 1*30
+            CH_RL_LEG: 60,  # 90 - 1*30  (rd=-1, opencat=30)
+        },
+        speed=1,
+    )
     print("✓ Standing position")
+
 
 def sit():
     """
@@ -156,18 +174,22 @@ def sit():
     opposite direction to the OpenCat sit convention.
     """
     print("\nSitting down...")
-    move_to({
-        CH_HEAD:        90,
-        CH_FL_SHOULDER: 100,   # stand value — front stable
-        CH_FR_SHOULDER:  80,   # stand value — front stable
-        CH_RR_SHOULDER:  40,   # rest value  — haunches down
-        CH_RL_SHOULDER: 140,   # rest value  — haunches down
-        CH_FL_LEG:       60,   # stand value — front extended
-        CH_FR_LEG:      120,   # stand value — front extended
-        CH_RR_LEG:       62,   # midpoint between rest(45) and neutral(90)
-        CH_RL_LEG:      118,   # midpoint between rest(135) and neutral(90)
-    }, speed=2)
+    move_to(
+        {
+            CH_HEAD: 90,
+            CH_FL_SHOULDER: 100,  # stand value — front stable
+            CH_FR_SHOULDER: 80,  # stand value — front stable
+            CH_RR_SHOULDER: 40,  # rest value  — haunches down
+            CH_RL_SHOULDER: 140,  # rest value  — haunches down
+            CH_FL_LEG: 60,  # stand value — front extended
+            CH_FR_LEG: 120,  # stand value — front extended
+            CH_RR_LEG: 62,  # midpoint between rest(45) and neutral(90)
+            CH_RL_LEG: 118,  # midpoint between rest(135) and neutral(90)
+        },
+        speed=2,
+    )
     print("✓ Sitting position")
+
 
 def rest():
     """
@@ -177,5 +199,3 @@ def rest():
     print("\nLying down...")
     move_to(_REST_COMMANDED, speed=1)
     print("✓ Resting position")
-
-
