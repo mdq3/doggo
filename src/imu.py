@@ -2,7 +2,7 @@
 
 WHO_AM_I = 0x67 (not ICM-20600 which is 0x11 — different chip, different register map).
 Hardware: I2C address 0x69, SDA=GPIO21, SCL=GPIO22, 400kHz.
-BiBoard V1.0, Bittle X V2.
+BiBoard V1.0 (Doggo).
 
 Register map (ICM-42670-P, bank 0):
   0x01  DEVICE_CONFIG    bit0 = soft reset

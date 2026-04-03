@@ -1,5 +1,5 @@
 """
-Bittle Walk Demo
+Doggo Walk Demo
 
 Usage:
     mpremote run src/demos/walk.py
@@ -19,7 +19,7 @@ from gaits.walk import walk
 from poses import rest, stand
 
 print("\n" + "=" * 60)
-print("Bittle Walk Demo")
+print("Doggo Walk Demo")
 print("=" * 60)
 
 try:

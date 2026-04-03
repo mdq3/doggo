@@ -23,7 +23,7 @@ print("=" * 50)
 print("Servo Test Script (BiBoard V1 Direct PWM)")
 print("=" * 50)
 
-# Bittle channel mapping
+# Doggo channel mapping
 JOINTS = {
     0: "Head Pan",
     4: "Front Left Shoulder",
@@ -36,10 +36,10 @@ JOINTS = {
     11: "Rear Left Leg",
 }
 
-BITTLE_CHANNELS = [0, 4, 5, 6, 7, 8, 9, 10, 11]
+CHANNELS = [0, 4, 5, 6, 7, 8, 9, 10, 11]
 
-print("\nBittle servo channel mapping:")
-for ch in BITTLE_CHANNELS:
+print("\nDoggo servo channel mapping:")
+for ch in CHANNELS:
     print(f"  Channel {ch:2d}: {JOINTS[ch]}")
 
 # Step 1: Initialize servos
@@ -81,12 +81,12 @@ except Exception as e:
     import sys
     sys.exit(1)
 
-# Step 3: Test all Bittle channels
-print("\n3. Testing all Bittle channels (quick sweep)...")
+# Step 3: Test all Doggo channels
+print("\n3. Testing all Doggo channels (quick sweep)...")
 print("   This will move all 9 servos briefly")
 time.sleep(2)
 
-for channel in BITTLE_CHANNELS:
+for channel in CHANNELS:
     name = JOINTS[channel]
     print(f"   Channel {channel:2d} ({name})...", end=" ")
     servos.set_servo(channel, 90)
@@ -103,4 +103,4 @@ print("SUCCESS! All servos working!")
 print("=" * 50)
 print("\nNext steps:")
 print("1. Calibrate servos: mpremote run src/configuration/calibrate.py")
-print("2. Make Bittle stand: mpremote run src/demos/stand.py")
+print("2. Make Doggo stand: mpremote run src/demos/stand.py")

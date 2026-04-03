@@ -19,7 +19,7 @@ servos = Servos()
 # BiBoard V1 GPIO mapping
 PINS = [18, 5, 14, 27, 23, 4, 12, 33, 19, 15, 13, 32]
 
-# Known Bittle channel mapping (discovered by testing)
+# Known Doggo channel mapping (discovered by testing)
 KNOWN_JOINTS = {
     0: "Head Pan",
     4: "Front Left Shoulder",
@@ -32,8 +32,8 @@ KNOWN_JOINTS = {
     11: "Rear Left Leg",
 }
 
-# Channels used by Bittle
-BITTLE_CHANNELS = [0, 4, 5, 6, 7, 8, 9, 10, 11]
+# Doggo servo channels
+CHANNELS = [0, 4, 5, 6, 7, 8, 9, 10, 11]
 
 def test(channel):
     """Wiggle a servo to identify it"""
@@ -60,9 +60,9 @@ def t(channel):
     test(channel)
 
 def all():
-    """Test all Bittle channels"""
-    print("\nTesting all Bittle channels...")
-    for ch in BITTLE_CHANNELS:
+    """Test all Doggo channels"""
+    print("\nTesting all Doggo channels...")
+    for ch in CHANNELS:
         name = KNOWN_JOINTS.get(ch, "Unknown")
         print(f"\n[{ch}] {name}")
         input("Press Enter to test...")
@@ -70,9 +70,9 @@ def all():
 
 def show():
     """Show known channel mapping"""
-    print("\nBittle Channel Mapping:")
+    print("\nDoggo Channel Mapping:")
     print("-" * 40)
-    for ch in BITTLE_CHANNELS:
+    for ch in CHANNELS:
         name = KNOWN_JOINTS.get(ch, "Unknown")
         print(f"  Channel {ch:2d}: {name}")
     print()
@@ -83,10 +83,10 @@ Servo Identifier Ready
 Commands:
   test(4)  - Wiggle channel 4 (Front Left Shoulder)
   t(4)     - Same (shortcut)
-  all()    - Test all Bittle channels
+  all()    - Test all Doggo channels
   show()   - Show channel mapping
 
-Known Bittle channels: 0, 4, 5, 6, 7, 8, 9, 10, 11
+Known Doggo channels: 0, 4, 5, 6, 7, 8, 9, 10, 11
 (Channels 1, 2, 3 are unused)
 """)
 show()

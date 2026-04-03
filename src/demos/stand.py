@@ -1,5 +1,5 @@
 """
-Bittle Stand Demo
+Doggo Stand Demo
 
 Usage:
     mpremote run src/demos/stand.py
@@ -10,7 +10,7 @@ import time
 from poses import rest, sit, stand
 
 print("\n" + "=" * 60)
-print("Bittle Stand Demo")
+print("Doggo Stand Demo")
 print("=" * 60)
 
 try:
