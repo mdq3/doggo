@@ -12,8 +12,8 @@ Routes:
   GET /pivot_right?steps=N
   GET /bound_left?steps=N
   GET /bound_right?steps=N
-  GET /trot?steps=N
-  GET /trot_ik?steps=N
+  GET /trot?steps=N&imu=0
+  GET /trot_ik?steps=N&imu=0
   GET /battery
   GET /info
 
@@ -46,6 +46,13 @@ def _parse_steps(qs):
     return None
 
 
+def _parse_imu(qs):
+    for part in (qs or "").split("&"):
+        if part.startswith("imu="):
+            return part[4:] not in ("0", "false", "off")
+    return True
+
+
 def _send_body(conn, body):
     conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: " + str(len(body)).encode() + b"\r\n\r\n" + body)
 
@@ -73,8 +80,8 @@ def _handle(conn):
                 b"  GET /pivot_right\n"
                 b"  GET /bound_left\n"
                 b"  GET /bound_right\n"
-                b"  GET /trot          (default steps=2)\n"
-                b"  GET /trot_ik       (default steps=2)\n\n"
+                b"  GET /trot          (default steps=2, imu=1)\n"
+                b"  GET /trot_ik       (default steps=2, imu=1)\n\n"
                 b"Diagnostics:\n"
                 b"  GET /battery\n"
                 b"  GET /info\n")
@@ -102,9 +109,9 @@ def _handle(conn):
         elif path == "/bound_right":
             bound_right(steps=_parse_steps(qs))
         elif path == "/trot":
-            trot_forward(steps=_parse_steps(qs) or 2)
+            trot_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
         elif path == "/trot_ik":
-            trot_ik_forward(steps=_parse_steps(qs) or 2)
+            trot_ik_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
         elif path == "/battery":
             v, pct, low = battery_status()
             body = f"{v:.2f}V ({pct}%)"
