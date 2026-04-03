@@ -52,8 +52,8 @@ _RD   = (1, -1, -1, 1, -1, 1, 1, -1)
 _ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
 
 _FRAME_DELAY           = 0.008  # seconds per frame — this gait needs ~8ms for dynamic stability
-_FRONT_SHOULDER_SQUEEZE = 0.9   # compress FL/FR sweep — reduce lateral CoM sway
-_REAR_SHOULDER_SQUEEZE  = 0.9   # compress RR/RL sweep — reduce lateral CoM sway
+_FRONT_SHOULDER_SQUEEZE = 0.87  # compress FL/FR sweep — reduce lateral CoM sway
+_REAR_SHOULDER_SQUEEZE  = 0.87  # compress RR/RL sweep — reduce lateral CoM sway
 _SHOULDER_MID           = 30    # OpenCat balance-pose shoulder angle (raw)
 _LEG_PUSH_SCALE         = 0.9   # scale push/stride (raw > 0) — reduce to cut sliding
 _LEG_LIFT_SCALE         = 1.0   # scale lift height (raw < 0) — increase for rug clearance
@@ -61,7 +61,7 @@ _TRIM                   = 2     # raw degrees added to left shoulders (FL+RL); p
 
 # IMU stabilization — actively corrects roll/pitch each frame
 _K_PITCH   = 0.2   # pitch correction gain
-_K_ROLL    = 0.3   # roll correction gain
+_K_ROLL    = 0.4   # roll correction gain
 _IMU_CLAMP = 8     # max correction degrees per axis
 
 # Index constants for IMU correction (legs only, indices 4-7 in _CH).
