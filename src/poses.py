@@ -1,5 +1,5 @@
 """
-Bittle Pose Library
+Doggo Pose Library
 
 Poses derived from OpenCatEsp32 InstinctBittleESP.h reference data.
 

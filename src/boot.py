@@ -47,7 +47,7 @@ if NETWORKS:
     ok, ip = connect_wifi()
     if ok:
         print("WiFi connected:", ip, f"({HOSTNAME}.local)")
-        webrepl.start(password=WEBREPL_PASSWORD or "bittle")
+        webrepl.start(password=WEBREPL_PASSWORD or "doggo")
     else:
         print("WiFi failed — no configured network in range")
 else:

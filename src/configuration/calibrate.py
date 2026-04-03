@@ -35,8 +35,8 @@ JOINTS = {
     11: "Rear Left Leg",
 }
 
-# Channels used by Bittle
-BITTLE_CHANNELS = [0, 4, 5, 6, 7, 8, 9, 10, 11]
+# Doggo servo channels
+CHANNELS = [0, 4, 5, 6, 7, 8, 9, 10, 11]
 
 def move(channel, angle):
     """Move a servo to an angle"""
@@ -78,10 +78,10 @@ def done():
     print("Copy everything below into config.py:")
     print("=" * 50 + "\n")
 
-    content = '"""\nBittle Calibration Config\n"""\n\n'
+    content = '"""\nDoggo Calibration Config\n"""\n\n'
     content += "# Channel to joint mapping\n"
     content += "JOINTS = {\n"
-    for ch in BITTLE_CHANNELS:
+    for ch in CHANNELS:
         name = JOINTS.get(ch, f"Channel {ch}")
         content += f"    {ch:2d}: \"{name}\",\n"
     content += "}\n\n"
@@ -89,7 +89,7 @@ def done():
     content += "# Calibration offsets (degrees from 90)\n"
     content += "CALIBRATION = {\n"
 
-    for ch in BITTLE_CHANNELS:
+    for ch in CHANNELS:
         offset = calibration.get(ch, 0)
         name = JOINTS.get(ch, f"Channel {ch}")
         content += f"    {ch:2d}: {offset:+3d},  # {name}\n"
@@ -122,9 +122,9 @@ Calibration Commands:
   done()                - Generate config.py content
   help()                - Show this help
 
-Bittle Channels:
+Doggo Channels:
 ----------------""")
-    for ch in BITTLE_CHANNELS:
+    for ch in CHANNELS:
         name = JOINTS.get(ch, f"Channel {ch}")
         print(f"  {ch:2d}: {name}")
     print()
@@ -133,8 +133,8 @@ Bittle Channels:
 print("\n" + "=" * 50)
 print("Calibration Helper Ready")
 print("=" * 50)
-print("\nBittle servo channels:")
-for ch in BITTLE_CHANNELS:
+print("\nDoggo servo channels:")
+for ch in CHANNELS:
     name = JOINTS.get(ch, f"Channel {ch}")
     print(f"  {ch:2d}: {name}")
 print("\nType help() for commands")
