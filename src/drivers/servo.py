@@ -37,7 +37,7 @@ class Servos:
         self.num_channels = len(self.pins)
 
         # PWM objects for each channel
-        self.pwm = [None] * self.num_channels
+        self.pwm: list[PWM | None] = [None] * self.num_channels
 
         # Servo pulse range (microseconds)
         self.min_us = 500  # 0 degrees
@@ -114,8 +114,9 @@ class Servos:
     def deinit(self):
         """Release all PWM resources"""
         for i in range(self.num_channels):
-            if self.pwm[i] is not None:
-                self.pwm[i].deinit()
+            pwm = self.pwm[i]
+            if pwm is not None:
+                pwm.deinit()
                 self.pwm[i] = None
 
     # Compatibility methods for code written for PCA9685
@@ -127,5 +128,6 @@ class Servos:
         """
         self.freq = freq
         for i in range(self.num_channels):
-            if self.pwm[i] is not None:
-                self.pwm[i].freq(freq)
+            pwm = self.pwm[i]
+            if pwm is not None:
+                pwm.freq(freq)
