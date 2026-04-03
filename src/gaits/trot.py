@@ -159,7 +159,7 @@ def _to_commanded(raw):
 # module load (avoids crashing the server if computation fails).
 # Each entry: (commanded_angles_tuple, raw_leg_values_tuple)
 # raw_legs is raw[4:] — used to detect stance (>= 0) vs swing (< 0).
-_BASE = None
+_BASE: tuple | None = None
 _frame_buf = {ch: 0.0 for ch in _CH}  # reusable — avoids dict allocation in the hot loop
 
 
@@ -222,12 +222,14 @@ def trot_forward(steps=None, use_imu=True):
             print("IMU init failed:", e)
 
     _ensure_base()
+    assert _BASE is not None
+    frames = _BASE
     move_to(_to_commanded(_FRAMES[0]), speed=2)
 
     count = 0
     try:
         while steps is None or count < steps:
-            for base, raw_legs in _BASE:
+            for base, raw_legs in frames:
                 t0 = ticks_us()
                 if imu is not None:
                     try:
