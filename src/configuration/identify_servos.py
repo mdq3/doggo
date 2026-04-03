@@ -35,10 +35,11 @@ KNOWN_JOINTS = {
 # Doggo servo channels
 CHANNELS = [0, 4, 5, 6, 7, 8, 9, 10, 11]
 
+
 def test(channel):
     """Wiggle a servo to identify it"""
     if channel < 0 or channel >= len(PINS):
-        print(f"Channel must be 0-{len(PINS)-1}")
+        print(f"Channel must be 0-{len(PINS) - 1}")
         return
 
     name = KNOWN_JOINTS.get(channel, "Unknown")
@@ -55,9 +56,11 @@ def test(channel):
     servos.set_servo(channel, 90)
     print("Done.")
 
+
 def t(channel):
     """Short alias"""
     test(channel)
+
 
 def all():
     """Test all Doggo channels"""
@@ -68,6 +71,7 @@ def all():
         input("Press Enter to test...")
         test(ch)
 
+
 def show():
     """Show known channel mapping"""
     print("\nDoggo Channel Mapping:")
@@ -76,6 +80,7 @@ def show():
         name = KNOWN_JOINTS.get(ch, "Unknown")
         print(f"  Channel {ch:2d}: {name}")
     print()
+
 
 print("""
 Servo Identifier Ready

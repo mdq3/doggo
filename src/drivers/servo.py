@@ -18,6 +18,7 @@ from machine import PWM, Pin
 # BiBoard V1.0 PWM pin mapping (channel -> GPIO)
 BIBOARD_V1_PINS = [18, 5, 14, 27, 23, 4, 12, 33, 19, 15, 13, 32]
 
+
 class Servos:
     """BiBoard V1 Direct PWM Servo Driver"""
 
@@ -39,7 +40,7 @@ class Servos:
         self.pwm = [None] * self.num_channels
 
         # Servo pulse range (microseconds)
-        self.min_us = 500   # 0 degrees
+        self.min_us = 500  # 0 degrees
         self.max_us = 2500  # 180 degrees
 
     def _init_channel(self, channel):

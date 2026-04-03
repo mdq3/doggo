@@ -15,8 +15,9 @@ try:
     from drivers.servo import Servos
 except ImportError:
     print("ERROR: drivers/servo.py not found!")
-    print("Upload it first: mpremote fs mkdir :drivers && mpremote fs cp src/drivers/servo.py :drivers/servo.py")
+    print("Upload it first: python deploy.py doggo.local <password>")
     import sys
+
     sys.exit(1)
 
 print("=" * 50)
@@ -50,6 +51,7 @@ try:
 except Exception as e:
     print(f"✗ Init failed: {e}")
     import sys
+
     sys.exit(1)
 
 # Step 2: Test head servo (channel 0)
@@ -79,6 +81,7 @@ try:
 except Exception as e:
     print(f"✗ Servo test failed: {e}")
     import sys
+
     sys.exit(1)
 
 # Step 3: Test all Doggo channels

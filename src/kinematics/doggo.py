@@ -16,10 +16,14 @@ Cross-check at stand pose (alpha=10, gamma=30):
 """
 
 from poses import (
-    CH_FL_SHOULDER, CH_FL_LEG,
-    CH_FR_SHOULDER, CH_FR_LEG,
-    CH_RR_SHOULDER, CH_RR_LEG,
-    CH_RL_SHOULDER, CH_RL_LEG,
+    CH_FL_LEG,
+    CH_FL_SHOULDER,
+    CH_FR_LEG,
+    CH_FR_SHOULDER,
+    CH_RL_LEG,
+    CH_RL_SHOULDER,
+    CH_RR_LEG,
+    CH_RR_SHOULDER,
 )
 
 
@@ -44,8 +48,12 @@ def leg_frame(a_fl, g_fl, a_fr, g_fr, a_rr, g_rr, a_rl, g_rl):
     rr_sh, rr_leg = to_commanded(a_rr, g_rr, left_side=False)
     rl_sh, rl_leg = to_commanded(a_rl, g_rl, left_side=True)
     return {
-        CH_FL_SHOULDER: fl_sh,  CH_FL_LEG: fl_leg,
-        CH_FR_SHOULDER: fr_sh,  CH_FR_LEG: fr_leg,
-        CH_RR_SHOULDER: rr_sh,  CH_RR_LEG: rr_leg,
-        CH_RL_SHOULDER: rl_sh,  CH_RL_LEG: rl_leg,
+        CH_FL_SHOULDER: fl_sh,
+        CH_FL_LEG: fl_leg,
+        CH_FR_SHOULDER: fr_sh,
+        CH_FR_LEG: fr_leg,
+        CH_RR_SHOULDER: rr_sh,
+        CH_RR_LEG: rr_leg,
+        CH_RL_SHOULDER: rl_sh,
+        CH_RL_LEG: rl_leg,
     }

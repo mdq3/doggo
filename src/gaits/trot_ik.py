@@ -25,26 +25,27 @@ Tuning:
 
 import math
 import time
-from utime import ticks_us, ticks_diff
+
+from utime import ticks_diff, ticks_us
 
 from kinematics.doggo import leg_frame
-from kinematics.leg import fk, ik
+from kinematics.leg import ik
 from poses import move_to, play_frame, stand
 
 # --- Trajectory parameters -------------------------------------------------
-_BODY_HEIGHT  = 101.0   # mm: foot z during stance (from FK at stand pose)
-_STEP_LENGTH  =  20.0   # mm: foot sweeps ±this value in x each half-cycle
-_STEP_HEIGHT  =  20.0   # mm: foot clearance above ground during swing
-_CYCLE_FRAMES =  48     # frames per full cycle
-_FRAME_DELAY  = 0.008   # seconds per frame (8ms minimum for dynamic stability)
+_BODY_HEIGHT = 101.0  # mm: foot z during stance (from FK at stand pose)
+_STEP_LENGTH = 20.0  # mm: foot sweeps ±this value in x each half-cycle
+_STEP_HEIGHT = 20.0  # mm: foot clearance above ground during swing
+_CYCLE_FRAMES = 48  # frames per full cycle
+_FRAME_DELAY = 0.008  # seconds per frame (8ms minimum for dynamic stability)
 
 # Left/right trim: small alpha offset applied to left-side shoulders (FL, RL).
 # Positive corrects rightward drift (same convention as trot.py _TRIM).
 _TRIM = 2.0
 
 # --- IMU stabilization -----------------------------------------------------
-_K_PITCH   = 0.2
-_K_ROLL    = 0.3
+_K_PITCH = 0.2
+_K_ROLL = 0.3
 _IMU_CLAMP = 8.0
 
 _FRAME_US = int(_FRAME_DELAY * 1_000_000)
@@ -65,22 +66,26 @@ def _foot_pos(phase):
     phase 0.5 → 1.0: swing  — foot raised, moving forward
     """
     if phase < 0.5:
-        t = phase * 2.0                              # 0 → 1 over stance
-        x = _STEP_LENGTH * (1.0 - 2.0 * t)          # +step_length → -step_length
+        t = phase * 2.0  # 0 → 1 over stance
+        x = _STEP_LENGTH * (1.0 - 2.0 * t)  # +step_length → -step_length
         z = _BODY_HEIGHT
     else:
-        t = (phase - 0.5) * 2.0                      # 0 → 1 over swing
-        x = _STEP_LENGTH * (2.0 * t - 1.0)           # -step_length → +step_length
+        t = (phase - 0.5) * 2.0  # 0 → 1 over swing
+        x = _STEP_LENGTH * (2.0 * t - 1.0)  # -step_length → +step_length
         z = _BODY_HEIGHT - _STEP_HEIGHT * math.sin(t * math.pi)
     return x, z
 
 
 def _stand_frame():
     return leg_frame(
-        _ALPHA_STAND, _GAMMA_STAND,
-        _ALPHA_STAND, _GAMMA_STAND,
-        _ALPHA_STAND, _GAMMA_STAND,
-        _ALPHA_STAND, _GAMMA_STAND,
+        _ALPHA_STAND,
+        _GAMMA_STAND,
+        _ALPHA_STAND,
+        _GAMMA_STAND,
+        _ALPHA_STAND,
+        _GAMMA_STAND,
+        _ALPHA_STAND,
+        _GAMMA_STAND,
     )
 
 
@@ -93,13 +98,14 @@ def trot_forward(steps=None, use_imu=True):
     """
     print("\nStarting IK trot forward...")
 
+    imu = None
     if use_imu:
         try:
-            import imu
-            imu.init()
+            from imu import IMU
+
+            imu = IMU()
         except Exception as e:
             print("IMU init failed:", e)
-            use_imu = False
 
     move_to(_stand_frame(), speed=2)
 
@@ -114,11 +120,11 @@ def trot_forward(steps=None, use_imu=True):
                 phase2 = (fi + _CYCLE_FRAMES // 2) / _CYCLE_FRAMES % 1.0
 
                 # IMU correction
-                if use_imu:
+                if imu is not None:
                     try:
                         pitch, roll = imu.read()
                         p_adj = _clamp(_K_PITCH * pitch, -_IMU_CLAMP, _IMU_CLAMP)
-                        r_adj = _clamp(_K_ROLL  * roll,  -_IMU_CLAMP, _IMU_CLAMP)
+                        r_adj = _clamp(_K_ROLL * roll, -_IMU_CLAMP, _IMU_CLAMP)
                     except Exception:
                         p_adj = r_adj = 0.0
                 else:

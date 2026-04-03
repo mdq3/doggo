@@ -41,9 +41,9 @@ def ik(x, z):
     Uses the "knee bent" (elbow-up) configuration.
     """
     r2 = x * x + z * z
-    r  = math.sqrt(r2)
+    r = math.sqrt(r2)
 
-    r_max = L1 + L2 - 1.0   # leave 1mm margin to avoid acos(1.0) edge case
+    r_max = L1 + L2 - 1.0  # leave 1mm margin to avoid acos(1.0) edge case
     r_min = abs(L1 - L2) + 1.0
     if r > r_max:
         x = x * r_max / r
@@ -56,9 +56,8 @@ def ik(x, z):
 
     cos_g = (r2 - L1 * L1 - L2 * L2) / (2.0 * L1 * L2)
     cos_g = max(-1.0, min(1.0, cos_g))
-    gamma = math.acos(cos_g)   # always >= 0 (knee bent, not hyper-extended)
+    gamma = math.acos(cos_g)  # always >= 0 (knee bent, not hyper-extended)
 
-    alpha = math.atan2(x, z) + math.atan2(L2 * math.sin(gamma),
-                                           L1 + L2 * math.cos(gamma))
+    alpha = math.atan2(x, z) + math.atan2(L2 * math.sin(gamma), L1 + L2 * math.cos(gamma))
 
     return math.degrees(alpha), math.degrees(gamma)

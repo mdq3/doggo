@@ -6,14 +6,15 @@ Formula from OpenCat reaction.h (BiBoard_V1_0 branch).
 2S LiPo range: 6.6V (empty, 3.3V/cell) → 8.4V (full, 4.2V/cell).
 Charge warning threshold: 7.0V (3.5V/cell).
 """
+
 from machine import ADC, Pin
 
 _adc = ADC(Pin(37))
 _adc.atten(ADC.ATTN_11DB)
 
-_V_FULL  = 8.4   # 2S LiPo fully charged
-_V_EMPTY = 6.6   # 2S LiPo safe minimum
-_V_WARN  = 7.0   # suggest charging below this
+_V_FULL = 8.4  # 2S LiPo fully charged
+_V_EMPTY = 6.6  # 2S LiPo safe minimum
+_V_WARN = 7.0  # suggest charging below this
 
 
 def battery_voltage():

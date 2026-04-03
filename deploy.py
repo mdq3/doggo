@@ -14,6 +14,7 @@ skipped if not present locally — the device keeps its existing copy.
 
 After upload, press the reset button on the robot to load the new files.
 """
+
 import argparse
 import os
 import socket
@@ -23,40 +24,43 @@ sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src
 from webrepl_proxy import _WS, _put_file  # noqa: E402
 
 # ANSI colour helpers
-_RESET  = "\033[0m"
-_BOLD   = "\033[1m"
-_CYAN   = "\033[36m"
-_GREEN  = "\033[32m"
+_RESET = "\033[0m"
+_BOLD = "\033[1m"
+_CYAN = "\033[36m"
+_GREEN = "\033[32m"
 _YELLOW = "\033[33m"
-_RED    = "\033[31m"
+_RED = "\033[31m"
 
-def _c(colour, text): return f"{colour}{text}{_RESET}"
+
+def _c(colour, text):
+    return f"{colour}{text}{_RESET}"
+
 
 # (local_path, remote_path) pairs — always deployed
 MANIFEST = [
-    ("src/drivers/servo.py",   "drivers/servo.py"),
-    ("src/poses.py",           "poses.py"),
-    ("src/battery.py",         "battery.py"),
-    ("src/device_info.py",     "device_info.py"),
-    ("src/server.py",          "server.py"),
-    ("src/boot.py",            "boot.py"),
-    ("src/main.py",            "main.py"),
-    ("src/imu.py",             "imu.py"),
-    ("src/gaits/walk.py",      "gaits/walk.py"),
+    ("src/drivers/servo.py", "drivers/servo.py"),
+    ("src/poses.py", "poses.py"),
+    ("src/battery.py", "battery.py"),
+    ("src/device_info.py", "device_info.py"),
+    ("src/server.py", "server.py"),
+    ("src/boot.py", "boot.py"),
+    ("src/main.py", "main.py"),
+    ("src/imu.py", "imu.py"),
+    ("src/gaits/walk.py", "gaits/walk.py"),
     ("src/gaits/walk_back.py", "gaits/walk_back.py"),
-    ("src/gaits/turn.py",      "gaits/turn.py"),
-    ("src/gaits/pivot.py",     "gaits/pivot.py"),
-    ("src/gaits/bound_turn.py","gaits/bound_turn.py"),
-    ("src/gaits/trot.py",              "gaits/trot.py"),
-    ("src/gaits/trot_ik.py",          "gaits/trot_ik.py"),
-    ("src/kinematics/__init__.py",    "kinematics/__init__.py"),
-    ("src/kinematics/leg.py",         "kinematics/leg.py"),
-    ("src/kinematics/doggo.py",       "kinematics/doggo.py"),
+    ("src/gaits/turn.py", "gaits/turn.py"),
+    ("src/gaits/pivot.py", "gaits/pivot.py"),
+    ("src/gaits/bound_turn.py", "gaits/bound_turn.py"),
+    ("src/gaits/trot.py", "gaits/trot.py"),
+    ("src/gaits/trot_ik.py", "gaits/trot_ik.py"),
+    ("src/kinematics/__init__.py", "kinematics/__init__.py"),
+    ("src/kinematics/leg.py", "kinematics/leg.py"),
+    ("src/kinematics/doggo.py", "kinematics/doggo.py"),
 ]
 
 # Deployed only if present locally (machine-specific, gitignored)
 OPTIONAL = [
-    ("config.py",      "config.py"),
+    ("config.py", "config.py"),
     ("wifi_config.py", "wifi_config.py"),
 ]
 
@@ -88,10 +92,11 @@ def _repl_exec(ws, code):
 
 def main():
     parser = argparse.ArgumentParser(description="Deploy source files to the Bittle over WebREPL.")
-    parser.add_argument("host",     help="Device hostname or IP (e.g. doggo.local or 192.168.1.x)")
+    parser.add_argument("host", help="Device hostname or IP (e.g. doggo.local or 192.168.1.x)")
     parser.add_argument("password", help="WebREPL password")
-    parser.add_argument("--port",   type=int, default=8266, metavar="PORT",
-                        help="WebREPL port (default: 8266)")
+    parser.add_argument(
+        "--port", type=int, default=8266, metavar="PORT", help="WebREPL port (default: 8266)"
+    )
     args = parser.parse_args()
 
     files = list(MANIFEST)
@@ -99,11 +104,16 @@ def main():
         if os.path.exists(local):
             files.append((local, remote))
         else:
-            print(_c(_YELLOW, f"  skipping {local} (not found locally — device keeps existing copy)"))
+            print(
+                _c(_YELLOW, f"  skipping {local} (not found locally — device keeps existing copy)")
+            )
 
     ws = _connect(args.host, args.password, args.port)
     try:
-        _repl_exec(ws, "import os; [os.mkdir(d) for d in ('drivers', 'gaits', 'kinematics') if d not in os.listdir()]")
+        _repl_exec(
+            ws,
+            "import os; [os.mkdir(d) for d in ('drivers', 'gaits', 'kinematics') if d not in os.listdir()]",
+        )
         for local, remote in files:
             _put_file(ws, local, remote)
     finally:

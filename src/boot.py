@@ -4,6 +4,7 @@ Scans visible APs and connects to the first network in NETWORKS that
 is currently in range. Falls through gracefully if wifi_config.py is
 missing or no configured network is found.
 """
+
 import time
 
 import network
@@ -24,8 +25,7 @@ def connect_wifi(timeout=20):
     network.hostname(HOSTNAME)  # must be set before active() for mDNS
     wlan.active(True)
 
-    visible = {e[0] if isinstance(e[0], str) else e[0].decode()
-               for e in wlan.scan()}
+    visible = {e[0] if isinstance(e[0], str) else e[0].decode() for e in wlan.scan()}
 
     for ssid, password in NETWORKS:
         if ssid not in visible:

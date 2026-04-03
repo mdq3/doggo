@@ -21,6 +21,7 @@ Returns 200 OK on success, 404 for unknown routes.
 Runs in a background _thread using raw sockets so the main thread
 stays free for WebREPL / interactive REPL access.
 """
+
 import _thread
 import socket
 
@@ -66,7 +67,9 @@ def _handle(conn):
         path, _, qs = parts[1].partition("?")
 
         if path == "/":
-            _send_body(conn, b"Doggo HTTP API\n\n"
+            _send_body(
+                conn,
+                b"Doggo HTTP API\n\n"
                 b"Poses:\n"
                 b"  GET /stand\n"
                 b"  GET /sit\n"
@@ -84,7 +87,8 @@ def _handle(conn):
                 b"  GET /trot_ik       (default steps=2, imu=1)\n\n"
                 b"Diagnostics:\n"
                 b"  GET /battery\n"
-                b"  GET /info\n")
+                b"  GET /info\n",
+            )
             return
         elif path == "/stand":
             stand()

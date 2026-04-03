@@ -15,7 +15,6 @@ Usage:
        >>> done()           # Print config.py content
 """
 
-
 from drivers.servo import Servos
 
 # Initialize
@@ -38,15 +37,18 @@ JOINTS = {
 # Doggo servo channels
 CHANNELS = [0, 4, 5, 6, 7, 8, 9, 10, 11]
 
+
 def move(channel, angle):
     """Move a servo to an angle"""
     servos.set_servo(channel, angle)
     name = JOINTS.get(channel, f"Channel {channel}")
     print(f"[{channel}] {name} -> {angle}°")
 
+
 def m(channel, angle):
     """Short alias for move()"""
     move(channel, angle)
+
 
 def save(channel, neutral_angle):
     """Save the neutral angle for a servo"""
@@ -55,9 +57,11 @@ def save(channel, neutral_angle):
     calibration[channel] = offset
     print(f"Saved: [{channel}] {name} = {neutral_angle}° (offset: {offset:+d}°)")
 
+
 def s(channel, neutral_angle):
     """Short alias for save()"""
     save(channel, neutral_angle)
+
 
 def show():
     """Show current calibration data"""
@@ -72,6 +76,7 @@ def show():
         print("  (none saved yet)")
     print()
 
+
 def done():
     """Generate and print config.py content"""
     print("\n" + "=" * 50)
@@ -83,7 +88,7 @@ def done():
     content += "JOINTS = {\n"
     for ch in CHANNELS:
         name = JOINTS.get(ch, f"Channel {ch}")
-        content += f"    {ch:2d}: \"{name}\",\n"
+        content += f'    {ch:2d}: "{name}",\n'
     content += "}\n\n"
 
     content += "# Calibration offsets (degrees from 90)\n"
@@ -107,6 +112,7 @@ def done():
     print("3. Run: mpremote fs cp config.py :config.py")
     print("=" * 50)
 
+
 def help():
     """Show available commands"""
     print("""
@@ -128,6 +134,7 @@ Doggo Channels:
         name = JOINTS.get(ch, f"Channel {ch}")
         print(f"  {ch:2d}: {name}")
     print()
+
 
 # Show help on import
 print("\n" + "=" * 50)
