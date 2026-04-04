@@ -119,7 +119,9 @@ See `docs/micropython-getting-started.md` for the full calibration walkthrough.
 
 ## Control
 
-### Send commands
+The robot can be controlled via REST API or by sending a Python script over the air to the robot.
+
+### Send commands via REST API
 
 ```bash
 curl http://doggo.local/stand
@@ -145,12 +147,50 @@ curl -4 http://doggo.local/stand
 curl http://192.168.1.x/stand
 ```
 
-### REPL and scripts
+### Running Python scripts
+
+Run a script directly — it executes on the device and streams output back:
+
+```bash
+dog run src/demos/walk.py
+dog run src/demos/trot.py
+```
+
+Write your own script and run it the same way. Scripts import from the device filesystem, so all deployed modules are available:
+
+```python
+# my_sequence.py
+from poses import stand, rest
+from gaits.walk import walk_forward
+from gaits.trot import trot_forward
+import time
+
+stand()
+time.sleep(1)
+walk_forward(steps=4)
+trot_forward(steps=2)
+rest()
+```
+
+```bash
+dog run my_sequence.py
+```
+
+### Interactive REPL
+
+For one-off commands or exploring behaviour interactively:
 
 ```bash
 dog repl
-dog run src/demos/walk.py
-dog run src/demos/trot.py
+```
+
+```python
+>>> from poses import stand, sit, rest
+>>> stand()
+>>> sit()
+>>> from gaits.walk import walk_forward
+>>> walk_forward(steps=3)
+>>> rest()
 ```
 
 ### Deploy code updates
