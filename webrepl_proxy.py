@@ -13,21 +13,18 @@ entered with Ctrl+A only — no Ctrl+D, no reboot.
 File copies (fs cp) are handled directly via the WebREPL binary protocol,
 bypassing mpremote entirely for faster transfers.
 
+Host and password are read from wifi_config.py by default.
+
 Usage:
-    # File copy host → device (WebREPL binary protocol, no mpremote):
-    python webrepl_proxy.py <host> <password> fs cp local.py :remote.py
+    # Use wifi_config.py for host + password:
+    python webrepl_proxy.py repl
+    python webrepl_proxy.py run src/demos/walk.py
+    python webrepl_proxy.py fs cp local.py :remote.py
+    python webrepl_proxy.py fs ls
+    python webrepl_proxy.py                        # daemon mode
 
-    # Any mpremote command — all subcommands work (fs ls, fs tree, exec, etc.):
-    python webrepl_proxy.py <host> <password> repl
-    python webrepl_proxy.py <host> <password> run src/demos/walk.py
-    python webrepl_proxy.py <host> <password> fs ls
-    python webrepl_proxy.py <host> <password> fs tree
-
-    # Daemon mode — proxy stays running, prints PTY path for manual mpremote:
-    python webrepl_proxy.py <host> <password>
-
-    # Custom WebREPL port (default 8266) — pass as a numeric third argument:
-    python webrepl_proxy.py <host> <password> 8266 repl
+    # Custom WebREPL port — pass as a leading numeric argument:
+    python webrepl_proxy.py 8266 repl
 """
 
 import os
@@ -244,21 +241,33 @@ def _run_command(ws, cmd_args):
     return returncode
 
 
+def _load_wifi_config():
+    root = os.path.dirname(os.path.abspath(__file__))
+    sys.path.insert(0, root)
+    try:
+        import wifi_config
+        host = getattr(wifi_config, "HOSTNAME", "doggo") + ".local"
+        password = getattr(wifi_config, "WEBREPL_PASSWORD", None)
+        return host, password
+    except ImportError:
+        return None, None
+
+
 def main():
-    if len(sys.argv) < 3:
-        print(__doc__)
+    host, password = _load_wifi_config()
+
+    if host is None or password is None:
+        print("Error: wifi_config.py not found. Create it from wifi_config_template.py.")
         sys.exit(1)
 
-    host = sys.argv[1]
-    password = sys.argv[2]
-
-    # Optional numeric third arg is the WebREPL port; everything after is cmd.
-    if len(sys.argv) > 3 and sys.argv[3].isdigit():
-        ws_port = int(sys.argv[3])
-        cmd_args = sys.argv[4:]
+    # Optional leading numeric arg is the WebREPL port; everything after is cmd.
+    args = sys.argv[1:]
+    if args and args[0].isdigit():
+        ws_port = int(args[0])
+        cmd_args = args[1:]
     else:
         ws_port = 8266
-        cmd_args = sys.argv[3:]
+        cmd_args = args
 
     print(f"Connecting to WebREPL at {host}:{ws_port}...")
     ws = _WS(socket.socket())
