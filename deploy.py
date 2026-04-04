@@ -1,12 +1,10 @@
 #!/usr/bin/env python3
-"""Deploy project source files to the Bittle over WebREPL.
+"""Deploy project source files to the Doggo over WebREPL.
 
 Usage:
-    python deploy.py <host> <password> [--port PORT]
-
-Examples:
-    python deploy.py doggo.local doggo
-    python deploy.py 192.168.1.42 doggo
+    python deploy.py                        # reads host + password from wifi_config.py
+    python deploy.py <host> <password>      # override host and password
+    python deploy.py --port PORT            # override WebREPL port (default 8266)
 
 All source files are uploaded in a single WebREPL session (fast — one
 connection, one login). Optional files (config.py, wifi_config.py) are
@@ -20,8 +18,20 @@ import os
 import socket
 import sys
 
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "src"))
+_ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(_ROOT, "src"))
+sys.path.insert(0, _ROOT)
 from webrepl_proxy import _WS, _put_file  # noqa: E402
+
+
+def _load_wifi_config():
+    try:
+        import wifi_config
+        host = getattr(wifi_config, "HOSTNAME", "doggo") + ".local"
+        password = getattr(wifi_config, "WEBREPL_PASSWORD", None)
+        return host, password
+    except ImportError:
+        return None, None
 
 # ANSI colour helpers
 _RESET = "\033[0m"
@@ -91,13 +101,22 @@ def _repl_exec(ws, code):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Deploy source files to the Bittle over WebREPL.")
-    parser.add_argument("host", help="Device hostname or IP (e.g. doggo.local or 192.168.1.x)")
-    parser.add_argument("password", help="WebREPL password")
+    cfg_host, cfg_password = _load_wifi_config()
+
+    parser = argparse.ArgumentParser(description="Deploy source files to the Doggo over WebREPL.")
+    parser.add_argument("host", nargs="?", default=cfg_host,
+                        help="Device hostname or IP (default: from wifi_config.py)")
+    parser.add_argument("password", nargs="?", default=cfg_password,
+                        help="WebREPL password (default: from wifi_config.py)")
     parser.add_argument(
         "--port", type=int, default=8266, metavar="PORT", help="WebREPL port (default: 8266)"
     )
     args = parser.parse_args()
+
+    if args.host is None or args.password is None:
+        print(_c(_RED, "Error: host/password not provided and wifi_config.py not found."))
+        print("Either create wifi_config.py or pass them as arguments.")
+        sys.exit(1)
 
     files = list(MANIFEST)
     for local, remote in OPTIONAL:

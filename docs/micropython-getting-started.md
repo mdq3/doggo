@@ -401,7 +401,7 @@ mpremote fs cp wifi_config.py :wifi_config.py + \
 Press reset. Once WiFi is up, deploy everything else over the air:
 
 ```bash
-python deploy.py doggo.local <password>
+python deploy.py
 ```
 
 Press reset again to load the deployed files.
@@ -447,19 +447,19 @@ You can also use the hostname: `curl -4 http://doggo.local/stand` (the `-4` flag
 
 ### 11e: Run scripts and transfer files over WiFi
 
-mpremote does not support WebREPL natively. Use `src/webrepl_proxy.py` — it connects to WebREPL, then runs `mpremote` for you, so the whole thing is a single command:
+mpremote does not support WebREPL natively. Use `webrepl_proxy.py` — it reads host and password from `wifi_config.py` automatically and runs `mpremote` for you:
 
 ```bash
-python src/webrepl_proxy.py 192.168.1.x doggo repl
-python src/webrepl_proxy.py 192.168.1.x doggo run src/demos/walk.py
-python src/webrepl_proxy.py 192.168.1.x doggo fs cp src/poses.py :poses.py
-python src/webrepl_proxy.py 192.168.1.x doggo fs ls
+python webrepl_proxy.py repl
+python webrepl_proxy.py run src/demos/walk.py
+python webrepl_proxy.py fs cp src/poses.py :poses.py
+python webrepl_proxy.py fs ls
 ```
 
 The proxy exits when mpremote exits. For repeated use, a shell alias helps:
 
 ```bash
-alias dog='python src/webrepl_proxy.py 192.168.1.x doggo'
+alias dog='python webrepl_proxy.py'
 
 dog repl
 dog run src/demos/walk.py
@@ -470,7 +470,7 @@ For a persistent proxy (stays alive between mpremote invocations), omit the subc
 
 ```bash
 # Terminal 1:
-python src/webrepl_proxy.py 192.168.1.x doggo
+python webrepl_proxy.py
 # prints: PTY ready: /dev/ttys003
 
 # Terminal 2:
@@ -490,7 +490,7 @@ dog fs cp src/server.py :server.py
 Or use `deploy.py` to upload everything at once, then press reset:
 
 ```bash
-python deploy.py doggo.local <password>
+python deploy.py
 ```
 
 ### Disconnect USB
@@ -664,7 +664,7 @@ doggo/
 - Trot forward — 48-frame diagonal-pair gait from OpenCat `trF`
 
 ### ✅ Phase 3: WiFi Control (Complete)
-- WebREPL — wireless REPL + file transfer via `src/webrepl_proxy.py` PTY bridge
+- WebREPL — wireless REPL + file transfer via `webrepl_proxy.py` PTY bridge
 - HTTP command server — `curl /stand`, `/walk?steps=N`, `/trot?steps=N`, etc.
 - `src/boot.py` + `src/main.py` + `src/server.py`
 - `deploy.py` — single-command WiFi deploy

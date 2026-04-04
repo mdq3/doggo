@@ -408,7 +408,7 @@ HOSTNAME = "doggo"
 
 ---
 
-### `src/webrepl_proxy.py`
+### `webrepl_proxy.py`
 
 **Purpose:** Host-side PTY bridge that lets `mpremote` talk to the device over WebREPL. mpremote has no built-in WebREPL transport; this proxy creates a pseudo-terminal (PTY) that mpremote treats as a normal serial port.
 
@@ -416,13 +416,13 @@ HOSTNAME = "doggo"
 
 **Usage:**
 ```bash
-# Single command — proxy connects, runs mpremote, then exits:
-python src/webrepl_proxy.py 192.168.1.x <password> repl
-python src/webrepl_proxy.py 192.168.1.x <password> run src/demos/walk.py
-python src/webrepl_proxy.py 192.168.1.x <password> fs cp src/poses.py :poses.py
+# Reads host + password from wifi_config.py automatically:
+python webrepl_proxy.py repl
+python webrepl_proxy.py run src/demos/walk.py
+python webrepl_proxy.py fs cp src/poses.py :poses.py
 
 # Daemon mode — stays running between mpremote invocations:
-python src/webrepl_proxy.py 192.168.1.x <password>
+python webrepl_proxy.py
 # prints: PTY ready: /dev/ttys003
 # then: mpremote connect /dev/ttys003 repl
 ```
@@ -593,15 +593,13 @@ mpremote fs cp wifi_config.py :wifi_config.py + \
     fs cp src/main.py :main.py
 
 # Press reset, then deploy everything over WiFi:
-python deploy.py doggo.local <password>
+python deploy.py
 
 # Then wireless:
 curl http://192.168.1.x/stand
 curl http://192.168.1.x/battery
-python src/webrepl_proxy.py 192.168.1.x <password> fs ls   # list device files
-python src/webrepl_proxy.py 192.168.1.x <password> repl    # interactive REPL
+python webrepl_proxy.py fs ls   # list device files
+python webrepl_proxy.py repl    # interactive REPL
 ```
 
----
 
-**Last Updated:** 2026-03-23

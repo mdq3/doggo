@@ -34,10 +34,19 @@ from poses import move_to, play_frame, stand
 
 # --- Trajectory parameters -------------------------------------------------
 _BODY_HEIGHT = 101.0  # mm: foot z during stance (from FK at stand pose)
-_STEP_LENGTH = 20.0  # mm: foot sweeps ±this value in x each half-cycle
-_STEP_HEIGHT = 20.0  # mm: foot clearance above ground during swing
+_STEP_LENGTH = 15.0  # mm: foot sweeps ±this value in x each half-cycle
+_STEP_HEIGHT = 8.0   # mm: foot clearance above ground during swing
+# _STEP_HEIGHT=20 drove FR/RR shoulder servos to commanded ~48° (calibrated ~15°,
+# near physical stop) and leg servos to 169° — causing violent servo stall.
+# At 8mm, worst-case FR/RR_sh ≈ 55° commanded and leg servos ≤ 145°.
 _CYCLE_FRAMES = 48  # frames per full cycle
 _FRAME_DELAY = 0.008  # seconds per frame (8ms minimum for dynamic stability)
+
+# Safety bounds: commanded angles are clamped before dispatch to prevent
+# servo stall at physical stops. Bounds are conservative relative to the
+# working keyframe trot range (FL_sh 63-123, FR_sh 61-116, legs 49-144).
+_CMD_MIN = 45.0
+_CMD_MAX = 150.0
 
 # Left/right trim: small alpha offset applied to left-side shoulders (FL, RL).
 # Positive corrects rightward drift (same convention as trot.py _TRIM).
@@ -107,7 +116,26 @@ def trot_forward(steps=None, use_imu=True):
         except Exception as e:
             print("IMU init failed:", e)
 
-    move_to(_stand_frame(), speed=2)
+    def _frame_at(fi, p_adj=0.0, r_adj=0.0):
+        phase1 = fi / _CYCLE_FRAMES
+        phase2 = (fi + _CYCLE_FRAMES // 2) / _CYCLE_FRAMES % 1.0
+        x1, z1 = _foot_pos(phase1)
+        x2, z2 = _foot_pos(phase2)
+        if phase1 < 0.5:
+            z1 += p_adj + r_adj
+        if phase2 < 0.5:
+            z2 += -p_adj + r_adj
+        a_fl, g_fl = ik(x1, z1)
+        a_rr, g_rr = ik(x1, z1)
+        a_fr, g_fr = ik(x2, z2)
+        a_rl, g_rl = ik(x2, z2)
+        a_fl += _TRIM
+        a_rl += _TRIM
+        raw = leg_frame(a_fl, g_fl, a_fr, g_fr, a_rr, g_rr, a_rl, g_rl)
+        return {ch: _clamp(a, _CMD_MIN, _CMD_MAX) for ch, a in raw.items()}
+
+    # Interpolate to frame 0 before starting — avoids a jerk from stand pose
+    move_to(_frame_at(0), speed=2)
 
     count = 0
     try:
@@ -115,11 +143,6 @@ def trot_forward(steps=None, use_imu=True):
             for fi in range(_CYCLE_FRAMES):
                 t0 = ticks_us()
 
-                # Phase for each diagonal (180° offset between them)
-                phase1 = fi / _CYCLE_FRAMES
-                phase2 = (fi + _CYCLE_FRAMES // 2) / _CYCLE_FRAMES % 1.0
-
-                # IMU correction
                 if imu is not None:
                     try:
                         pitch, roll = imu.read()
@@ -130,30 +153,7 @@ def trot_forward(steps=None, use_imu=True):
                 else:
                     p_adj = r_adj = 0.0
 
-                # Foot positions from trajectory
-                x1, z1 = _foot_pos(phase1)  # diagonal 1: FL + RR
-                x2, z2 = _foot_pos(phase2)  # diagonal 2: FR + RL
-
-                # Apply IMU correction to z on stance legs only (foot on ground).
-                # Stance = phase < 0.5.  Correction grouped by diagonal:
-                #   Diagonal 1 (FL+RR): +pitch_adj + roll_adj
-                #   Diagonal 2 (FR+RL): -pitch_adj + roll_adj
-                if phase1 < 0.5:
-                    z1 += p_adj + r_adj
-                if phase2 < 0.5:
-                    z2 += -p_adj + r_adj
-
-                # Solve IK
-                a_fl, g_fl = ik(x1, z1)
-                a_rr, g_rr = ik(x1, z1)
-                a_fr, g_fr = ik(x2, z2)
-                a_rl, g_rl = ik(x2, z2)
-
-                # Left-side trim to correct yaw drift
-                a_fl += _TRIM
-                a_rl += _TRIM
-
-                frame = leg_frame(a_fl, g_fl, a_fr, g_fr, a_rr, g_rr, a_rl, g_rl)
+                frame = _frame_at(fi, p_adj, r_adj)
                 play_frame(frame)
 
                 remaining = _FRAME_US - ticks_diff(ticks_us(), t0)

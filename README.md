@@ -141,7 +141,7 @@ mpremote fs cp wifi_config.py :wifi_config.py + \
 Reboot (press the reset button). Once WiFi is up, deploy everything else over the air:
 
 ```bash
-python deploy.py doggo.local <password>
+python deploy.py
 ```
 
 Press reset again to load the deployed files.
@@ -189,18 +189,18 @@ curl -4 http://doggo.local/stand
 
 ### 5. Run scripts and transfer files over WiFi
 
-mpremote has no built-in WebREPL support. Use `src/webrepl_proxy.py` — pass the mpremote subcommand directly and it handles everything:
+mpremote has no built-in WebREPL support. Use `webrepl_proxy.py` — it reads host and password from `wifi_config.py` automatically:
 
 ```bash
-python src/webrepl_proxy.py 192.168.1.x doggo repl
-python src/webrepl_proxy.py 192.168.1.x doggo run src/demos/walk.py
-python src/webrepl_proxy.py 192.168.1.x doggo fs cp src/poses.py :poses.py
+python webrepl_proxy.py repl
+python webrepl_proxy.py run src/demos/walk.py
+python webrepl_proxy.py fs cp src/poses.py :poses.py
 ```
 
 A shell alias makes this even shorter:
 
 ```bash
-alias dog='python src/webrepl_proxy.py 192.168.1.x doggo'
+alias dog='python webrepl_proxy.py'
 dog repl
 dog run src/demos/walk.py
 dog fs cp src/poses.py :poses.py
@@ -218,7 +218,7 @@ dog fs cp src/server.py :server.py
 Or use `deploy.py` to upload everything at once:
 
 ```bash
-python deploy.py doggo.local <password>
+python deploy.py
 ```
 
 ---

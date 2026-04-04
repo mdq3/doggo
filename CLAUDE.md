@@ -26,7 +26,7 @@ src/demos/walk.py           — demo: stand → walk → rest
 src/server.py               — HTTP command server (_thread + raw sockets, port 80)
 src/boot.py                 — WiFi connect + mDNS hostname + WebREPL start (runs on every boot)
 src/main.py                 — HTTP server loop (runs after boot.py)
-src/webrepl_proxy.py        — host-side PTY proxy: bridges mpremote ↔ WebREPL WebSocket
+webrepl_proxy.py            — host-side PTY proxy: bridges mpremote ↔ WebREPL WebSocket
 src/configuration/wifi_config_template.py — credential template (copy → wifi_config.py)
 ```
 
@@ -50,7 +50,7 @@ src/configuration/wifi_config_template.py — credential template (copy → wifi
 | `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/turn_left` `/turn_right` `/pivot_left` `/pivot_right` `/bound_left` `/bound_right` `/trot` `/battery` `/info` | `server.py` |
 | `src/boot.py` | Runs on boot: WiFi connect + mDNS hostname registration + WebREPL start | `boot.py` |
 | `src/main.py` | Runs after boot: starts HTTP server loop | `main.py` |
-| `src/webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL | n/a (host only) |
+| `webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL | n/a (host only) |
 | `src/configuration/wifi_config_template.py` | Credential + hostname template (checked in; copy to `wifi_config.py`) | n/a (host only) |
 | `src/demos/stand.py` | Stand demo script | run via `mpremote run` |
 | `src/demos/walk.py` | Walk demo script | run via `mpremote run` |
@@ -166,7 +166,7 @@ python deploy.py doggo.local <password>
 ### mpremote over WiFi (after WiFi setup)
 ```bash
 # Terminal 1
-python src/webrepl_proxy.py 192.168.1.x <password>
+python webrepl_proxy.py
 # Terminal 2 — use the PTY path printed by the proxy
 mpremote connect /dev/ttysNNN repl
 mpremote connect /dev/ttysNNN run src/demos/walk.py
