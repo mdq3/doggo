@@ -113,7 +113,7 @@ Paste the output into `config.py` at the repo root, then upload it:
 dog fs cp config.py :config.py
 ```
 
-See `docs/micropython-getting-started.md` for the full calibration walkthrough.
+For detailed calibration instructions and servo identification, see [hardware setup docs](docs/hardware-setup.md).
 
 ---
 
@@ -204,6 +204,6 @@ dog fs cp src/poses.py :poses.py   # upload a single file
 
 ## Documentation
 
-- **[Getting Started Guide](docs/micropython-getting-started.md)** — full step-by-step setup
+- **[Hardware Setup & Calibration](docs/micropython-getting-started.md)** — flashing, servo verification, channel identification, calibration
 - **[File Reference Guide](docs/file-reference-guide.md)** — every file explained
 - **[Hardware & OpenCat Reference](docs/hardware-and-opencat-reference.md)** — pinout, angle conversion, restoring firmware
