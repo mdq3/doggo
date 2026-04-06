@@ -499,10 +499,6 @@ Architecture notes and project conventions for Claude Code sessions.
 
 How to restore the stock OpenCat firmware (from backup or Petoi Desktop App).
 
-### `docs/flashing-opencat-arduino-bins.md`
-
-How to flash compiled Arduino `.bin` files when you have multiple binary parts.
-
 ### `docs/micropython-detailed-plan.md`
 
 Full technical analysis of the MicroPython approach, IK examples, roadmap details.

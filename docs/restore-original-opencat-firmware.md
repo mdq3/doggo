@@ -274,7 +274,6 @@ If you want the absolute latest firmware or need to customize the code:
    - `0xe000` - Boot app configuration
    - `0x10000` - Main application firmware
 
-   **For detailed instructions on locating and flashing these four files, see `FLASHING_ARDUINO_BINS.md`**
 
 ---
 

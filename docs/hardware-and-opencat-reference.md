@@ -146,8 +146,6 @@ Use the **Petoi Desktop App → Firmware Uploader** to download and flash the st
 
 If you compiled OpenCat from source with Arduino IDE and have multiple `.bin` files (`.ino.bin`, `.ino.bootloader.bin`, `.ino.partitions.bin`):
 
-See `docs/flashing-opencat-arduino-bins.md` for step-by-step instructions.
-
 See `docs/restore-original-opencat-firmware.md` for the complete restoration guide.
 
 ---
