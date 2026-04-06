@@ -123,21 +123,27 @@ The robot can be controlled via REST API or by sending a Python script over the 
 
 ### Send commands via REST API
 
+| Route | Parameters | Action |
+|-------|-----------|--------|
+| `/stand` | | Stand up |
+| `/sit` | | Sit down |
+| `/rest` | | Lie flat |
+| `/walk` | `steps=N` | Walk forward N cycles |
+| `/walk_back` | `steps=N` | Walk backward N cycles |
+| `/turn_left` | `steps=N` | Arc turn left |
+| `/turn_right` | `steps=N` | Arc turn right |
+| `/pivot_left` | `steps=N` | Rotate in place left |
+| `/pivot_right` | `steps=N` | Rotate in place right |
+| `/bound_left` | `steps=N` | Tight arc turn left |
+| `/bound_right` | `steps=N` | Tight arc turn right |
+| `/trot` | `steps=N` `imu=0/1` | Diagonal trot (IMU stabilization on by default) |
+| `/battery` | | Battery voltage and charge level |
+| `/info` | | Device diagnostics (RAM, flash, CPU, WiFi, uptime) |
+
 ```bash
-curl http://doggo.local/stand
-curl http://doggo.local/sit
-curl http://doggo.local/rest
 curl http://doggo.local/walk?steps=3
-curl http://doggo.local/walk_back?steps=3
-curl http://doggo.local/turn_left?steps=1
-curl http://doggo.local/turn_right?steps=1
-curl http://doggo.local/pivot_left?steps=1   # in-place rotation
-curl http://doggo.local/pivot_right?steps=1
-curl http://doggo.local/bound_left?steps=1   # tight arc turn
-curl http://doggo.local/bound_right?steps=1
-curl http://doggo.local/trot?steps=2         # fast diagonal-pair trot with IMU stabilization
+curl http://doggo.local/trot?steps=2
 curl http://doggo.local/battery
-curl http://doggo.local/info
 ```
 
 If mDNS is slow, use the IP directly or pass `-4` to skip IPv6 resolution:
@@ -205,5 +211,4 @@ dog fs cp src/poses.py :poses.py   # upload a single file
 ## Documentation
 
 - **[Hardware Setup & Calibration](docs/micropython-getting-started.md)** — flashing, servo verification, channel identification, calibration
-- **[File Reference Guide](docs/file-reference-guide.md)** — every file explained
 - **[Hardware & OpenCat Reference](docs/hardware-and-opencat-reference.md)** — pinout, angle conversion, restoring firmware

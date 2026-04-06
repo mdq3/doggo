@@ -172,6 +172,29 @@ mpremote fs cp config.py :config.py
 
 ---
 
+## Gait tuning
+
+Each gait has tuning constants at the top of its file. Notes on the non-obvious ones:
+
+### Walk (`src/gaits/walk.py`)
+
+- `_FRAME_DELAY = 0.016` — plays every 2nd frame (~0.9s cycle). Too fast causes sliding; too slow looks sluggish.
+- `_SHOULDER_SQUEEZE = 0.85` — compresses the shoulder sweep around the balance midpoint (`_SHOULDER_MID = 30`). Prevents front/rear foot clash. Must be centred on `_SHOULDER_MID`, not zero — scaling toward zero causes forward/backward lean.
+
+### Walk back (`src/gaits/walk_back.py`)
+
+- `_TRIM` — raw degree offset added to left-side shoulders (FL, RL) to correct sideways drift. Positive corrects rightward curve. Tune until the robot goes straight.
+
+### Trot (`src/gaits/trot.py`)
+
+- `_FRAME_DELAY = 0.008` — 8ms/frame is the hard minimum. The trot relies on dynamic momentum; at ≥10ms the robot falls.
+- `_SHOULDER_SQUEEZE` — compresses stride around `_SHOULDER_MID = 30`. 0.87 is the stable value; 0.85 causes falls, 1.0 hobbles excessively.
+- `_K_ROLL`, `_K_PITCH` — IMU correction gains. The trot wobble is primarily translational (CoM swaying between support diagonals), so shoulder squeeze has more effect than IMU gain on reducing it.
+- IMU correction is grouped by diagonal, not by side: diagonal 1 (FL+RR) gets `+pitch_adj + roll_adj`, diagonal 2 (FR+RL) gets `-pitch_adj + roll_adj`.
+- Timing uses `ticks_us()` to measure per-frame compute time and subtracts it from the sleep — servo commands fire at consistent 8ms intervals regardless of IMU read overhead (~0.5ms).
+
+---
+
 ## Resources
 
 - [MicroPython ESP32 docs](https://docs.micropython.org/en/latest/esp32/quickref.html)
