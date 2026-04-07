@@ -5,15 +5,15 @@ Routes:
   GET /sit
   GET /rest
   GET /walk?steps=N
-  GET /walk_back?steps=N
-  GET /turn_left?steps=N
-  GET /turn_right?steps=N
-  GET /pivot_left?steps=N
-  GET /pivot_right?steps=N
-  GET /bound_left?steps=N
-  GET /bound_right?steps=N
+  GET /walk-back?steps=N
+  GET /turn-left?steps=N
+  GET /turn-right?steps=N
+  GET /pivot-left?steps=N
+  GET /pivot-right?steps=N
+  GET /bound-left?steps=N
+  GET /bound-right?steps=N
   GET /trot?steps=N&imu=0
-  GET /trot_ik?steps=N&imu=0
+  GET /trot-ik?steps=N&imu=0
   GET /battery
   GET /info
 
@@ -76,15 +76,15 @@ def _handle(conn):
                 b"  GET /rest\n\n"
                 b"Gaits (optional ?steps=N):\n"
                 b"  GET /walk\n"
-                b"  GET /walk_back\n"
-                b"  GET /turn_left\n"
-                b"  GET /turn_right\n"
-                b"  GET /pivot_left\n"
-                b"  GET /pivot_right\n"
-                b"  GET /bound_left\n"
-                b"  GET /bound_right\n"
+                b"  GET /walk-back\n"
+                b"  GET /turn-left\n"
+                b"  GET /turn-right\n"
+                b"  GET /pivot-left\n"
+                b"  GET /pivot-right\n"
+                b"  GET /bound-left\n"
+                b"  GET /bound-right\n"
                 b"  GET /trot          (default steps=2, imu=1)\n"
-                b"  GET /trot_ik       (default steps=2, imu=1)\n\n"
+                b"  GET /trot-ik       (default steps=2, imu=1)\n\n"
                 b"Diagnostics:\n"
                 b"  GET /battery\n"
                 b"  GET /info\n",
@@ -98,23 +98,23 @@ def _handle(conn):
             rest()
         elif path == "/walk":
             walk(steps=_parse_steps(qs))
-        elif path == "/walk_back":
+        elif path == "/walk-back":
             walk_back(steps=_parse_steps(qs))
-        elif path == "/turn_left":
+        elif path == "/turn-left":
             turn_left(steps=_parse_steps(qs))
-        elif path == "/turn_right":
+        elif path == "/turn-right":
             turn_right(steps=_parse_steps(qs))
-        elif path == "/pivot_left":
+        elif path == "/pivot-left":
             pivot_left(steps=_parse_steps(qs))
-        elif path == "/pivot_right":
+        elif path == "/pivot-right":
             pivot_right(steps=_parse_steps(qs))
-        elif path == "/bound_left":
+        elif path == "/bound-left":
             bound_left(steps=_parse_steps(qs))
-        elif path == "/bound_right":
+        elif path == "/bound-right":
             bound_right(steps=_parse_steps(qs))
         elif path == "/trot":
             trot_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
-        elif path == "/trot_ik":
+        elif path == "/trot-ik":
             trot_ik_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
         elif path == "/battery":
             v, pct, low = battery_status()

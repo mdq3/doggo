@@ -55,7 +55,7 @@ src/configuration/wifi_config_template.py — credential template (copy → wifi
 | `src/imu.py` | ICM-42670-P IMU driver — I2C 0x69, SDA=GPIO21, SCL=GPIO22; complementary filter → `(pitch, roll)` | `imu.py` |
 | `src/kinematics/leg.py` | 2-DOF planar leg IK/FK — `fk(alpha, gamma)→(x,z)`, `ik(x,z)→(alpha, gamma)`; L1=50mm, L2=55mm | `kinematics/leg.py` |
 | `src/kinematics/doggo.py` | Servo angle conversion — physical `(alpha, gamma)` → commanded angles; `leg_frame()` builds 8-joint dict | `kinematics/doggo.py` |
-| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk_back` `/turn_left` `/turn_right` `/pivot_left` `/pivot_right` `/bound_left` `/bound_right` `/trot` `/trot_ik` `/battery` `/info` | `server.py` |
+| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk-back` `/turn-left` `/turn-right` `/pivot-left` `/pivot-right` `/bound-left` `/bound-right` `/trot` `/trot-ik` `/battery` `/info` | `server.py` |
 | `src/boot.py` | Runs on boot: WiFi connect + mDNS hostname registration + WebREPL start | `boot.py` |
 | `src/main.py` | Runs after boot: starts HTTP server loop | `main.py` |
 | `webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL | n/a (host only) |
@@ -197,6 +197,15 @@ python webrepl_proxy.py
 mpremote connect /dev/ttysNNN repl
 mpremote connect /dev/ttysNNN run src/demos/walk.py
 ```
+
+## Documentation maintenance
+
+When making code changes, keep `README.md` and `docs/` in sync:
+
+- **Route changes** (add/remove/rename) → update the routes table in `README.md` and the routes list in `src/server.py`'s docstring
+- **New files or modules** → add to the layer separation diagram and key files table in this file (`CLAUDE.md`)
+- **New gaits or demos** → add to the relevant deployment commands in `CLAUDE.md`
+- **Tuning constants or behaviour changes** → update `docs/hardware-setup.md` if that gait is documented there
 
 ## Linting
 

@@ -129,14 +129,15 @@ The robot can be controlled via REST API or by sending a Python script over the 
 | `/sit` | | Sit down |
 | `/rest` | | Lie flat |
 | `/walk` | `steps=N` | Walk forward N cycles |
-| `/walk_back` | `steps=N` | Walk backward N cycles |
-| `/turn_left` | `steps=N` | Arc turn left |
-| `/turn_right` | `steps=N` | Arc turn right |
-| `/pivot_left` | `steps=N` | Rotate in place left |
-| `/pivot_right` | `steps=N` | Rotate in place right |
-| `/bound_left` | `steps=N` | Tight arc turn left |
-| `/bound_right` | `steps=N` | Tight arc turn right |
+| `/walk-back` | `steps=N` | Walk backward N cycles |
+| `/turn-left` | `steps=N` | Arc turn left |
+| `/turn-right` | `steps=N` | Arc turn right |
+| `/pivot-left` | `steps=N` | Rotate in place left |
+| `/pivot-right` | `steps=N` | Rotate in place right |
+| `/bound-left` | `steps=N` | Tight arc turn left |
+| `/bound-right` | `steps=N` | Tight arc turn right |
 | `/trot` | `steps=N` `imu=0/1` | Diagonal trot (IMU stabilization on by default) |
+| `/trot-ik` | `steps=N` `imu=0/1` | IK-based trot with parametric foot trajectories |
 | `/battery` | | Battery voltage and charge level |
 | `/info` | | Device diagnostics (RAM, flash, CPU, WiFi, uptime) |
 
