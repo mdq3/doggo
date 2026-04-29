@@ -1,0 +1,25 @@
+{
+  "name": "doggo-blocks",
+  "productName": "Doggo Blocks",
+  "version": "1.0.0",
+  "description": "Block-based programming for Petoi Bittle",
+  "main": ".vite/build/main.js",
+  "scripts": {
+    "start": "electron-forge start",
+    "package": "electron-forge package",
+    "make": "electron-forge make"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@electron-forge/cli": "^7.6.0",
+    "@electron-forge/maker-zip": "^7.6.0",
+    "@electron-forge/plugin-auto-unpack-natives": "^7.6.0",
+    "@electron-forge/plugin-vite": "^7.6.0",
+    "electron": "^33.0.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.0.10"
+  },
+  "dependencies": {
+    "scratch-blocks": "^2.1.19"
+  }
+}
