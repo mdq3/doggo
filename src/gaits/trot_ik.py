@@ -12,14 +12,16 @@ At any moment one diagonal is in stance, the other is in swing.
 
 Tuning:
   Body drifts backward / no forward progress  → increase _STEP_LENGTH
-  Feet catching on floor                      → increase _STEP_HEIGHT
+  Feet catching on floor / colliding          → increase _STEP_HEIGHT
   Feet sliding on landing                     → decrease _STEP_LENGTH
   Too fast / unstable                         → increase _FRAME_DELAY (min 0.008)
   Too slow                                    → decrease _FRAME_DELAY
   Body height too low / servos straining      → decrease _BODY_HEIGHT
   Body height too high / tippy                → increase _BODY_HEIGHT
+  Pitches forward on start                    → decrease _X_OFFSET (more negative)
+  Pitches backward / no forward progress      → increase _X_OFFSET (toward 0)
   Curves left or right                        → adjust _TRIM (positive = corrects rightward drift)
-  Pitching nose-up/down                       → tune _K_PITCH
+  Pitching nose-up/down during gait          → tune _K_PITCH
   Rolling left/right                          → tune _K_ROLL
 """
 
@@ -34,11 +36,15 @@ from poses import move_to, play_frame, stand
 
 # --- Trajectory parameters -------------------------------------------------
 _BODY_HEIGHT = 101.0  # mm: foot z during stance (from FK at stand pose)
-_STEP_LENGTH = 15.0  # mm: foot sweeps ±this value in x each half-cycle
+_STEP_LENGTH = 12.0  # mm: foot sweeps ±this value in x each half-cycle
 _STEP_HEIGHT = 8.0   # mm: foot clearance above ground during swing
 # _STEP_HEIGHT=20 drove FR/RR shoulder servos to commanded ~48° (calibrated ~15°,
 # near physical stop) and leg servos to 169° — causing violent servo stall.
 # At 8mm, worst-case FR/RR_sh ≈ 55° commanded and leg servos ≤ 145°.
+# 12mm already pushes left-leg servos to ~26° (CMD_MIN=45) — too violent.
+_X_OFFSET = -5.0  # mm: shifts entire foot trajectory backward of shoulder
+# Negative offset biases foot contact behind the shoulder, counteracting the
+# ~10° forward shoulder lean of the stand pose that otherwise causes forward pitch.
 _CYCLE_FRAMES = 48  # frames per full cycle
 _FRAME_DELAY = 0.008  # seconds per frame (8ms minimum for dynamic stability)
 
@@ -76,11 +82,11 @@ def _foot_pos(phase):
     """
     if phase < 0.5:
         t = phase * 2.0  # 0 → 1 over stance
-        x = _STEP_LENGTH * (1.0 - 2.0 * t)  # +step_length → -step_length
+        x = _STEP_LENGTH * (1.0 - 2.0 * t) + _X_OFFSET  # +step_length → -step_length
         z = _BODY_HEIGHT
     else:
         t = (phase - 0.5) * 2.0  # 0 → 1 over swing
-        x = _STEP_LENGTH * (2.0 * t - 1.0)  # -step_length → +step_length
+        x = _STEP_LENGTH * (2.0 * t - 1.0) + _X_OFFSET  # -step_length → +step_length
         z = _BODY_HEIGHT - _STEP_HEIGHT * math.sin(t * math.pi)
     return x, z
 
