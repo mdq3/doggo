@@ -140,6 +140,11 @@ button:disabled {
   box-shadow: none !important;
 }
 
+.blocklyToolbox {
+  padding: 0 10px;
+  box-sizing: content-box;
+}
+
 .categoryBubble {
   border: none !important;
   outline: none !important;
