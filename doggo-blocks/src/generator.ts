@@ -41,10 +41,11 @@ export function createGenerator(): ScratchBlocks.CodeGenerator {
   // ─── UTILITY BLOCKS ───────────────────────────────────────────────────────
   gen.forBlock['math_number'] = (block) => [block.getFieldValue('NUM'), 0];
 
-  gen.forBlock['variables_get'] = (block) => [block.getFieldValue('VAR'), 0];
+  // getFieldValue('VAR') returns the variable UUID — use getText() for the name.
+  gen.forBlock['variables_get'] = (block) => [block.getField('VAR')!.getText(), 0];
 
   gen.forBlock['variables_set'] = (block, g) => {
-    const name = block.getFieldValue('VAR');
+    const name = block.getField('VAR')!.getText();
     const val = g.valueToCode(block, 'VALUE', 0) || '0';
     return `${name} = ${val}\n`;
   };

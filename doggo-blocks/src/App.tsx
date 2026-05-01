@@ -5,18 +5,67 @@ import { createGenerator } from './generator.js';
 import { toolboxConfig } from './toolbox.js';
 import { doggoTheme } from './theme.js';
 
-// Initialise once at module load — not inside the component.
 ScratchBlocks.ScratchMsgs.setLocale('en');
 defineBlocks();
 const pyGen = createGenerator();
+
+// Generate XML flyout elements for the Variables category.
+// Overrides the built-in Scratch callback which:
+//   (a) omits the math_number shadow on VALUE (Scratch expects reporter blocks),
+//   (b) re-registers CREATE_VARIABLE → prompt() on every call.
+// Our version adds the shadow and leaves the button callback alone.
+function variablesFlyoutXML(ws: ScratchBlocks.WorkspaceSvg): Element[] {
+  const vars = ws.getVariableMap().getAllVariables();
+  const items: Element[] = [];
+
+  const button = document.createElement('button');
+  button.setAttribute('text', 'Create Variable');
+  button.setAttribute('callbackKey', 'CREATE_VARIABLE');
+  items.push(button);
+
+  for (const v of vars) {
+    // set [var] to [0]
+    const setBlock = document.createElement('block');
+    setBlock.setAttribute('type', 'variables_set');
+    const setField = document.createElement('field');
+    setField.setAttribute('name', 'VAR');
+    setField.setAttribute('id', v.getId());
+    setField.textContent = v.getName();
+    setBlock.appendChild(setField);
+    const valueEl = document.createElement('value');
+    valueEl.setAttribute('name', 'VALUE');
+    const shadow = document.createElement('shadow');
+    shadow.setAttribute('type', 'math_number');
+    const numField = document.createElement('field');
+    numField.setAttribute('name', 'NUM');
+    numField.textContent = '0';
+    shadow.appendChild(numField);
+    valueEl.appendChild(shadow);
+    setBlock.appendChild(valueEl);
+    items.push(setBlock);
+
+    // [var] reporter
+    const getBlock = document.createElement('block');
+    getBlock.setAttribute('type', 'variables_get');
+    const getField = document.createElement('field');
+    getField.setAttribute('name', 'VAR');
+    getField.setAttribute('id', v.getId());
+    getField.textContent = v.getName();
+    getBlock.appendChild(getField);
+    items.push(getBlock);
+  }
+
+  return items;
+}
 
 export function App() {
   const blocklyDivRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<ScratchBlocks.WorkspaceSvg | null>(null);
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState('');
+  const [varDialog, setVarDialog] = useState(false);
+  const [varName, setVarName] = useState('');
 
-  // Inject the Blockly workspace once the div is mounted.
   useEffect(() => {
     if (!blocklyDivRef.current || workspaceRef.current) return;
 
@@ -30,7 +79,20 @@ export function App() {
     }) as ScratchBlocks.WorkspaceSvg;
     workspaceRef.current = ws;
 
-    // Add tooltips to the scratch zoom controls (SVG <title> = native browser tooltip).
+    // Replace the built-in 'VARIABLE' callback with ours.
+    ws.registerToolboxCategoryCallback(
+      'VARIABLE',
+      variablesFlyoutXML as unknown as (
+        ws: ScratchBlocks.Workspace,
+      ) => ScratchBlocks.utils.toolbox.FlyoutItemInfoArray,
+    );
+    // Our callback never calls registerButtonCallback(prompt), so this
+    // registration is permanent for the lifetime of the workspace.
+    ws.registerButtonCallback('CREATE_VARIABLE', () => {
+      setVarName('');
+      setVarDialog(true);
+    });
+
     for (const [cls, label] of [
       ['blocklyZoomIn', 'Zoom in'],
       ['blocklyZoomOut', 'Zoom out'],
@@ -44,7 +106,6 @@ export function App() {
       }
     }
 
-    // Keep workspace filling its container as the window resizes.
     const observer = new ResizeObserver(() => {
       (ScratchBlocks as unknown as { svgResize: (ws: ScratchBlocks.WorkspaceSvg) => void })
         .svgResize(ws);
@@ -58,7 +119,6 @@ export function App() {
     };
   }, []);
 
-  // Wire up IPC callbacks.
   useEffect(() => {
     window.doggo.onOutput((line) => console.log('[doggo]', line));
     window.doggo.onDone((exitCode) => {
@@ -82,6 +142,26 @@ export function App() {
     window.doggo.stopScript();
   }
 
+  function handleCreateVar() {
+    const name = varName.trim();
+    const ws = workspaceRef.current;
+    if (name && ws) {
+      ws.getVariableMap().createVariable(name);
+      const tb = ws.getToolbox() as unknown as {
+        getFlyout: () => {
+          show: (c: unknown) => void;
+          scrollToCategory: (item: unknown) => void;
+        };
+        getInitialFlyoutContents: () => unknown;
+        getToolboxItems: () => Array<{ getName: () => string }>;
+      };
+      tb.getFlyout().show(tb.getInitialFlyoutContents());
+      const varItem = tb.getToolboxItems().find((item) => item.getName?.() === 'Variables');
+      if (varItem) tb.getFlyout().scrollToCategory(varItem);
+    }
+    setVarDialog(false);
+  }
+
   return (
     <>
       <div id="toolbar">
@@ -94,6 +174,28 @@ export function App() {
         <span id="status">{status}</span>
       </div>
       <div id="blockly-div" ref={blocklyDivRef} />
+
+      {varDialog && (
+        <div className="dialog-overlay" onClick={() => setVarDialog(false)}>
+          <div className="dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>New variable</h3>
+            <input
+              autoFocus
+              placeholder="Variable name"
+              value={varName}
+              onChange={(e) => setVarName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handleCreateVar(); }
+                if (e.key === 'Escape') setVarDialog(false);
+              }}
+            />
+            <div className="dialog-buttons">
+              <button onClick={handleCreateVar} disabled={!varName.trim()}>OK</button>
+              <button onClick={() => setVarDialog(false)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }

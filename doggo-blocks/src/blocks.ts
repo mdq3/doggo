@@ -38,10 +38,11 @@ export function defineBlocks(): void {
 
   Blocks['variables_set'] = {
     init(this: ScratchBlocks.Block) {
-      this.appendValueInput('VALUE')
+      this.appendDummyInput()
         .appendField('set')
         .appendField(new FieldVariable('i'), 'VAR')
         .appendField('to');
+      this.appendValueInput('VALUE');
       this.setInputsInline(true);
       this.setPreviousStatement(true);
       this.setNextStatement(true);
