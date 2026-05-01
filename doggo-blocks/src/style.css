@@ -116,6 +116,13 @@ button:disabled {
   min-height: 0;
 }
 
+#code-panel pre,
+#code-panel code,
+#code-panel span {
+  font-family: 'Sono Variable', 'Sono', monospace !important;
+  font-weight: 700 !important;
+}
+
 #btn-code {
   margin-left: auto;
   background: #313244;

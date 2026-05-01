@@ -1,5 +1,6 @@
-// Allow Vite-handled CSS imports in TypeScript.
+// Allow Vite-handled CSS and font package imports in TypeScript.
 declare module '*.css';
+declare module '@fontsource-variable/sono';
 
 // Globals injected by @electron-forge/plugin-vite into the main process bundle.
 declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;

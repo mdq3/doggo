@@ -202,7 +202,7 @@ export function App() {
             customStyle={{
               margin: 0,
               flex: 1,
-              fontSize: '12px',
+              fontSize: '13px',
               lineHeight: '1.6',
               background: '#1e1e2e',
               minWidth: '360px',
