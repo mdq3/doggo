@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Play, Square, Code2 } from 'lucide-react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import * as ScratchBlocks from 'scratch-blocks';
 import { defineBlocks } from './blocks.js';
 import { createGenerator } from './generator.js';
@@ -194,7 +196,22 @@ export function App() {
           <div id="code-panel-header">
             <span>Generated Python</span>
           </div>
-          <pre id="code-output">{generatedCode}</pre>
+          <SyntaxHighlighter
+            language="python"
+            style={vscDarkPlus}
+            customStyle={{
+              margin: 0,
+              flex: 1,
+              fontSize: '12px',
+              lineHeight: '1.6',
+              background: '#1e1e2e',
+              minWidth: '360px',
+              height: '100%',
+              overflow: 'auto',
+            }}
+          >
+            {generatedCode}
+          </SyntaxHighlighter>
         </div>
       </div>
 

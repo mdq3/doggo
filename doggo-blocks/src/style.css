@@ -110,17 +110,10 @@ button:disabled {
   letter-spacing: 0.05em;
 }
 
-#code-output {
+/* SyntaxHighlighter renders its own pre — just ensure the wrapper fills height */
+#code-panel.open > div:last-child {
   flex: 1;
-  margin: 0;
-  padding: 12px 14px;
-  font-family: 'Monaco', 'Menlo', 'Consolas', monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #cdd6f4;
-  overflow: auto;
-  white-space: pre;
-  min-width: 360px;
+  min-height: 0;
 }
 
 #btn-code {
