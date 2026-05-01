@@ -57,13 +57,13 @@ export const toolboxConfig = {
         { kind: 'block', type: 'doggo_sub', inputs: { A: numShadow(0), B: numShadow(0) } },
         { kind: 'block', type: 'doggo_mul', inputs: { A: numShadow(0), B: numShadow(0) } },
         { kind: 'block', type: 'doggo_div', inputs: { A: numShadow(0), B: numShadow(1) } },
-        { kind: 'sep' },
+
         { kind: 'block', type: 'doggo_lt',  inputs: { A: numShadow(0), B: numShadow(50) } },
         { kind: 'block', type: 'doggo_gt',  inputs: { A: numShadow(0), B: numShadow(50) } },
         { kind: 'block', type: 'doggo_eq',  inputs: { A: numShadow(0), B: numShadow(0) } },
         { kind: 'block', type: 'doggo_lte', inputs: { A: numShadow(0), B: numShadow(50) } },
         { kind: 'block', type: 'doggo_gte', inputs: { A: numShadow(0), B: numShadow(50) } },
-        { kind: 'sep' },
+
         { kind: 'block', type: 'doggo_and' },
         { kind: 'block', type: 'doggo_or' },
         { kind: 'block', type: 'doggo_not' },

@@ -14,6 +14,7 @@ A block-based programming interface for the Petoi Bittle X V2. Drag blocks to bu
 ```bash
 cd doggo-blocks
 npm install
+cp -r node_modules/scratch-blocks/media public/media   # copies workspace icons (gitignored)
 npm start
 ```
 
