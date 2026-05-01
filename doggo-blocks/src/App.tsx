@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
+import { Play, Square, Code2 } from 'lucide-react';
 import * as ScratchBlocks from 'scratch-blocks';
 import { defineBlocks } from './blocks.js';
 import { createGenerator } from './generator.js';
@@ -65,6 +66,8 @@ export function App() {
   const [status, setStatus] = useState('');
   const [varDialog, setVarDialog] = useState(false);
   const [varName, setVarName] = useState('');
+  const [codeOpen, setCodeOpen] = useState(false);
+  const [generatedCode, setGeneratedCode] = useState('# Place blocks to generate code');
 
   useEffect(() => {
     if (!blocklyDivRef.current || workspaceRef.current) return;
@@ -91,6 +94,11 @@ export function App() {
     ws.registerButtonCallback('CREATE_VARIABLE', () => {
       setVarName('');
       setVarDialog(true);
+    });
+
+    ws.addChangeListener(() => {
+      const code = pyGen.workspaceToCode(ws);
+      setGeneratedCode(code || '# Place blocks to generate code');
     });
 
     for (const [cls, label] of [
@@ -166,14 +174,29 @@ export function App() {
     <>
       <div id="toolbar">
         <button id="btn-run" onClick={handleRun} disabled={running}>
-          &#9654; Run
+          <Play size={14} /> Run
         </button>
         <button id="btn-stop" onClick={handleStop} disabled={!running}>
-          &#9632; Stop
+          <Square size={14} /> Stop
         </button>
         <span id="status">{status}</span>
+        <button
+          id="btn-code"
+          onClick={() => setCodeOpen((o) => !o)}
+          title="Toggle Python code viewer"
+        >
+          <Code2 size={14} /> Code
+        </button>
       </div>
-      <div id="blockly-div" ref={blocklyDivRef} />
+      <div id="main-area">
+        <div id="blockly-div" ref={blocklyDivRef} />
+        <div id="code-panel" className={codeOpen ? 'open' : ''}>
+          <div id="code-panel-header">
+            <span>Generated Python</span>
+          </div>
+          <pre id="code-output">{generatedCode}</pre>
+        </div>
+      </div>
 
       {varDialog && (
         <div className="dialog-overlay" onClick={() => setVarDialog(false)}>
