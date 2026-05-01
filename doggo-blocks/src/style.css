@@ -129,6 +129,30 @@ button:disabled {
   color: #cdd6f4;
 }
 
+/* ─── Toolbox sidebar category labels ───────────────────────────────── */
+.blocklyToolboxCategoryLabel,
+.blocklyToolboxCategory,
+.blocklyToolboxCategoryContainer {
+  font-family: 'Sono Variable', 'Sono', monospace !important;
+  font-weight: 500;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.categoryBubble {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ─── Block outlines — remove SVG stroke so blocks appear flat ───────── */
+.blocklyPath,
+.blocklyPathDark,
+.blocklyPathLight {
+  stroke: none !important;
+}
+
 /* ─── Blockly flyout "Make a Variable" button ───────────────────────── */
 .blocklyFlyoutButton .blocklyFlyoutButtonBackground {
   fill: #FF8C1A !important;
