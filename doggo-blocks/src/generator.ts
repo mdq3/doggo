@@ -9,10 +9,31 @@ export function createGenerator(): ScratchBlocks.CodeGenerator {
 
   const imports = new Set<string>();
 
-  const base = gen.workspaceToCode.bind(gen);
+  // Blockly 12's default scrub_() just returns the current block's code and
+  // ignores nextConnection. Override it to chain connected statement blocks.
+  gen.scrub_ = function (
+    block: ScratchBlocks.Block,
+    code: string,
+    opt_thisOnly?: boolean,
+  ): string {
+    const next = block.nextConnection?.targetBlock() ?? null;
+    const nextCode =
+      opt_thisOnly || !next ? '' : (this.blockToCode(next) as string);
+    return code + nextCode;
+  };
+
+  // Only generate code for block stacks that start with a doggo_on_start hat.
+  // Disconnected blocks are silently ignored — same model as Scratch.
   gen.workspaceToCode = (workspace: ScratchBlocks.Workspace): string => {
     imports.clear();
-    const body = base(workspace);
+    const body = workspace
+      .getTopBlocks(true)
+      .filter((b) => b.type === 'doggo_on_start')
+      .map((hat) => {
+        const first = hat.nextConnection?.targetBlock() ?? null;
+        return first ? (gen.blockToCode(first) as string) : '';
+      })
+      .join('');
     if (!imports.size) return body;
     return [...imports].sort().join('\n') + '\n\n' + body;
   };
@@ -27,6 +48,9 @@ export function createGenerator(): ScratchBlocks.CodeGenerator {
     const val = g.valueToCode(block, 'VALUE', 0) || '0';
     return `${name} = ${val}\n`;
   };
+
+  // ─── ON START HAT ─────────────────────────────────────────────────────────
+  gen.forBlock['doggo_on_start'] = () => '';
 
   // ─── POSES ────────────────────────────────────────────────────────────────
   gen.forBlock['doggo_stand'] = () => { imports.add('from poses import stand'); return 'stand()\n'; };

@@ -7,6 +7,14 @@ export const toolboxConfig = {
   contents: [
     {
       kind: 'category',
+      name: 'Events',
+      colour: '#FFAB19',
+      contents: [
+        { kind: 'block', type: 'doggo_on_start' },
+      ],
+    },
+    {
+      kind: 'category',
       name: 'Poses',
       colour: '#9966FF',
       contents: [

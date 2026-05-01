@@ -8,6 +8,15 @@ import * as ScratchBlocks from 'scratch-blocks';
 export function defineBlocks(): void {
   const { Blocks, FieldNumber, FieldVariable } = ScratchBlocks;
 
+  // ─── HAT BLOCK ────────────────────────────────────────────────────────────
+  Blocks['doggo_on_start'] = {
+    init(this: ScratchBlocks.Block) {
+      this.appendDummyInput().appendField('when ▶ run');
+      this.setNextStatement(true);
+      this.setStyle('hat_blocks');
+    },
+  };
+
   // ─── UTILITY BLOCKS ───────────────────────────────────────────────────────
   // math_number: scratch-blocks registers its own, but we override it so it
   // uses our doggo_operators style and has a clean number-only UI.
