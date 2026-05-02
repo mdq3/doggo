@@ -101,6 +101,10 @@ export function App() {
     ws.addChangeListener((event: ScratchBlocks.Events.Abstract) => {
       setGeneratedCode(pyGen.workspaceToCode(ws) || '# Place blocks to generate code');
 
+      if (event.type === 'delete') {
+        (ws as unknown as { trashcan?: { emptyContents: () => void } }).trashcan?.emptyContents();
+      }
+
       // Refresh the variables flyout when a variable is deleted or renamed.
       if (event.type === 'var_delete' || event.type === 'var_rename') {
         const tb = ws.getToolbox() as unknown as {
