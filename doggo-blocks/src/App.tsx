@@ -12,74 +12,34 @@ ScratchBlocks.ScratchMsgs.setLocale('en');
 defineBlocks();
 const pyGen = createGenerator();
 
-// Register a flyout inflater for 'category' items.
-const _noOpRect = { getHeight: () => 0, getWidth: () => 0 };
-const _noOpEl   = { moveBy: () => {}, getBoundingRectangle: () => _noOpRect };
-const _noOpItem = { getType: () => 'category', getElement: () => _noOpEl };
-ScratchBlocks.registry.register(
-  ScratchBlocks.registry.Type.FLYOUT_INFLATER,
-  'category',
-  class {
-    load()        { return _noOpItem; }
-    gapForItem()  { return 0; }
-    disposeItem() {}
-    setFlyout()   {}
-    getType()     { return 'category'; }
-  },
-);
+// Build the flat flyout item array that show() expects — one label + contents
+// per toolbox category, with Variables section updated for current variables.
+function buildFlyoutItems(
+  vars: ScratchBlocks.IVariableModel<ScratchBlocks.IVariableState>[],
+): ScratchBlocks.utils.toolbox.FlyoutItemInfoArray {
+  const numShadow = { shadow: { type: 'math_number', fields: { NUM: 0 } } };
+  // FieldVariable.loadState() expects { id, name, type } not a bare UUID string.
+  // One set block is enough (it has a dropdown); one get block per variable.
+  const firstVar = vars[0];
+  const varBlocks = [
+    ...(firstVar ? [{ kind: 'block', type: 'variables_set', fields: { VAR: { id: firstVar.getId(), name: firstVar.getName(), type: firstVar.getType() } }, inputs: { VALUE: numShadow } }] : []),
+    ...vars.map((v) => ({ kind: 'block', type: 'variables_get', fields: { VAR: { id: v.getId(), name: v.getName(), type: v.getType() } } })),
+  ];
 
-// Generate XML flyout elements for the Variables category.
-// Overrides the built-in Scratch callback which:
-//   (a) omits the math_number shadow on VALUE (Scratch expects reporter blocks),
-//   (b) re-registers CREATE_VARIABLE → prompt() on every call.
-// Our version adds the shadow and leaves the button callback alone.
-function variablesFlyoutXML(ws: ScratchBlocks.WorkspaceSvg): Element[] {
-  const vars = ws.getVariableMap().getAllVariables();
-  const items: Element[] = [];
-
-  const button = document.createElement('button');
-  button.setAttribute('text', 'Create Variable');
-  button.setAttribute('callbackKey', 'CREATE_VARIABLE');
-  items.push(button);
-
-  for (const v of vars) {
-    // set [var] to [0]
-    const setBlock = document.createElement('block');
-    setBlock.setAttribute('type', 'variables_set');
-    const setField = document.createElement('field');
-    setField.setAttribute('name', 'VAR');
-    setField.setAttribute('id', v.getId());
-    setField.textContent = v.getName();
-    setBlock.appendChild(setField);
-    const valueEl = document.createElement('value');
-    valueEl.setAttribute('name', 'VALUE');
-    const shadow = document.createElement('shadow');
-    shadow.setAttribute('type', 'math_number');
-    const numField = document.createElement('field');
-    numField.setAttribute('name', 'NUM');
-    numField.textContent = '0';
-    shadow.appendChild(numField);
-    valueEl.appendChild(shadow);
-    setBlock.appendChild(valueEl);
-    items.push(setBlock);
-
-    // [var] reporter
-    const getBlock = document.createElement('block');
-    getBlock.setAttribute('type', 'variables_get');
-    const getField = document.createElement('field');
-    getField.setAttribute('name', 'VAR');
-    getField.setAttribute('id', v.getId());
-    getField.textContent = v.getName();
-    getBlock.appendChild(getField);
-    items.push(getBlock);
-  }
-
-  return items;
+  return toolboxConfig.contents.flatMap((cat) => {
+    const label = { kind: 'label', text: cat.name };
+    if (cat.name === 'Variables') {
+      const button = { kind: 'button', text: 'Create Variable', callbackKey: 'CREATE_VARIABLE' };
+      return [label, button, ...varBlocks];
+    }
+    return [label, ...(cat.contents ?? [])];
+  });
 }
 
 export function App() {
   const blocklyDivRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<ScratchBlocks.WorkspaceSvg | null>(null);
+  const refreshVariablesRef = useRef<(() => void) | null>(null);
   const [running, setRunning] = useState(false);
   const [status, setStatus] = useState('');
   const [varDialog, setVarDialog] = useState(false);
@@ -98,20 +58,29 @@ export function App() {
       scrollbars: true,
       zoom: { controls: true, wheel: true, startScale: 0.85 },
       sounds: false,
-    }) as ScratchBlocks.WorkspaceSvg;
+    });
     workspaceRef.current = ws;
 
-    // Replace the built-in 'VARIABLE' callback with ours.
-    ws.registerToolboxCategoryCallback(
-      'VARIABLE',
-      variablesFlyoutXML,
-    );
-    // Our callback never calls registerButtonCallback(prompt), so this
-    // registration is permanent for the lifetime of the workspace.
     ws.registerButtonCallback('CREATE_VARIABLE', () => {
       setVarName('');
       setVarDialog(true);
     });
+
+    const refreshVariables = refreshVariablesRef.current = () => {
+      const vars = ws.getVariableMap().getAllVariables();
+      const items = buildFlyoutItems(vars);
+      ws.getToolbox()?.getFlyout()?.show(items);
+      // show() resets scroll to top — click the Variables sidebar item to scroll back.
+      setTimeout(() => {
+        const cats = blocklyDivRef.current?.querySelectorAll('.blocklyToolboxCategory');
+        for (const el of cats ?? []) {
+          if (el.querySelector('.blocklyToolboxCategoryLabel')?.textContent?.trim() === 'Variables') {
+            (el as HTMLElement).click();
+            break;
+          }
+        }
+      }, 50);
+    };
 
     ws.addChangeListener((event: ScratchBlocks.Events.Abstract) => {
       setGeneratedCode(pyGen.workspaceToCode(ws) || '# Place blocks to generate code');
@@ -120,13 +89,8 @@ export function App() {
         ws.trashcan?.emptyContents();
       }
 
-      // Refresh the variables flyout when a variable is deleted or renamed.
       if (event.type === 'var_delete' || event.type === 'var_rename') {
-        const tb = ws.getToolbox() as unknown as {
-          getFlyout: () => { show: (c: unknown) => void };
-          getInitialFlyoutContents: () => unknown;
-        };
-        tb.getFlyout().show(tb.getInitialFlyoutContents());
+        refreshVariables();
       }
     });
 
@@ -134,7 +98,7 @@ export function App() {
       ['blocklyZoomIn', 'Zoom in'],
       ['blocklyZoomOut', 'Zoom out'],
       ['blocklyZoomReset', 'Reset zoom'],
-    ] as const) {
+    ]) {
       const el = blocklyDivRef.current.querySelector(`.${cls}`);
       if (el) {
         const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
@@ -143,9 +107,7 @@ export function App() {
       }
     }
 
-    const observer = new ResizeObserver(() => {
-      ScratchBlocks.svgResize(ws);
-    });
+    const observer = new ResizeObserver(() => ScratchBlocks.svgResize(ws));
     observer.observe(blocklyDivRef.current);
 
     return () => {
@@ -183,17 +145,7 @@ export function App() {
     const ws = workspaceRef.current;
     if (name && ws) {
       ws.getVariableMap().createVariable(name);
-      const tb = ws.getToolbox() as unknown as {
-        getFlyout: () => {
-          show: (c: unknown) => void;
-          scrollToCategory: (item: unknown) => void;
-        };
-        getInitialFlyoutContents: () => unknown;
-        getToolboxItems: () => Array<{ getName: () => string }>;
-      };
-      tb.getFlyout().show(tb.getInitialFlyoutContents());
-      const varItem = tb.getToolboxItems().find((item) => item.getName?.() === 'Variables');
-      if (varItem) tb.getFlyout().scrollToCategory(varItem);
+      refreshVariablesRef.current?.();
     }
     setVarDialog(false);
   }

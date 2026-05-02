@@ -72,8 +72,10 @@ export const toolboxConfig = {
     {
       kind: 'category',
       name: 'Variables',
-      custom: 'VARIABLE',
       colour: '#FF8C1A',
+      contents: [
+        { kind: 'button', text: 'Create Variable', callbackKey: 'CREATE_VARIABLE' },
+      ],
     },
   ],
 };

@@ -18,7 +18,7 @@ export function createGenerator(): ScratchBlocks.CodeGenerator {
   ): string {
     const next = block.nextConnection?.targetBlock() ?? null;
     const nextCode =
-      opt_thisOnly || !next ? '' : (this.blockToCode(next) as string);
+      opt_thisOnly || !next ? '' : this.blockToCode(next);
     return code + nextCode;
   };
 
@@ -31,7 +31,7 @@ export function createGenerator(): ScratchBlocks.CodeGenerator {
       .filter((b) => b.type === 'doggo_on_start')
       .map((hat) => {
         const first = hat.nextConnection?.targetBlock() ?? null;
-        return first ? (gen.blockToCode(first) as string) : '';
+        return first ? gen.blockToCode(first) : '';
       })
       .join('');
     if (!imports.size) return body;

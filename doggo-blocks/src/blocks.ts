@@ -5,8 +5,23 @@ import * as ScratchBlocks from 'scratch-blocks';
 // Zelos styles: list_blocks=purple, logic_blocks=blue, loop_blocks=teal,
 //               math_blocks=green, variable_blocks=orange
 
+class WorkspaceOnlyFieldVariable extends ScratchBlocks.FieldVariable {
+  override isClickableInFlyout(): boolean { return false; }
+
+  protected override createSVGArrow_(): void {
+    if (this.getSourceBlock()?.workspace.isFlyout) return;
+    super.createSVGArrow_();
+  }
+
+  protected override createTextArrow_(): void {
+    if (this.getSourceBlock()?.workspace.isFlyout) return;
+    super.createTextArrow_();
+  }
+}
+
 export function defineBlocks(): void {
-  const { Blocks, FieldNumber, FieldVariable } = ScratchBlocks;
+  const { Blocks, FieldNumber } = ScratchBlocks;
+  const FieldVariable = WorkspaceOnlyFieldVariable;
 
   // ─── HAT BLOCK ────────────────────────────────────────────────────────────
   Blocks['doggo_on_start'] = {
@@ -55,7 +70,7 @@ export function defineBlocks(): void {
     ['doggo_stand', 'stand'],
     ['doggo_sit', 'sit'],
     ['doggo_rest', 'rest'],
-  ] as const) {
+  ]) {
     Blocks[type] = {
       init(this: ScratchBlocks.Block) {
         this.appendDummyInput().appendField(label);
@@ -75,7 +90,7 @@ export function defineBlocks(): void {
     ['doggo_pivot_left', 'pivot left'],
     ['doggo_pivot_right', 'pivot right'],
     ['doggo_trot', 'trot'],
-  ] as const) {
+  ]) {
     Blocks[type] = {
       init(this: ScratchBlocks.Block) {
         this.appendValueInput('STEPS').setCheck('Number').appendField(label);
@@ -140,7 +155,7 @@ export function defineBlocks(): void {
     ['doggo_eq', '='],
     ['doggo_lte', '≤'],
     ['doggo_gte', '≥'],
-  ] as const) {
+  ]) {
     Blocks[type] = {
       init(this: ScratchBlocks.Block) {
         this.appendValueInput('A');
@@ -191,7 +206,7 @@ export function defineBlocks(): void {
     ['doggo_sub', '-'],
     ['doggo_mul', '×'],
     ['doggo_div', '÷'],
-  ] as const) {
+  ]) {
     Blocks[type] = {
       init(this: ScratchBlocks.Block) {
         this.appendValueInput('A').setCheck('Number');
