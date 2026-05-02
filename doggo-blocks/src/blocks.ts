@@ -24,7 +24,7 @@ export function defineBlocks(): void {
     init(this: ScratchBlocks.Block) {
       this.appendDummyInput().appendField(new FieldNumber(0), 'NUM');
       this.setOutput(true, 'Number');
-      this.setStyle('math_blocks');
+      this.setStyle('colour_blocks');
     },
   };
 
@@ -148,7 +148,7 @@ export function defineBlocks(): void {
         this.appendValueInput('B');
         this.setInputsInline(true);
         this.setOutput(true, 'Boolean');
-        this.setStyle('math_blocks');
+        this.setStyle('colour_blocks');
       },
     };
   }
@@ -161,7 +161,7 @@ export function defineBlocks(): void {
       this.appendValueInput('B').setCheck('Boolean');
       this.setInputsInline(true);
       this.setOutput(true, 'Boolean');
-      this.setStyle('math_blocks');
+      this.setStyle('colour_blocks');
     },
   };
 
@@ -172,7 +172,7 @@ export function defineBlocks(): void {
       this.appendValueInput('B').setCheck('Boolean');
       this.setInputsInline(true);
       this.setOutput(true, 'Boolean');
-      this.setStyle('math_blocks');
+      this.setStyle('colour_blocks');
     },
   };
 
@@ -181,7 +181,7 @@ export function defineBlocks(): void {
       this.appendValueInput('VALUE').setCheck('Boolean').appendField('not');
       this.setInputsInline(true);
       this.setOutput(true, 'Boolean');
-      this.setStyle('math_blocks');
+      this.setStyle('colour_blocks');
     },
   };
 
@@ -199,7 +199,7 @@ export function defineBlocks(): void {
         this.appendValueInput('B').setCheck('Number');
         this.setInputsInline(true);
         this.setOutput(true, 'Number');
-        this.setStyle('math_blocks');
+        this.setStyle('colour_blocks');
       },
     };
   }

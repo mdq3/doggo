@@ -8,7 +8,7 @@ export const toolboxConfig = {
     {
       kind: 'category',
       name: 'Events',
-      colour: '#FFAB19',
+      colour: '#FFBF00',
       contents: [
         { kind: 'block', type: 'doggo_on_start' },
       ],
@@ -40,7 +40,7 @@ export const toolboxConfig = {
     {
       kind: 'category',
       name: 'Control',
-      colour: '#FFAB19',
+      colour: '#0fBD8C',
       contents: [
         { kind: 'block', type: 'doggo_repeat',  inputs: { TIMES:   numShadow(10) } },
         { kind: 'block', type: 'doggo_forever' },
@@ -51,7 +51,7 @@ export const toolboxConfig = {
     {
       kind: 'category',
       name: 'Operators',
-      colour: '#59C059',
+      colour: '#CF63CF',
       contents: [
         { kind: 'block', type: 'doggo_add', inputs: { A: numShadow(0), B: numShadow(0) } },
         { kind: 'block', type: 'doggo_sub', inputs: { A: numShadow(0), B: numShadow(0) } },

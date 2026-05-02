@@ -6,6 +6,10 @@ import * as ScratchBlocks from 'scratch-blocks';
 export const doggoTheme = ScratchBlocks.Theme.defineTheme('doggo', {
   name: 'doggo',
   base: ScratchBlocks.Themes.Zelos,
+  blockStyles: {
+    // Override hat_blocks to yellow so Events is distinct from Motion (logic_blocks = blue)
+    hat_blocks: { colourPrimary: '#FFBF00', colourSecondary: '#E6AB00', colourTertiary: '#CC9900' },
+  },
   fontStyle: {
     family: 'Sono Variable, Sono, monospace',
     weight: '500',
