@@ -78,6 +78,7 @@ export function App() {
       toolbox: toolboxConfig,
       theme: doggoTheme,
       media: '/media/',
+      grid: { spacing: 24, length: 1, colour: '#c0c0c0', snap: true },
       scrollbars: true,
       zoom: { controls: true, wheel: true, startScale: 0.85 },
       sounds: false,
