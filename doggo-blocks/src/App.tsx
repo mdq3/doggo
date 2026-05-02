@@ -98,9 +98,17 @@ export function App() {
       setVarDialog(true);
     });
 
-    ws.addChangeListener(() => {
-      const code = pyGen.workspaceToCode(ws);
-      setGeneratedCode(code || '# Place blocks to generate code');
+    ws.addChangeListener((event: ScratchBlocks.Events.Abstract) => {
+      setGeneratedCode(pyGen.workspaceToCode(ws) || '# Place blocks to generate code');
+
+      // Refresh the variables flyout when a variable is deleted or renamed.
+      if (event.type === 'var_delete' || event.type === 'var_rename') {
+        const tb = ws.getToolbox() as unknown as {
+          getFlyout: () => { show: (c: unknown) => void };
+          getInitialFlyoutContents: () => unknown;
+        };
+        tb.getFlyout().show(tb.getInitialFlyoutContents());
+      }
     });
 
     for (const [cls, label] of [

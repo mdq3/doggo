@@ -129,6 +129,16 @@ button:disabled {
   color: #cdd6f4;
 }
 
+/* ─── Toolbox selected state — no background ────────────────────────── */
+.blocklyToolboxSelected,
+.blocklyToolboxSelected > div {
+  background-color: transparent !important;
+}
+
+.blocklyToolbox {
+  --colour-toolboxSelected: transparent;
+}
+
 /* ─── Toolbox sidebar category labels ───────────────────────────────── */
 .blocklyToolboxCategoryLabel,
 .blocklyToolboxCategory,
