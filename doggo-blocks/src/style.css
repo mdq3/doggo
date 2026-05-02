@@ -1,3 +1,7 @@
+:root {
+  --font-mono: 'Sono Variable', 'Sono', monospace;
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -42,7 +46,7 @@ button {
   padding: 6px 18px;
   border: none;
   border-radius: 6px;
-  font-family: 'Sono Variable', 'Sono', monospace;
+  font-family: var(--font-mono);
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
@@ -120,7 +124,7 @@ button:disabled {
 #code-panel pre,
 #code-panel code,
 #code-panel span {
-  font-family: 'Sono Variable', 'Sono', monospace !important;
+  font-family: var(--font-mono) !important;
   font-weight: 700 !important;
 }
 
@@ -144,7 +148,7 @@ button:disabled {
 .blocklyToolboxCategoryLabel,
 .blocklyToolboxCategory,
 .blocklyToolboxCategoryContainer {
-  font-family: 'Sono Variable', 'Sono', monospace !important;
+  font-family: var(--font-mono) !important;
   font-weight: 500;
   border: none !important;
   outline: none !important;
