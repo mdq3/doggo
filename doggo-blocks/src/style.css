@@ -124,8 +124,8 @@ button:disabled {
 #code-panel pre,
 #code-panel code,
 #code-panel span {
-  font-family: var(--font-mono) !important;
-  font-weight: 700 !important;
+  font-family: var(--font-mono);
+  font-weight: 700;
 }
 
 #btn-code {
@@ -137,7 +137,7 @@ button:disabled {
 /* ─── Toolbox selected state — no background ────────────────────────── */
 .blocklyToolboxSelected,
 .blocklyToolboxSelected > div {
-  background-color: transparent !important;
+  background-color: transparent;
 }
 
 .blocklyToolbox {
@@ -148,11 +148,11 @@ button:disabled {
 .blocklyToolboxCategoryLabel,
 .blocklyToolboxCategory,
 .blocklyToolboxCategoryContainer {
-  font-family: var(--font-mono) !important;
+  font-family: var(--font-mono);
   font-weight: 500;
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
+  border: none;
+  outline: none;
+  box-shadow: none;
 }
 
 .blocklyToolbox {
@@ -161,28 +161,26 @@ button:disabled {
 }
 
 .categoryBubble {
-  border: none !important;
-  outline: none !important;
-  box-shadow: none !important;
+  border: none;
 }
 
 /* ─── Block outlines — remove SVG stroke so blocks appear flat ───────── */
 .blocklyPath,
 .blocklyPathDark,
 .blocklyPathLight {
-  stroke: none !important;
+  stroke: none;
 }
 
 /* ─── Blockly flyout "Make a Variable" button ───────────────────────── */
 .blocklyFlyoutButton .blocklyFlyoutButtonBackground {
-  fill: #FF8C1A !important;
+  fill: #FF8C1A;
   rx: 4;
 }
 .blocklyFlyoutButton .blocklyFlyoutButtonShadow {
-  fill: #d4720e !important;
+  fill: transparent;
 }
 .blocklyFlyoutButton text {
-  fill: #ffffff !important;
+  fill: #ffffff;
 }
 
 /* ─── Variable creation dialog ───────────────────────────────────────── */
