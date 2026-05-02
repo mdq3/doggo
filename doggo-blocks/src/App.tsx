@@ -104,9 +104,7 @@ export function App() {
     // Replace the built-in 'VARIABLE' callback with ours.
     ws.registerToolboxCategoryCallback(
       'VARIABLE',
-      variablesFlyoutXML as unknown as (
-        ws: ScratchBlocks.Workspace,
-      ) => ScratchBlocks.utils.toolbox.FlyoutItemInfoArray,
+      variablesFlyoutXML,
     );
     // Our callback never calls registerButtonCallback(prompt), so this
     // registration is permanent for the lifetime of the workspace.
@@ -119,7 +117,7 @@ export function App() {
       setGeneratedCode(pyGen.workspaceToCode(ws) || '# Place blocks to generate code');
 
       if (event.type === 'delete') {
-        (ws as unknown as { trashcan?: { emptyContents: () => void } }).trashcan?.emptyContents();
+        ws.trashcan?.emptyContents();
       }
 
       // Refresh the variables flyout when a variable is deleted or renamed.
@@ -146,8 +144,7 @@ export function App() {
     }
 
     const observer = new ResizeObserver(() => {
-      (ScratchBlocks as unknown as { svgResize: (ws: ScratchBlocks.WorkspaceSvg) => void })
-        .svgResize(ws);
+      ScratchBlocks.svgResize(ws);
     });
     observer.observe(blocklyDivRef.current);
 
