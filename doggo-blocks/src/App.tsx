@@ -12,6 +12,22 @@ ScratchBlocks.ScratchMsgs.setLocale('en');
 defineBlocks();
 const pyGen = createGenerator();
 
+// Register a flyout inflater for 'category' items.
+const _noOpRect = { getHeight: () => 0, getWidth: () => 0 };
+const _noOpEl   = { moveBy: () => {}, getBoundingRectangle: () => _noOpRect };
+const _noOpItem = { getType: () => 'category', getElement: () => _noOpEl };
+ScratchBlocks.registry.register(
+  ScratchBlocks.registry.Type.FLYOUT_INFLATER,
+  'category',
+  class {
+    load()        { return _noOpItem; }
+    gapForItem()  { return 0; }
+    disposeItem() {}
+    setFlyout()   {}
+    getType()     { return 'category'; }
+  },
+);
+
 // Generate XML flyout elements for the Variables category.
 // Overrides the built-in Scratch callback which:
 //   (a) omits the math_number shadow on VALUE (Scratch expects reporter blocks),
