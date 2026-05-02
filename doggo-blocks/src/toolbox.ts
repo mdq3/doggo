@@ -1,8 +1,13 @@
+import type * as ScratchBlocks from 'scratch-blocks';
+
+type FlyoutItem = ScratchBlocks.utils.toolbox.FlyoutItemInfo;
+type Category = { kind: string; name: string; colour: string; contents: FlyoutItem[] };
+
 function numShadow(n = 1) {
   return { shadow: { type: 'math_number', fields: { NUM: n } } };
 }
 
-export const toolboxConfig = {
+export const toolboxConfig: { kind: string; contents: Category[] } = {
   kind: 'categoryToolbox',
   contents: [
     {
@@ -74,7 +79,7 @@ export const toolboxConfig = {
       name: 'Variables',
       colour: '#FF8C1A',
       contents: [
-        { kind: 'button', text: 'Create Variable', callbackKey: 'CREATE_VARIABLE' },
+        { kind: 'button', text: 'Create Variable', callbackkey: 'CREATE_VARIABLE' },
       ],
     },
   ],

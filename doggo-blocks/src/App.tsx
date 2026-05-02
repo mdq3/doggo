@@ -26,13 +26,13 @@ function buildFlyoutItems(
     ...vars.map((v) => ({ kind: 'block', type: 'variables_get', fields: { VAR: { id: v.getId(), name: v.getName(), type: v.getType() } } })),
   ];
 
-  return toolboxConfig.contents.flatMap((cat) => {
+  return toolboxConfig.contents.flatMap((cat): ScratchBlocks.utils.toolbox.FlyoutItemInfo[] => {
     const label = { kind: 'label', text: cat.name };
     if (cat.name === 'Variables') {
-      const button = { kind: 'button', text: 'Create Variable', callbackKey: 'CREATE_VARIABLE' };
+      const button = { kind: 'button', text: 'Create Variable', callbackkey: 'CREATE_VARIABLE' };
       return [label, button, ...varBlocks];
     }
-    return [label, ...(cat.contents ?? [])];
+    return [label, ...cat.contents];
   });
 }
 
@@ -72,10 +72,10 @@ export function App() {
       ws.getToolbox()?.getFlyout()?.show(items);
       // show() resets scroll to top — click the Variables sidebar item to scroll back.
       setTimeout(() => {
-        const cats = blocklyDivRef.current?.querySelectorAll('.blocklyToolboxCategory');
+        const cats = blocklyDivRef.current?.querySelectorAll<HTMLElement>('.blocklyToolboxCategory');
         for (const el of cats ?? []) {
           if (el.querySelector('.blocklyToolboxCategoryLabel')?.textContent?.trim() === 'Variables') {
-            (el as HTMLElement).click();
+            el.click();
             break;
           }
         }
