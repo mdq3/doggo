@@ -9,7 +9,7 @@ import { BrowserWindow, app, ipcMain } from 'electron';
 let mainWindow: BrowserWindow | null = null;
 let runningProcess: ChildProcess | null = null;
 
-function createWindow(): void {
+const createWindow = (): void => {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,

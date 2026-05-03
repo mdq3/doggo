@@ -32,7 +32,7 @@ class WorkspaceOnlyFieldVariable extends ScratchBlocks.FieldVariable {
   }
 }
 
-export function defineBlocks(): void {
+export const defineBlocks = (): void => {
   const { Blocks, FieldNumber } = ScratchBlocks;
   const FieldVariable = WorkspaceOnlyFieldVariable;
 

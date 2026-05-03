@@ -3,9 +3,7 @@ import type * as ScratchBlocks from 'scratch-blocks';
 type FlyoutItem = ScratchBlocks.utils.toolbox.FlyoutItemInfo;
 type Category = { colour: string; contents: FlyoutItem[]; kind: string; name: string };
 
-function numShadow(n = 1) {
-  return { shadow: { type: 'math_number', fields: { NUM: n } } };
-}
+const numShadow = (n = 1) => ({ shadow: { type: 'math_number', fields: { NUM: n } } });
 
 export const toolboxConfig: { kind: string; contents: Category[] } = {
   kind: 'categoryToolbox',

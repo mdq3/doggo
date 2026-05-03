@@ -3,7 +3,7 @@ import * as ScratchBlocks from 'scratch-blocks';
 // Python code generator using Blockly 12's forBlock API.
 // Imports are accumulated per-generation and prepended as a header block.
 
-export function createGenerator(): ScratchBlocks.CodeGenerator {
+export const createGenerator = (): ScratchBlocks.CodeGenerator => {
   const gen = new ScratchBlocks.CodeGenerator('Python');
   gen.INDENT = '    ';
 

@@ -15,9 +15,9 @@ const pyGen = createGenerator();
 
 // Build the flat flyout item array that show() expects — one label + contents
 // per toolbox category, with Variables section updated for current variables.
-function buildFlyoutItems(
+const buildFlyoutItems = (
   vars: ScratchBlocks.IVariableModel<ScratchBlocks.IVariableState>[],
-): ScratchBlocks.utils.toolbox.FlyoutItemInfoArray {
+): ScratchBlocks.utils.toolbox.FlyoutItemInfoArray => {
   const numShadow = { shadow: { type: 'math_number', fields: { NUM: 0 } } };
   // FieldVariable.loadState() expects { id, name, type } not a bare UUID string.
   // One set block is enough (it has a dropdown); one get block per variable.
@@ -52,7 +52,7 @@ function buildFlyoutItems(
   });
 }
 
-export function App() {
+export const App = () => {
   const blocklyDivRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<ScratchBlocks.WorkspaceSvg | null>(null);
   const refreshVariablesRef = useRef<(() => void) | null>(null);
@@ -217,7 +217,7 @@ export function App() {
     });
   }, []);
 
-  function handleRun() {
+  const handleRun = () => {
     const ws = workspaceRef.current;
     if (!ws) {
       return;
@@ -233,7 +233,7 @@ export function App() {
     window.doggo.stopScript();
   };
 
-  function handleRenameVar() {
+  const handleRenameVar = () => {
     const ws = workspaceRef.current;
     const newName = renameName.trim();
     if (!ws || !renameVarId || !newName) {
@@ -246,7 +246,7 @@ export function App() {
     setRenameVarId(null);
   }
 
-  function handleDeleteVar(varId: string) {
+  const handleDeleteVar = (varId: string) => {
     const ws = workspaceRef.current;
     const variable = ws?.getVariableMap().getVariableById(varId);
     if (ws && variable) {
@@ -255,7 +255,7 @@ export function App() {
     setCtxMenu(null);
   }
 
-  function handleCreateVar() {
+  const handleCreateVar = () => {
     const name = varName.trim();
     const ws = workspaceRef.current;
     if (name && ws) {
