@@ -10,7 +10,6 @@ declare const MAIN_WINDOW_VITE_NAME: string;
 interface Window {
   doggo: {
     runScript: (code: string) => Promise<void>;
-    stopScript: () => Promise<void>;
     onOutput: (cb: (line: string) => void) => void;
     onDone: (cb: (exitCode: number | null) => void) => void;
   };

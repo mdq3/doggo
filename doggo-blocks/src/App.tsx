@@ -1,4 +1,4 @@
-import { Code2, Play, Square } from 'lucide-react';
+import { Code2, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -56,7 +56,6 @@ export const App = () => {
   const blocklyDivRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<ScratchBlocks.WorkspaceSvg | null>(null);
   const refreshVariablesRef = useRef<(() => void) | null>(null);
-  const [running, setRunning] = useState(false);
   const [status, setStatus] = useState('');
   const [varDialog, setVarDialog] = useState(false);
   const [varName, setVarName] = useState('');
@@ -211,7 +210,6 @@ export const App = () => {
   useEffect(() => {
     window.doggo.onOutput((line) => console.log('[doggo]', line));
     window.doggo.onDone((exitCode) => {
-      setRunning(false);
       setStatus(exitCode === 0 ? 'Done ✓' : `Error (exit ${exitCode})`);
       setTimeout(() => setStatus(''), 3000);
     });
@@ -224,14 +222,9 @@ export const App = () => {
     }
     const code = pyGen.workspaceToCode(ws);
     console.log(`[doggo-blocks] generated script:\n${code}`);
-    setRunning(true);
     setStatus('Running…');
     window.doggo.runScript(code);
   }
-
-  const handleStop = () => {
-    window.doggo.stopScript();
-  };
 
   const handleRenameVar = () => {
     const ws = workspaceRef.current;
@@ -268,11 +261,8 @@ export const App = () => {
   return (
     <>
       <div id="toolbar">
-        <button id="btn-run" onClick={handleRun} disabled={running}>
+        <button id="btn-run" onClick={handleRun}>
           <Play size={14} /> Run
-        </button>
-        <button id="btn-stop" onClick={handleStop} disabled={!running}>
-          <Square size={14} /> Stop
         </button>
         <span id="status">{status}</span>
         <button

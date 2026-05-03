@@ -69,10 +69,3 @@ ipcMain.handle('run-script', (_event, code: string) => {
     mainWindow?.webContents.send('script-done', exitCode);
   });
 });
-
-ipcMain.handle('stop-script', () => {
-  if (runningProcess) {
-    runningProcess.kill('SIGTERM');
-    runningProcess = null;
-  }
-});

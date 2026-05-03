@@ -63,11 +63,6 @@ button:disabled {
   color: #1e1e2e;
 }
 
-#btn-stop {
-  background: #f38ba8;
-  color: #1e1e2e;
-}
-
 #status {
   font-size: 13px;
   color: #a6adc8;
