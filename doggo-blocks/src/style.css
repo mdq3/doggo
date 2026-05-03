@@ -279,6 +279,52 @@ button:disabled {
   color: #cdd6f4;
 }
 
+/* ─── Splash screen ──────────────────────────────────────────────────── */
+.splash {
+  position: fixed;
+  inset: 0;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  z-index: 9999;
+}
+
+.splash-image {
+  width: 480px;
+  height: auto;
+}
+
+.splash-title {
+  font-family: var(--font-mono);
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: -0.02em;
+  background: linear-gradient(90deg, #ff8c1a, #a855f7, #3b82f6, #22c55e);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.splash-btn {
+  background: #a6e3a1;
+  color: #1e1e2e;
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  padding: 10px 32px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.splash-btn:hover {
+  opacity: 0.88;
+}
+
 /* ─── Settings ───────────────────────────────────────────────────────── */
 #btn-settings {
   background: transparent;

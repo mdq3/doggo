@@ -56,6 +56,7 @@ export const App = () => {
   const blocklyDivRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<ScratchBlocks.WorkspaceSvg | null>(null);
   const refreshVariablesRef = useRef<(() => void) | null>(null);
+  const [showSplash, setShowSplash] = useState(true);
   const outputRef = useRef<string[]>([]);
   const [status, setStatus] = useState('');
   const [errorDialog, setErrorDialog] = useState<{ exitCode: number; output: string } | null>(null);
@@ -285,6 +286,15 @@ export const App = () => {
 
   return (
     <>
+      {showSplash && (
+        <div className="splash">
+          <img src="doggo-blocks-sparkle.png" alt="doggo blocks" className="splash-image" />
+          <h1 className="splash-title">doggo blocks</h1>
+          <button className="splash-btn" onClick={() => setShowSplash(false)}>
+            Start Coding
+          </button>
+        </div>
+      )}
       <div id="toolbar">
         <button id="btn-run" onClick={handleRun}>
           <Play size={14} /> Run
