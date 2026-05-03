@@ -6,6 +6,10 @@
 
 Block-based programming for the Petoi Bittle X V2. Drag blocks to build a sequence of moves, then hit **Run** to send the program to the robot over Wi-Fi.
 
+<p align="center">
+  <img src="public/gui.png" />
+</p>
+
 ## Prerequisites
 
 - Node.js 18+
