@@ -1,6 +1,6 @@
 # Doggo Blocks
 
-![](public/doggo-blocks.png)
+![](public/doggo-blocks-small.png)
 
 A block-based programming interface for the Petoi Bittle X V2. Drag blocks to build a sequence of moves, then hit **Run** to send the program to the robot via WebREPL.
 
