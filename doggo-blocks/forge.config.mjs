@@ -3,7 +3,7 @@ import { VitePlugin } from '@electron-forge/plugin-vite';
 import { AutoUnpackNativesPlugin } from '@electron-forge/plugin-auto-unpack-natives';
 
 export default {
-  packagerConfig: { asar: true },
+  packagerConfig: { asar: true, extraResource: ['../webrepl_proxy.py'] },
   rebuildConfig: {},
   makers: [new MakerZIP({}, ['darwin', 'linux', 'win32'])],
   plugins: [

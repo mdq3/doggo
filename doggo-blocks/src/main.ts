@@ -50,7 +50,9 @@ ipcMain.handle('run-script', (_event, code: string) => {
   const scriptPath = path.join(tmpDir, 'script.py');
   writeFileSync(scriptPath, code, 'utf8');
 
-  const proxyPath = path.join(app.getAppPath(), '..', 'webrepl_proxy.py');
+  const proxyPath = app.isPackaged
+    ? path.join(process.resourcesPath, 'webrepl_proxy.py')
+    : path.join(app.getAppPath(), '..', 'webrepl_proxy.py');
   const proc = spawn('python', [proxyPath, 'run', scriptPath]);
   runningProcess = proc;
 
