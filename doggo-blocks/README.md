@@ -4,7 +4,7 @@
   <img src="public/doggo-blocks-sparkle.png" height="400" />
 </p>
 
-A block-based programming interface for the Petoi Bittle X V2. Drag blocks to build a sequence of moves, then hit **Run** to send the program to the robot via WebREPL.
+Block-based programming for the Petoi Bittle X V2. Drag blocks to build a sequence of moves, then hit **Run** to send the program to the robot over Wi-Fi.
 
 ## Prerequisites
 
