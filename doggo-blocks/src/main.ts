@@ -1,7 +1,8 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { BrowserWindow, app, ipcMain } from 'electron';
+import { mkdtempSync, writeFileSync } from 'fs';
+import type { ChildProcess } from 'child_process';
 import path from 'path';
-import { spawn, ChildProcess } from 'child_process';
-import { writeFileSync, mkdtempSync } from 'fs';
+import { spawn } from 'child_process';
 import { tmpdir } from 'os';
 
 let mainWindow: BrowserWindow | null = null;
@@ -30,15 +31,15 @@ function createWindow(): void {
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
+  if (process.platform !== 'darwin') { app.quit(); }
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+  if (BrowserWindow.getAllWindows().length === 0) { createWindow(); }
 });
 
 ipcMain.handle('run-script', (_event, code: string) => {
-  if (runningProcess) return;
+  if (runningProcess) { return; }
 
   const tmpDir = mkdtempSync(path.join(tmpdir(), 'doggo-'));
   const scriptPath = path.join(tmpDir, 'script.py');

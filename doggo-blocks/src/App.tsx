@@ -1,12 +1,12 @@
-import { useEffect, useRef, useState } from 'react';
-import { Play, Square, Code2 } from 'lucide-react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import * as ScratchBlocks from 'scratch-blocks';
-import { defineBlocks } from './blocks.js';
+import { Code2, Play, Square } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { createGenerator } from './generator.js';
-import { toolboxConfig } from './toolbox.js';
+import { defineBlocks } from './blocks.js';
 import { doggoTheme } from './theme.js';
+import { toolboxConfig } from './toolbox.js';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 ScratchBlocks.ScratchMsgs.setLocale('en');
 defineBlocks();
@@ -51,7 +51,7 @@ export function App() {
   const [renameName, setRenameName] = useState('');
 
   useEffect(() => {
-    if (!blocklyDivRef.current || workspaceRef.current) return;
+    if (!blocklyDivRef.current || workspaceRef.current) { return; }
 
     const ws = ScratchBlocks.inject(blocklyDivRef.current, {
       toolbox: toolboxConfig,
@@ -69,7 +69,7 @@ export function App() {
       setVarDialog(true);
     });
 
-    const refreshVariables = refreshVariablesRef.current = () => {
+    const refreshVariables = () => {
       const vars = ws.getVariableMap().getAllVariables();
       const items = buildFlyoutItems(vars);
       ws.getToolbox()?.getFlyout()?.show(items);
@@ -84,6 +84,7 @@ export function App() {
         }
       }, 50);
     };
+    refreshVariablesRef.current = refreshVariables;
 
     ws.addChangeListener((event: ScratchBlocks.Events.Abstract) => {
       setGeneratedCode(pyGen.workspaceToCode(ws) || '# Place blocks to generate code');
@@ -119,31 +120,31 @@ export function App() {
     // Block SVG groups carry data-id; walk up to find it.
     const flyoutVarBlockAt = (target: EventTarget | null) => {
       let el: Element | null = target as Element | null;
-      while (el && !el.hasAttribute('data-id')) el = el.parentElement;
-      if (!el) return null;
+      while (el && !el.hasAttribute('data-id')) { el = el.parentElement; }
+      if (!el) { return null; }
       const dataId = el.getAttribute('data-id');
-      if (!dataId) return null;
+      if (!dataId) { return null; }
       const flyout = ws.getToolbox()?.getFlyout();
-      if (!flyout) return null;
+      if (!flyout) { return null; }
       const block = flyout.getWorkspace().getBlockById(dataId);
-      if (!block?.workspace.isFlyout) return null;
-      if (block.type !== 'variables_get') return null;
+      if (!block?.workspace.isFlyout) { return null; }
+      if (block.type !== 'variables_get') { return null; }
       return block;
     };
 
     // Intercept right-click pointerdown before Blockly starts its gesture.
     const handlePointerDown = (e: PointerEvent) => {
-      if (e.button !== 2 || !flyoutVarBlockAt(e.target)) return;
+      if (e.button !== 2 || !flyoutVarBlockAt(e.target)) { return; }
       e.stopPropagation();
     };
 
     const handleContextMenu = (e: MouseEvent) => {
       const block = flyoutVarBlockAt(e.target);
-      if (!block) return;
+      if (!block) { return; }
       const varId = block.getField('VAR')?.getValue();
-      if (!varId) return;
+      if (!varId) { return; }
       const variable = ws.getVariableMap().getVariableById(varId);
-      if (!variable) return;
+      if (!variable) { return; }
       e.preventDefault();
       e.stopPropagation();
       setCtxMenu({ x: e.clientX, y: e.clientY, varId, varName: variable.getName() });
@@ -172,31 +173,31 @@ export function App() {
 
   function handleRun() {
     const ws = workspaceRef.current;
-    if (!ws) return;
+    if (!ws) { return; }
     const code = pyGen.workspaceToCode(ws);
-    console.log('[doggo-blocks] generated script:\n' + code);
+    console.log(`[doggo-blocks] generated script:\n${code}`);
     setRunning(true);
     setStatus('Running…');
     window.doggo.runScript(code);
   }
 
-  function handleStop() {
+  const handleStop = () => {
     window.doggo.stopScript();
-  }
+  };
 
   function handleRenameVar() {
     const ws = workspaceRef.current;
     const newName = renameName.trim();
-    if (!ws || !renameVarId || !newName) return;
+    if (!ws || !renameVarId || !newName) { return; }
     const variable = ws.getVariableMap().getVariableById(renameVarId);
-    if (variable) ws.getVariableMap().renameVariable(variable, newName);
+    if (variable) { ws.getVariableMap().renameVariable(variable, newName); }
     setRenameVarId(null);
   }
 
   function handleDeleteVar(varId: string) {
     const ws = workspaceRef.current;
     const variable = ws?.getVariableMap().getVariableById(varId);
-    if (ws && variable) ws.getVariableMap().deleteVariable(variable);
+    if (ws && variable) { ws.getVariableMap().deleteVariable(variable); }
     setCtxMenu(null);
   }
 
@@ -277,7 +278,7 @@ export function App() {
               onChange={(e) => setRenameName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') { e.preventDefault(); handleRenameVar(); }
-                if (e.key === 'Escape') setRenameVarId(null);
+                if (e.key === 'Escape') { setRenameVarId(null); }
               }}
             />
             <div className="dialog-buttons">
@@ -299,7 +300,7 @@ export function App() {
               onChange={(e) => setVarName(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === 'Enter') { e.preventDefault(); handleCreateVar(); }
-                if (e.key === 'Escape') setVarDialog(false);
+                if (e.key === 'Escape') { setVarDialog(false); }
               }}
             />
             <div className="dialog-buttons">

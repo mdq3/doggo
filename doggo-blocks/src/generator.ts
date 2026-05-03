@@ -34,8 +34,8 @@ export function createGenerator(): ScratchBlocks.CodeGenerator {
         return first ? gen.blockToCode(first) : '';
       })
       .join('');
-    if (!imports.size) return body;
-    return [...imports].sort().join('\n') + '\n\n' + body;
+    if (!imports.size) { return body; }
+    return `${[...imports].toSorted().join('\n')}\n\n${body}`;
   };
 
   // ─── UTILITY BLOCKS ───────────────────────────────────────────────────────
@@ -79,18 +79,18 @@ export function createGenerator(): ScratchBlocks.CodeGenerator {
   // ─── CONTROL ──────────────────────────────────────────────────────────────
   gen.forBlock['doggo_repeat'] = (block, g) => {
     const times = g.valueToCode(block, 'TIMES', 0) || '1';
-    const body  = g.statementToCode(block, 'SUBSTACK') || g.INDENT + 'pass\n';
+    const body  = g.statementToCode(block, 'SUBSTACK') || `${g.INDENT}pass\n`;
     return `for _ in range(${times}):\n${body}`;
   };
 
   gen.forBlock['doggo_forever'] = (block, g) => {
-    const body = g.statementToCode(block, 'SUBSTACK') || g.INDENT + 'pass\n';
+    const body = g.statementToCode(block, 'SUBSTACK') || `${g.INDENT}pass\n`;
     return `while True:\n${body}`;
   };
 
   gen.forBlock['doggo_while'] = (block, g) => {
     const cond = g.valueToCode(block, 'CONDITION', 0) || 'True';
-    const body = g.statementToCode(block, 'SUBSTACK') || g.INDENT + 'pass\n';
+    const body = g.statementToCode(block, 'SUBSTACK') || `${g.INDENT}pass\n`;
     return `while ${cond}:\n${body}`;
   };
 

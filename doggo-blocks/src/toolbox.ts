@@ -1,7 +1,7 @@
 import type * as ScratchBlocks from 'scratch-blocks';
 
 type FlyoutItem = ScratchBlocks.utils.toolbox.FlyoutItemInfo;
-type Category = { kind: string; name: string; colour: string; contents: FlyoutItem[] };
+type Category = { colour: string; contents: FlyoutItem[]; kind: string; name: string };
 
 function numShadow(n = 1) {
   return { shadow: { type: 'math_number', fields: { NUM: n } } };
