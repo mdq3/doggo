@@ -108,7 +108,7 @@ ipcMain.handle('run-script', (_event, code: string) => {
   });
 
   proc.stderr?.on('data', (data: Buffer) => {
-    console.error('[doggo]', data.toString());
+    mainWindow?.webContents.send('script-output', data.toString());
   });
 
   proc.on('close', (exitCode: number | null) => {

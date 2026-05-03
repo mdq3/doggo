@@ -272,9 +272,25 @@ def main():
     print(f"Connecting to WebREPL at {host}:{ws_port}...")
     ws = _WS(socket.socket())
     ws.settimeout(10)
-    ws._sock.connect((host, ws_port))
-    ws.handshake()
-    ws.login(password)
+    try:
+        ws._sock.connect((host, ws_port))
+        ws.handshake()
+        ws.login(password)
+    except socket.gaierror:
+        print(f"Error: Could not find '{host}' on the network.")
+        print("Make sure the robot is powered on and connected to WiFi.")
+        sys.exit(1)
+    except (socket.timeout, TimeoutError):
+        print(f"Error: Connection to '{host}' timed out.")
+        print("Make sure the robot is powered on and WebREPL is running.")
+        sys.exit(1)
+    except ConnectionRefusedError:
+        print(f"Error: Connection to '{host}:{ws_port}' was refused.")
+        print("Make sure WebREPL is enabled on the robot.")
+        sys.exit(1)
+    except OSError as e:
+        print(f"Error: Could not connect to '{host}': {e}")
+        sys.exit(1)
     ws.settimeout(None)
     print(f"WebREPL connected: {host}:{ws_port}")
 

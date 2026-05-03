@@ -1,4 +1,4 @@
-import { Code2, Play } from 'lucide-react';
+import { AlertTriangle, Code2, Play } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -56,7 +56,9 @@ export const App = () => {
   const blocklyDivRef = useRef<HTMLDivElement>(null);
   const workspaceRef = useRef<ScratchBlocks.WorkspaceSvg | null>(null);
   const refreshVariablesRef = useRef<(() => void) | null>(null);
+  const outputRef = useRef<string[]>([]);
   const [status, setStatus] = useState('');
+  const [errorDialog, setErrorDialog] = useState<{ exitCode: number; output: string } | null>(null);
   const [varDialog, setVarDialog] = useState(false);
   const [varName, setVarName] = useState('');
   const [codeOpen, setCodeOpen] = useState(false);
@@ -208,10 +210,17 @@ export const App = () => {
   }, []);
 
   useEffect(() => {
-    window.doggo.onOutput((line) => console.log('[doggo]', line));
+    window.doggo.onOutput((line) => {
+      outputRef.current.push(line);
+    });
     window.doggo.onDone((exitCode) => {
-      setStatus(exitCode === 0 ? 'Done ✓' : `Error (exit ${exitCode})`);
-      setTimeout(() => setStatus(''), 3000);
+      setStatus('');
+      if (exitCode === 0) {
+        setStatus('Done ✓');
+        setTimeout(() => setStatus(''), 3000);
+      } else {
+        setErrorDialog({ exitCode: exitCode ?? 1, output: outputRef.current.join('') });
+      }
     });
   }, []);
 
@@ -222,6 +231,7 @@ export const App = () => {
     }
     const code = pyGen.workspaceToCode(ws);
     console.log(`[doggo-blocks] generated script:\n${code}`);
+    outputRef.current = [];
     setStatus('Running…');
     window.doggo.runScript(code);
   }
@@ -342,6 +352,22 @@ export const App = () => {
                 OK
               </button>
               <button onClick={() => setRenameVarId(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {errorDialog && (
+        <div className="dialog-overlay" onClick={() => setErrorDialog(null)}>
+          <div className="dialog error-dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>
+              <AlertTriangle size={16} style={{ color: '#f38ba8', flexShrink: 0 }} />
+              Run failed
+            </h3>
+            <p className="error-exit-code">Exit code {errorDialog.exitCode}</p>
+            <pre className="error-output">{errorDialog.output || '(no output)'}</pre>
+            <div className="dialog-buttons">
+              <button onClick={() => setErrorDialog(null)}>OK</button>
             </div>
           </div>
         </div>
