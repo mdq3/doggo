@@ -6,15 +6,24 @@ import * as ScratchBlocks from 'scratch-blocks';
 //               math_blocks=green, variable_blocks=orange
 
 class WorkspaceOnlyFieldVariable extends ScratchBlocks.FieldVariable {
-  override isClickableInFlyout(): boolean { return false; }
+  // Suppress dropdown only on variables_get in the flyout; variables_set keeps
+  // the dropdown so users can pick which variable to assign.
+  private isFlyoutGet(): boolean {
+    const b = this.getSourceBlock();
+    return !!(b?.workspace.isFlyout && b.type === 'variables_get');
+  }
+
+  override isClickableInFlyout(autoClosingFlyout: boolean): boolean {
+    return this.isFlyoutGet() ? false : !autoClosingFlyout;
+  }
 
   protected override createSVGArrow_(): void {
-    if (this.getSourceBlock()?.workspace.isFlyout) return;
+    if (this.isFlyoutGet()) return;
     super.createSVGArrow_();
   }
 
   protected override createTextArrow_(): void {
-    if (this.getSourceBlock()?.workspace.isFlyout) return;
+    if (this.isFlyoutGet()) return;
     super.createTextArrow_();
   }
 }

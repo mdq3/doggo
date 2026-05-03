@@ -127,7 +127,7 @@ export function App() {
       if (!flyout) return null;
       const block = flyout.getWorkspace().getBlockById(dataId);
       if (!block?.workspace.isFlyout) return null;
-      if (block.type !== 'variables_get' && block.type !== 'variables_set') return null;
+      if (block.type !== 'variables_get') return null;
       return block;
     };
 
