@@ -1,0 +1,280 @@
+:root {
+  --font-mono: 'Sono Variable', 'Sono', monospace;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #1e1e2e;
+  color: #cdd6f4;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+}
+
+#root {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+#toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 18px;
+  border: none;
+  border-radius: 6px;
+  font-family: var(--font-mono);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+button:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+#btn-run {
+  background: #a6e3a1;
+  color: #1e1e2e;
+}
+
+#status {
+  font-size: 13px;
+  color: #a6adc8;
+  margin-left: 4px;
+}
+
+#main-area {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+}
+
+#blockly-div {
+  flex: 1;
+  min-height: 0;
+}
+
+/* ─── Code panel ─────────────────────────────────────────────────────────── */
+#code-panel {
+  width: 0;
+  overflow: hidden;
+  transition: width 0.2s ease;
+  background: #1e1e2e;
+  border-left: 1px solid #313244;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+#code-panel.open {
+  width: 360px;
+}
+
+#code-panel-header {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a6adc8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* SyntaxHighlighter renders its own pre — just ensure the wrapper fills height */
+#code-panel.open > div:last-child {
+  flex: 1;
+  min-height: 0;
+}
+
+#code-panel pre,
+#code-panel code,
+#code-panel span {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+#btn-code {
+  margin-left: auto;
+  background: #313244;
+  color: #cdd6f4;
+}
+
+/* ─── Toolbox selected state — no background ────────────────────────── */
+.blocklyToolboxSelected,
+.blocklyToolboxSelected > div {
+  background-color: transparent;
+}
+
+.blocklyToolbox {
+  --colour-toolboxSelected: transparent;
+}
+
+/* ─── Toolbox sidebar category labels ───────────────────────────────── */
+.blocklyToolboxCategoryLabel,
+.blocklyToolboxCategory,
+.blocklyToolboxCategoryContainer {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  border: none;
+  outline: none;
+  box-shadow: none;
+}
+
+.blocklyToolbox {
+  padding: 0 10px;
+  box-sizing: content-box;
+}
+
+.categoryBubble {
+  border: none;
+}
+
+/* ─── Block outlines — remove SVG stroke so blocks appear flat ───────── */
+.blocklyPath,
+.blocklyPathDark,
+.blocklyPathLight {
+  stroke: none;
+}
+
+/* ─── Blockly flyout "Make a Variable" button ───────────────────────── */
+.blocklyFlyoutButton .blocklyFlyoutButtonBackground {
+  fill: #ff8c1a;
+  rx: 4;
+}
+.blocklyFlyoutButton .blocklyFlyoutButtonShadow {
+  fill: transparent;
+}
+.blocklyFlyoutButton text {
+  fill: #ffffff;
+}
+
+/* ─── Variable context menu ──────────────────────────────────────────── */
+.context-menu {
+  position: fixed;
+  z-index: 1000;
+  background: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  min-width: 120px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.context-menu button {
+  background: transparent;
+  color: #cdd6f4;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  justify-content: flex-start;
+}
+
+.context-menu button:hover {
+  background: #313244;
+  opacity: 1;
+}
+
+/* ─── Variable creation dialog ───────────────────────────────────────── */
+.dialog-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.dialog {
+  background: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 10px;
+  padding: 24px;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.dialog h3 {
+  margin: 0;
+  font-size: 15px;
+  color: #cdd6f4;
+}
+
+.dialog input {
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #1e1e2e;
+  color: #cdd6f4;
+  font-size: 14px;
+  outline: none;
+}
+
+.dialog input:focus {
+  border-color: #ff8c1a;
+}
+
+.dialog-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.dialog-buttons button {
+  padding: 6px 16px;
+  border-radius: 6px;
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.dialog-buttons button:first-child {
+  background: #ff8c1a;
+  color: #1e1e2e;
+}
+
+.dialog-buttons button:first-child:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.dialog-buttons button:last-child {
+  background: #444;
+  color: #cdd6f4;
+}
