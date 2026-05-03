@@ -46,6 +46,9 @@ export function App() {
   const [varName, setVarName] = useState('');
   const [codeOpen, setCodeOpen] = useState(false);
   const [generatedCode, setGeneratedCode] = useState('# Place blocks to generate code');
+  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; varId: string; varName: string } | null>(null);
+  const [renameVarId, setRenameVarId] = useState<string | null>(null);
+  const [renameName, setRenameName] = useState('');
 
   useEffect(() => {
     if (!blocklyDivRef.current || workspaceRef.current) return;
@@ -110,8 +113,49 @@ export function App() {
     const observer = new ResizeObserver(() => ScratchBlocks.svgResize(ws));
     observer.observe(blocklyDivRef.current);
 
+    const blocklyEl = blocklyDivRef.current;
+
+    // Resolve the flyout variable block (if any) under the event target.
+    // Block SVG groups carry data-id; walk up to find it.
+    const flyoutVarBlockAt = (target: EventTarget | null) => {
+      let el: Element | null = target as Element | null;
+      while (el && !el.hasAttribute('data-id')) el = el.parentElement;
+      if (!el) return null;
+      const dataId = el.getAttribute('data-id');
+      if (!dataId) return null;
+      const flyout = ws.getToolbox()?.getFlyout();
+      if (!flyout) return null;
+      const block = flyout.getWorkspace().getBlockById(dataId);
+      if (!block?.workspace.isFlyout) return null;
+      if (block.type !== 'variables_get' && block.type !== 'variables_set') return null;
+      return block;
+    };
+
+    // Intercept right-click pointerdown before Blockly starts its gesture.
+    const handlePointerDown = (e: PointerEvent) => {
+      if (e.button !== 2 || !flyoutVarBlockAt(e.target)) return;
+      e.stopPropagation();
+    };
+
+    const handleContextMenu = (e: MouseEvent) => {
+      const block = flyoutVarBlockAt(e.target);
+      if (!block) return;
+      const varId = block.getField('VAR')?.getValue();
+      if (!varId) return;
+      const variable = ws.getVariableMap().getVariableById(varId);
+      if (!variable) return;
+      e.preventDefault();
+      e.stopPropagation();
+      setCtxMenu({ x: e.clientX, y: e.clientY, varId, varName: variable.getName() });
+    };
+
+    blocklyEl.addEventListener('pointerdown', handlePointerDown, true);
+    blocklyEl.addEventListener('contextmenu', handleContextMenu, true);
+
     return () => {
       observer.disconnect();
+      blocklyEl.removeEventListener('pointerdown', handlePointerDown, true);
+      blocklyEl.removeEventListener('contextmenu', handleContextMenu, true);
       ws.dispose();
       workspaceRef.current = null;
     };
@@ -138,6 +182,22 @@ export function App() {
 
   function handleStop() {
     window.doggo.stopScript();
+  }
+
+  function handleRenameVar() {
+    const ws = workspaceRef.current;
+    const newName = renameName.trim();
+    if (!ws || !renameVarId || !newName) return;
+    const variable = ws.getVariableMap().getVariableById(renameVarId);
+    if (variable) ws.getVariableMap().renameVariable(variable, newName);
+    setRenameVarId(null);
+  }
+
+  function handleDeleteVar(varId: string) {
+    const ws = workspaceRef.current;
+    const variable = ws?.getVariableMap().getVariableById(varId);
+    if (ws && variable) ws.getVariableMap().deleteVariable(variable);
+    setCtxMenu(null);
   }
 
   function handleCreateVar() {
@@ -169,7 +229,7 @@ export function App() {
         </button>
       </div>
       <div id="main-area">
-        <div id="blockly-div" ref={blocklyDivRef} />
+        <div id="blockly-div" ref={blocklyDivRef} onClick={() => setCtxMenu(null)} />
         <div id="code-panel" className={codeOpen ? 'open' : ''}>
           <div id="code-panel-header">
             <span>Generated Python</span>
@@ -192,6 +252,41 @@ export function App() {
           </SyntaxHighlighter>
         </div>
       </div>
+
+      {ctxMenu && (
+        <>
+          <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => setCtxMenu(null)} />
+          <div className="context-menu" style={{ left: ctxMenu.x, top: ctxMenu.y }}>
+            <button onClick={() => {
+              setRenameVarId(ctxMenu.varId);
+              setRenameName(ctxMenu.varName);
+              setCtxMenu(null);
+            }}>Rename</button>
+            <button onClick={() => handleDeleteVar(ctxMenu.varId)}>Delete</button>
+          </div>
+        </>
+      )}
+
+      {renameVarId && (
+        <div className="dialog-overlay" onClick={() => setRenameVarId(null)}>
+          <div className="dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Rename variable</h3>
+            <input
+              autoFocus
+              value={renameName}
+              onChange={(e) => setRenameName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') { e.preventDefault(); handleRenameVar(); }
+                if (e.key === 'Escape') setRenameVarId(null);
+              }}
+            />
+            <div className="dialog-buttons">
+              <button onClick={handleRenameVar} disabled={!renameName.trim()}>OK</button>
+              <button onClick={() => setRenameVarId(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {varDialog && (
         <div className="dialog-overlay" onClick={() => setVarDialog(false)}>
