@@ -12,5 +12,7 @@ interface Window {
     runScript: (code: string) => Promise<void>;
     onOutput: (cb: (line: string) => void) => void;
     onDone: (cb: (exitCode: number | null) => void) => void;
+    getSettings: () => Promise<{ hostname: string; password: string }>;
+    saveSettings: (settings: { hostname: string; password: string }) => Promise<void>;
   };
 }

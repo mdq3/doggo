@@ -1,6 +1,6 @@
 import type { ChildProcess } from 'child_process';
 import { spawn } from 'child_process';
-import { mkdtempSync, writeFileSync } from 'fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 
@@ -8,6 +8,30 @@ import { BrowserWindow, Menu, app, ipcMain } from 'electron';
 
 let mainWindow: BrowserWindow | null = null;
 let runningProcess: ChildProcess | null = null;
+
+interface Settings {
+  hostname: string;
+  password: string;
+}
+
+const DEFAULT_SETTINGS: Settings = { hostname: 'doggo.local', password: 'doggo' };
+
+function loadSettings(): Settings {
+  try {
+    const raw = readFileSync(path.join(app.getPath('userData'), 'settings.json'), 'utf8');
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+function saveSettings(settings: Settings): void {
+  writeFileSync(
+    path.join(app.getPath('userData'), 'settings.json'),
+    JSON.stringify(settings, null, 2),
+    'utf8',
+  );
+}
 
 const createWindow = (): void => {
   mainWindow = new BrowserWindow({
@@ -49,6 +73,15 @@ app.whenReady().then(() => {
           ]
         : []),
       {
+        label: 'Edit',
+        submenu: [
+          { role: 'cut' as const },
+          { role: 'copy' as const },
+          { role: 'paste' as const },
+          { role: 'selectAll' as const },
+        ],
+      },
+      {
         label: 'View',
         submenu: [
           ...(!app.isPackaged
@@ -88,6 +121,12 @@ app.on('activate', () => {
   }
 });
 
+ipcMain.handle('get-settings', () => loadSettings());
+
+ipcMain.handle('save-settings', (_event, settings: Settings) => {
+  saveSettings(settings);
+});
+
 ipcMain.handle('run-script', (_event, code: string) => {
   if (runningProcess) {
     return;
@@ -100,7 +139,10 @@ ipcMain.handle('run-script', (_event, code: string) => {
   const proxyPath = app.isPackaged
     ? path.join(process.resourcesPath, 'webrepl_proxy.py')
     : path.join(app.getAppPath(), '..', 'webrepl_proxy.py');
-  const proc = spawn('python', [proxyPath, 'run', scriptPath]);
+  const { hostname, password } = loadSettings();
+  const proc = spawn('python', [proxyPath, 'run', scriptPath], {
+    env: { ...process.env, DOGGO_HOST: hostname, DOGGO_PASSWORD: password },
+  });
   runningProcess = proc;
 
   proc.stdout?.on('data', (data: Buffer) => {

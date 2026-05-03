@@ -106,12 +106,17 @@ class _WS:
         # would otherwise leak into the bridge and confuse mpremote.
         self._sock.settimeout(5)
         buf = b""
+        server_closed = False
         try:
             while b">>> " not in buf:
                 buf += self.recv_frame()
-        except (socket.timeout, OSError):
-            pass
+        except socket.timeout:
+            pass  # slow boot with correct password — continue
+        except OSError:
+            server_closed = True  # server hung up — wrong password
         self._sock.settimeout(None)
+        if server_closed or b"Access denied" in buf:
+            raise PermissionError("Incorrect WebREPL password.")
 
     def settimeout(self, t):
         self._sock.settimeout(t)
@@ -241,7 +246,14 @@ def _run_command(ws, cmd_args):
     return returncode
 
 
-def _load_wifi_config():
+def _load_config():
+    # Env vars take priority (set by the DoggoBlocks app).
+    host_env = os.environ.get("DOGGO_HOST")
+    password_env = os.environ.get("DOGGO_PASSWORD")
+    if host_env and password_env:
+        return host_env, password_env
+
+    # Fall back to wifi_config.py for command-line / dev use.
     root = os.path.dirname(os.path.abspath(__file__))
     sys.path.insert(0, root)
     try:
@@ -254,10 +266,11 @@ def _load_wifi_config():
 
 
 def main():
-    host, password = _load_wifi_config()
+    host, password = _load_config()
 
     if host is None or password is None:
-        print("Error: wifi_config.py not found. Create it from wifi_config_template.py.")
+        print("Error: No robot configuration found.")
+        print("Open DoggoBlocks and set the hostname and password in Settings.")
         sys.exit(1)
 
     # Optional leading numeric arg is the WebREPL port; everything after is cmd.
@@ -283,6 +296,10 @@ def main():
     except (socket.timeout, TimeoutError):
         print(f"Error: Connection to '{host}' timed out.")
         print("Make sure the robot is powered on and WebREPL is running.")
+        sys.exit(1)
+    except PermissionError as e:
+        print(f"Error: {e}")
+        print("Check the WebREPL password in Settings.")
         sys.exit(1)
     except ConnectionRefusedError:
         print(f"Error: Connection to '{host}:{ws_port}' was refused.")

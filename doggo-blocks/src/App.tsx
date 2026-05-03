@@ -1,4 +1,4 @@
-import { AlertTriangle, Code2, Play } from 'lucide-react';
+import { AlertTriangle, Code2, Play, Settings } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
@@ -59,6 +59,9 @@ export const App = () => {
   const outputRef = useRef<string[]>([]);
   const [status, setStatus] = useState('');
   const [errorDialog, setErrorDialog] = useState<{ exitCode: number; output: string } | null>(null);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsHostname, setSettingsHostname] = useState('doggo.local');
+  const [settingsPassword, setSettingsPassword] = useState('doggo');
   const [varDialog, setVarDialog] = useState(false);
   const [varName, setVarName] = useState('');
   const [codeOpen, setCodeOpen] = useState(false);
@@ -224,6 +227,18 @@ export const App = () => {
     });
   }, []);
 
+  useEffect(() => {
+    window.doggo.getSettings().then(({ hostname, password }) => {
+      setSettingsHostname(hostname);
+      setSettingsPassword(password);
+    });
+  }, []);
+
+  const handleSaveSettings = async () => {
+    await window.doggo.saveSettings({ hostname: settingsHostname, password: settingsPassword });
+    setSettingsOpen(false);
+  };
+
   const handleRun = () => {
     const ws = workspaceRef.current;
     if (!ws) {
@@ -281,6 +296,9 @@ export const App = () => {
           title="Toggle Python code viewer"
         >
           <Code2 size={14} /> Code
+        </button>
+        <button id="btn-settings" onClick={() => setSettingsOpen(true)} title="Settings">
+          <Settings size={14} />
         </button>
       </div>
       <div id="main-area">
@@ -352,6 +370,43 @@ export const App = () => {
                 OK
               </button>
               <button onClick={() => setRenameVarId(null)}>Cancel</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {settingsOpen && (
+        <div className="dialog-overlay" onClick={() => setSettingsOpen(false)}>
+          <div className="dialog" onClick={(e) => e.stopPropagation()}>
+            <h3>Settings</h3>
+            <label className="settings-label">
+              Robot hostname
+              <input
+                autoFocus
+                value={settingsHostname}
+                placeholder="doggo.local"
+                onChange={(e) => setSettingsHostname(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveSettings();
+                  if (e.key === 'Escape') setSettingsOpen(false);
+                }}
+              />
+            </label>
+            <label className="settings-label">
+              Robot password
+              <input
+                value={settingsPassword}
+                placeholder="doggo"
+                onChange={(e) => setSettingsPassword(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleSaveSettings();
+                  if (e.key === 'Escape') setSettingsOpen(false);
+                }}
+              />
+            </label>
+            <div className="dialog-buttons">
+              <button onClick={handleSaveSettings}>Save</button>
+              <button onClick={() => setSettingsOpen(false)}>Cancel</button>
             </div>
           </div>
         </div>
