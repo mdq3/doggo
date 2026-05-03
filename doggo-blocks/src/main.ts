@@ -4,7 +4,7 @@ import { mkdtempSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 
-import { BrowserWindow, app, ipcMain } from 'electron';
+import { BrowserWindow, Menu, app, ipcMain } from 'electron';
 
 let mainWindow: BrowserWindow | null = null;
 let runningProcess: ChildProcess | null = null;
@@ -28,7 +28,53 @@ const createWindow = (): void => {
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  const isMac = process.platform === 'darwin';
+  Menu.setApplicationMenu(
+    Menu.buildFromTemplate([
+      ...(isMac
+        ? [
+            {
+              label: app.name,
+              submenu: [
+                { role: 'about' as const },
+                { type: 'separator' as const },
+                { role: 'hide' as const },
+                { role: 'hideOthers' as const },
+                { role: 'unhide' as const },
+                { type: 'separator' as const },
+                { role: 'quit' as const },
+              ],
+            },
+          ]
+        : []),
+      {
+        label: 'View',
+        submenu: [
+          ...(!app.isPackaged
+            ? [
+                { role: 'reload' as const },
+                { role: 'forceReload' as const },
+                { role: 'toggleDevTools' as const },
+                { type: 'separator' as const },
+              ]
+            : []),
+          { role: 'resetZoom' as const },
+          { role: 'zoomIn' as const },
+          { role: 'zoomOut' as const },
+          { type: 'separator' as const },
+          { role: 'togglefullscreen' as const },
+        ],
+      },
+      { role: 'windowMenu' as const },
+      {
+        role: 'help' as const,
+        submenu: [{ role: 'about' as const }],
+      },
+    ]),
+  );
+  createWindow();
+});
 
 app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
