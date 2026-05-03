@@ -1,9 +1,10 @@
-import { BrowserWindow, app, ipcMain } from 'electron';
-import { mkdtempSync, writeFileSync } from 'fs';
 import type { ChildProcess } from 'child_process';
-import path from 'path';
 import { spawn } from 'child_process';
+import { mkdtempSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
+import path from 'path';
+
+import { BrowserWindow, app, ipcMain } from 'electron';
 
 let mainWindow: BrowserWindow | null = null;
 let runningProcess: ChildProcess | null = null;
@@ -22,24 +23,28 @@ function createWindow(): void {
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(
-      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
-    );
+    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
 }
 
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') { app.quit(); }
+  if (process.platform !== 'darwin') {
+    app.quit();
+  }
 });
 
 app.on('activate', () => {
-  if (BrowserWindow.getAllWindows().length === 0) { createWindow(); }
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow();
+  }
 });
 
 ipcMain.handle('run-script', (_event, code: string) => {
-  if (runningProcess) { return; }
+  if (runningProcess) {
+    return;
+  }
 
   const tmpDir = mkdtempSync(path.join(tmpdir(), 'doggo-'));
   const scriptPath = path.join(tmpDir, 'script.py');

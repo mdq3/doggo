@@ -18,12 +18,16 @@ class WorkspaceOnlyFieldVariable extends ScratchBlocks.FieldVariable {
   }
 
   protected override createSVGArrow_(): void {
-    if (this.isFlyoutGet()) { return; }
+    if (this.isFlyoutGet()) {
+      return;
+    }
     super.createSVGArrow_();
   }
 
   protected override createTextArrow_(): void {
-    if (this.isFlyoutGet()) { return; }
+    if (this.isFlyoutGet()) {
+      return;
+    }
     super.createTextArrow_();
   }
 }

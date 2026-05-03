@@ -1,12 +1,13 @@
-import * as ScratchBlocks from 'scratch-blocks';
 import { Code2, Play, Square } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { createGenerator } from './generator.js';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import * as ScratchBlocks from 'scratch-blocks';
+
 import { defineBlocks } from './blocks.js';
+import { createGenerator } from './generator.js';
 import { doggoTheme } from './theme.js';
 import { toolboxConfig } from './toolbox.js';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 ScratchBlocks.ScratchMsgs.setLocale('en');
 defineBlocks();
@@ -22,8 +23,23 @@ function buildFlyoutItems(
   // One set block is enough (it has a dropdown); one get block per variable.
   const firstVar = vars[0];
   const varBlocks = [
-    ...(firstVar ? [{ kind: 'block', type: 'variables_set', fields: { VAR: { id: firstVar.getId(), name: firstVar.getName(), type: firstVar.getType() } }, inputs: { VALUE: numShadow } }] : []),
-    ...vars.map((v) => ({ kind: 'block', type: 'variables_get', fields: { VAR: { id: v.getId(), name: v.getName(), type: v.getType() } } })),
+    ...(firstVar
+      ? [
+          {
+            kind: 'block',
+            type: 'variables_set',
+            fields: {
+              VAR: { id: firstVar.getId(), name: firstVar.getName(), type: firstVar.getType() },
+            },
+            inputs: { VALUE: numShadow },
+          },
+        ]
+      : []),
+    ...vars.map((v) => ({
+      kind: 'block',
+      type: 'variables_get',
+      fields: { VAR: { id: v.getId(), name: v.getName(), type: v.getType() } },
+    })),
   ];
 
   return toolboxConfig.contents.flatMap((cat): ScratchBlocks.utils.toolbox.FlyoutItemInfo[] => {
@@ -46,12 +62,19 @@ export function App() {
   const [varName, setVarName] = useState('');
   const [codeOpen, setCodeOpen] = useState(false);
   const [generatedCode, setGeneratedCode] = useState('# Place blocks to generate code');
-  const [ctxMenu, setCtxMenu] = useState<{ x: number; y: number; varId: string; varName: string } | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<{
+    x: number;
+    y: number;
+    varId: string;
+    varName: string;
+  } | null>(null);
   const [renameVarId, setRenameVarId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState('');
 
   useEffect(() => {
-    if (!blocklyDivRef.current || workspaceRef.current) { return; }
+    if (!blocklyDivRef.current || workspaceRef.current) {
+      return;
+    }
 
     const ws = ScratchBlocks.inject(blocklyDivRef.current, {
       toolbox: toolboxConfig,
@@ -75,9 +98,12 @@ export function App() {
       ws.getToolbox()?.getFlyout()?.show(items);
       // show() resets scroll to top — click the Variables sidebar item to scroll back.
       setTimeout(() => {
-        const cats = blocklyDivRef.current?.querySelectorAll<HTMLElement>('.blocklyToolboxCategory');
+        const cats =
+          blocklyDivRef.current?.querySelectorAll<HTMLElement>('.blocklyToolboxCategory');
         for (const el of cats ?? []) {
-          if (el.querySelector('.blocklyToolboxCategoryLabel')?.textContent?.trim() === 'Variables') {
+          if (
+            el.querySelector('.blocklyToolboxCategoryLabel')?.textContent?.trim() === 'Variables'
+          ) {
             el.click();
             break;
           }
@@ -120,31 +146,51 @@ export function App() {
     // Block SVG groups carry data-id; walk up to find it.
     const flyoutVarBlockAt = (target: EventTarget | null) => {
       let el: Element | null = target as Element | null;
-      while (el && !el.hasAttribute('data-id')) { el = el.parentElement; }
-      if (!el) { return null; }
+      while (el && !el.hasAttribute('data-id')) {
+        el = el.parentElement;
+      }
+      if (!el) {
+        return null;
+      }
       const dataId = el.getAttribute('data-id');
-      if (!dataId) { return null; }
+      if (!dataId) {
+        return null;
+      }
       const flyout = ws.getToolbox()?.getFlyout();
-      if (!flyout) { return null; }
+      if (!flyout) {
+        return null;
+      }
       const block = flyout.getWorkspace().getBlockById(dataId);
-      if (!block?.workspace.isFlyout) { return null; }
-      if (block.type !== 'variables_get') { return null; }
+      if (!block?.workspace.isFlyout) {
+        return null;
+      }
+      if (block.type !== 'variables_get') {
+        return null;
+      }
       return block;
     };
 
     // Intercept right-click pointerdown before Blockly starts its gesture.
     const handlePointerDown = (e: PointerEvent) => {
-      if (e.button !== 2 || !flyoutVarBlockAt(e.target)) { return; }
+      if (e.button !== 2 || !flyoutVarBlockAt(e.target)) {
+        return;
+      }
       e.stopPropagation();
     };
 
     const handleContextMenu = (e: MouseEvent) => {
       const block = flyoutVarBlockAt(e.target);
-      if (!block) { return; }
+      if (!block) {
+        return;
+      }
       const varId = block.getField('VAR')?.getValue();
-      if (!varId) { return; }
+      if (!varId) {
+        return;
+      }
       const variable = ws.getVariableMap().getVariableById(varId);
-      if (!variable) { return; }
+      if (!variable) {
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
       setCtxMenu({ x: e.clientX, y: e.clientY, varId, varName: variable.getName() });
@@ -173,7 +219,9 @@ export function App() {
 
   function handleRun() {
     const ws = workspaceRef.current;
-    if (!ws) { return; }
+    if (!ws) {
+      return;
+    }
     const code = pyGen.workspaceToCode(ws);
     console.log(`[doggo-blocks] generated script:\n${code}`);
     setRunning(true);
@@ -188,16 +236,22 @@ export function App() {
   function handleRenameVar() {
     const ws = workspaceRef.current;
     const newName = renameName.trim();
-    if (!ws || !renameVarId || !newName) { return; }
+    if (!ws || !renameVarId || !newName) {
+      return;
+    }
     const variable = ws.getVariableMap().getVariableById(renameVarId);
-    if (variable) { ws.getVariableMap().renameVariable(variable, newName); }
+    if (variable) {
+      ws.getVariableMap().renameVariable(variable, newName);
+    }
     setRenameVarId(null);
   }
 
   function handleDeleteVar(varId: string) {
     const ws = workspaceRef.current;
     const variable = ws?.getVariableMap().getVariableById(varId);
-    if (ws && variable) { ws.getVariableMap().deleteVariable(variable); }
+    if (ws && variable) {
+      ws.getVariableMap().deleteVariable(variable);
+    }
     setCtxMenu(null);
   }
 
@@ -256,13 +310,20 @@ export function App() {
 
       {ctxMenu && (
         <>
-          <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={() => setCtxMenu(null)} />
+          <div
+            style={{ position: 'fixed', inset: 0, zIndex: 999 }}
+            onClick={() => setCtxMenu(null)}
+          />
           <div className="context-menu" style={{ left: ctxMenu.x, top: ctxMenu.y }}>
-            <button onClick={() => {
-              setRenameVarId(ctxMenu.varId);
-              setRenameName(ctxMenu.varName);
-              setCtxMenu(null);
-            }}>Rename</button>
+            <button
+              onClick={() => {
+                setRenameVarId(ctxMenu.varId);
+                setRenameName(ctxMenu.varName);
+                setCtxMenu(null);
+              }}
+            >
+              Rename
+            </button>
             <button onClick={() => handleDeleteVar(ctxMenu.varId)}>Delete</button>
           </div>
         </>
@@ -277,12 +338,19 @@ export function App() {
               value={renameName}
               onChange={(e) => setRenameName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); handleRenameVar(); }
-                if (e.key === 'Escape') { setRenameVarId(null); }
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleRenameVar();
+                }
+                if (e.key === 'Escape') {
+                  setRenameVarId(null);
+                }
               }}
             />
             <div className="dialog-buttons">
-              <button onClick={handleRenameVar} disabled={!renameName.trim()}>OK</button>
+              <button onClick={handleRenameVar} disabled={!renameName.trim()}>
+                OK
+              </button>
               <button onClick={() => setRenameVarId(null)}>Cancel</button>
             </div>
           </div>
@@ -299,12 +367,19 @@ export function App() {
               value={varName}
               onChange={(e) => setVarName(e.target.value)}
               onKeyDown={(e) => {
-                if (e.key === 'Enter') { e.preventDefault(); handleCreateVar(); }
-                if (e.key === 'Escape') { setVarDialog(false); }
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleCreateVar();
+                }
+                if (e.key === 'Escape') {
+                  setVarDialog(false);
+                }
               }}
             />
             <div className="dialog-buttons">
-              <button onClick={handleCreateVar} disabled={!varName.trim()}>OK</button>
+              <button onClick={handleCreateVar} disabled={!varName.trim()}>
+                OK
+              </button>
               <button onClick={() => setVarDialog(false)}>Cancel</button>
             </div>
           </div>

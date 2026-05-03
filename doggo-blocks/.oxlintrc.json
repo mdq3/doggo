@@ -13,7 +13,6 @@
     "prefer-template": "warn",
     "typescript/consistent-type-imports": "warn",
     "no-multi-assign": "warn",
-    "sort-imports": "warn",
     "curly": "warn"
   },
   "env": {

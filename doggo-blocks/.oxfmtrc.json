@@ -3,5 +3,6 @@
   "printWidth": 100,
   "singleQuote": true,
   "trailingComma": "all",
+  "sortImports": true,
   "ignorePatterns": [".vite/**", "dist/**", "out/**"]
 }

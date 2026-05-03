@@ -173,7 +173,7 @@ button:disabled {
 
 /* ─── Blockly flyout "Make a Variable" button ───────────────────────── */
 .blocklyFlyoutButton .blocklyFlyoutButtonBackground {
-  fill: #FF8C1A;
+  fill: #ff8c1a;
   rx: 4;
 }
 .blocklyFlyoutButton .blocklyFlyoutButtonShadow {
@@ -251,7 +251,7 @@ button:disabled {
 }
 
 .dialog input:focus {
-  border-color: #FF8C1A;
+  border-color: #ff8c1a;
 }
 
 .dialog-buttons {
@@ -270,7 +270,7 @@ button:disabled {
 }
 
 .dialog-buttons button:first-child {
-  background: #FF8C1A;
+  background: #ff8c1a;
   color: #1e1e2e;
 }
 
