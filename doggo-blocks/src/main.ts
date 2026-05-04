@@ -16,22 +16,22 @@ interface Settings {
 
 const DEFAULT_SETTINGS: Settings = { hostname: 'doggo.local', password: 'doggo' };
 
-function loadSettings(): Settings {
+const loadSettings = (): Settings => {
   try {
     const raw = readFileSync(path.join(app.getPath('userData'), 'settings.json'), 'utf8');
     return { ...DEFAULT_SETTINGS, ...JSON.parse(raw) };
   } catch {
     return { ...DEFAULT_SETTINGS };
   }
-}
+};
 
-function saveSettings(settings: Settings): void {
+const saveSettings = (settings: Settings): void => {
   writeFileSync(
     path.join(app.getPath('userData'), 'settings.json'),
     JSON.stringify(settings, null, 2),
     'utf8',
   );
-}
+};
 
 const createWindow = (): void => {
   mainWindow = new BrowserWindow({
@@ -50,7 +50,7 @@ const createWindow = (): void => {
   } else {
     mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
   }
-}
+};
 
 app.whenReady().then(() => {
   const isMac = process.platform === 'darwin';

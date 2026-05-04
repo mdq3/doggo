@@ -231,4 +231,4 @@ export const defineBlocks = (): void => {
       },
     };
   }
-}
+};

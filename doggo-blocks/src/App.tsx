@@ -50,7 +50,7 @@ const buildFlyoutItems = (
     }
     return [label, ...cat.contents];
   });
-}
+};
 
 export const App = () => {
   const blocklyDivRef = useRef<HTMLDivElement>(null);
@@ -250,7 +250,7 @@ export const App = () => {
     outputRef.current = [];
     setStatus('Running…');
     window.doggo.runScript(code);
-  }
+  };
 
   const handleRenameVar = () => {
     const ws = workspaceRef.current;
@@ -263,7 +263,7 @@ export const App = () => {
       ws.getVariableMap().renameVariable(variable, newName);
     }
     setRenameVarId(null);
-  }
+  };
 
   const handleDeleteVar = (varId: string) => {
     const ws = workspaceRef.current;
@@ -272,7 +272,7 @@ export const App = () => {
       ws.getVariableMap().deleteVariable(variable);
     }
     setCtxMenu(null);
-  }
+  };
 
   const handleCreateVar = () => {
     const name = varName.trim();
@@ -282,7 +282,7 @@ export const App = () => {
       refreshVariablesRef.current?.();
     }
     setVarDialog(false);
-  }
+  };
 
   return (
     <>
@@ -397,8 +397,12 @@ export const App = () => {
                 placeholder="doggo.local"
                 onChange={(e) => setSettingsHostname(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveSettings();
-                  if (e.key === 'Escape') setSettingsOpen(false);
+                  if (e.key === 'Enter') {
+                    handleSaveSettings();
+                  }
+                  if (e.key === 'Escape') {
+                    setSettingsOpen(false);
+                  }
                 }}
               />
             </label>
@@ -409,8 +413,12 @@ export const App = () => {
                 placeholder="doggo"
                 onChange={(e) => setSettingsPassword(e.target.value)}
                 onKeyDown={(e) => {
-                  if (e.key === 'Enter') handleSaveSettings();
-                  if (e.key === 'Escape') setSettingsOpen(false);
+                  if (e.key === 'Enter') {
+                    handleSaveSettings();
+                  }
+                  if (e.key === 'Escape') {
+                    setSettingsOpen(false);
+                  }
                 }}
               />
             </label>
@@ -468,4 +476,4 @@ export const App = () => {
       )}
     </>
   );
-}
+};

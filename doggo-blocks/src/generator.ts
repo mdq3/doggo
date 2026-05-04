@@ -154,4 +154,4 @@ export const createGenerator = (): ScratchBlocks.CodeGenerator => {
   }
 
   return gen;
-}
+};
