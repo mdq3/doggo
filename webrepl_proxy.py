@@ -282,7 +282,7 @@ def main():
         ws_port = 8266
         cmd_args = args
 
-    print(f"Connecting to WebREPL at {host}:{ws_port}...")
+    print(f"Connecting to {host}:{ws_port}...")
     ws = _WS(socket.socket())
     ws.settimeout(10)
     try:
