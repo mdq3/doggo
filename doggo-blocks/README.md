@@ -12,16 +12,13 @@ Block-based programming for the Petoi Bittle X V2. Drag blocks to build a sequen
 
 ## Prerequisites
 
-- Node.js 18+
 - The robot on Wi-Fi with WebREPL enabled (see `../docs/hardware-setup.md`)
 - Python with `mpremote` installed (`pip install mpremote`)
 
 ## Running in development
 
 ```bash
-cd doggo-blocks
 npm install
-cp -r node_modules/scratch-blocks/media public/media   # copies workspace icons (gitignored)
 npm start
 ```
 
