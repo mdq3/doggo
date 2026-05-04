@@ -39,7 +39,7 @@ export const defineBlocks = (): void => {
   // ─── HAT BLOCK ────────────────────────────────────────────────────────────
   Blocks['doggo_on_start'] = {
     init(this: ScratchBlocks.Block) {
-      this.appendDummyInput().appendField('when ▶ run');
+      this.appendDummyInput().appendField('when ▶ clicked');
       this.setNextStatement(true);
       this.setStyle('hat_blocks');
     },

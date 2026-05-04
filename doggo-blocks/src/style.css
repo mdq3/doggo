@@ -299,8 +299,8 @@ button:disabled {
 
 .splash-title {
   font-family: var(--font-mono);
-  font-size: 56px;
-  font-weight: 900;
+  font-size: 65px;
+  font-weight: bold;
   letter-spacing: -0.02em;
   background: linear-gradient(90deg, #ff8c1a, #a855f7, #3b82f6, #22c55e);
   -webkit-background-clip: text;
@@ -312,7 +312,7 @@ button:disabled {
   background: #a6e3a1;
   color: #1e1e2e;
   font-family: var(--font-mono);
-  font-size: 15px;
+  font-size: 28px;
   font-weight: 700;
   padding: 10px 32px;
   border-radius: 8px;

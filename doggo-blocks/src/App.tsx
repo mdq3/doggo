@@ -304,8 +304,9 @@ export const App = () => {
     <>
       {showSplash && (
         <div className="splash">
-          <img src="doggo-blocks-sparkle.png" alt="doggo blocks" className="splash-image" />
           <h1 className="splash-title">doggo blocks</h1>
+          <img src="doggo-blocks-sparkle.png" alt="doggo blocks" className="splash-image" />
+
           <button className="splash-btn" onClick={() => setShowSplash(false)}>
             Start Coding
           </button>
