@@ -75,6 +75,8 @@ export const App = () => {
   } | null>(null);
   const [renameVarId, setRenameVarId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState('');
+  const [promptOpen, setPromptOpen] = useState(false);
+  const promptCallbackRef = useRef<((name: string | null) => void) | null>(null);
 
   useEffect(() => {
     if (!blocklyDivRef.current || workspaceRef.current) {
@@ -101,19 +103,6 @@ export const App = () => {
       const vars = ws.getVariableMap().getAllVariables();
       const items = buildFlyoutItems(vars);
       ws.getToolbox()?.getFlyout()?.show(items);
-      // show() resets scroll to top — click the Variables sidebar item to scroll back.
-      setTimeout(() => {
-        const cats =
-          blocklyDivRef.current?.querySelectorAll<HTMLElement>('.blocklyToolboxCategory');
-        for (const el of cats ?? []) {
-          if (
-            el.querySelector('.blocklyToolboxCategoryLabel')?.textContent?.trim() === 'Variables'
-          ) {
-            el.click();
-            break;
-          }
-        }
-      }, 50);
     };
     refreshVariablesRef.current = refreshVariables;
 
@@ -165,14 +154,19 @@ export const App = () => {
       if (!flyout) {
         return null;
       }
-      const block = flyout.getWorkspace().getBlockById(dataId);
+      let block: ScratchBlocks.Block | null = flyout.getWorkspace().getBlockById(dataId);
       if (!block?.workspace.isFlyout) {
         return null;
       }
-      if (block.type !== 'variables_get') {
-        return null;
+      // Walk up the block parent chain — handles clicks on the shadow number input
+      // inside the set block, where the DOM walker resolves to math_number, not variables_set.
+      while (block) {
+        if (block.type === 'variables_get' || block.type === 'variables_set') {
+          return block;
+        }
+        block = (block as any).getParent?.() ?? null;
       }
-      return block;
+      return null;
     };
 
     // Intercept right-click pointerdown before Blockly starts its gesture.
@@ -229,6 +223,14 @@ export const App = () => {
   }, []);
 
   useEffect(() => {
+    ScratchBlocks.dialog.setPrompt((_message, defaultValue, callback) => {
+      setRenameName(defaultValue);
+      promptCallbackRef.current = callback;
+      setPromptOpen(true);
+    });
+  }, []);
+
+  useEffect(() => {
     window.doggo.getSettings().then(({ hostname, password }) => {
       setSettingsHostname(hostname);
       setSettingsPassword(password);
@@ -252,17 +254,31 @@ export const App = () => {
     window.doggo.runScript(code);
   };
 
-  const handleRenameVar = () => {
-    const ws = workspaceRef.current;
-    const newName = renameName.trim();
-    if (!ws || !renameVarId || !newName) {
-      return;
-    }
-    const variable = ws.getVariableMap().getVariableById(renameVarId);
-    if (variable) {
-      ws.getVariableMap().renameVariable(variable, newName);
+  const closeRenameDialog = () => {
+    if (promptCallbackRef.current) {
+      promptCallbackRef.current(null);
+      promptCallbackRef.current = null;
     }
     setRenameVarId(null);
+    setPromptOpen(false);
+  };
+
+  const handleRenameVar = () => {
+    const newName = renameName.trim();
+    if (!newName) return;
+
+    if (renameVarId) {
+      const ws = workspaceRef.current;
+      const variable = ws?.getVariableMap().getVariableById(renameVarId);
+      if (ws && variable) {
+        ws.getVariableMap().renameVariable(variable, newName);
+      }
+      setRenameVarId(null);
+    } else if (promptOpen && promptCallbackRef.current) {
+      promptCallbackRef.current(newName);
+      promptCallbackRef.current = null;
+      setPromptOpen(false);
+    }
   };
 
   const handleDeleteVar = (varId: string) => {
@@ -357,8 +373,8 @@ export const App = () => {
         </>
       )}
 
-      {renameVarId && (
-        <div className="dialog-overlay" onClick={() => setRenameVarId(null)}>
+      {(renameVarId || promptOpen) && (
+        <div className="dialog-overlay" onClick={closeRenameDialog}>
           <div className="dialog" onClick={(e) => e.stopPropagation()}>
             <h3>Rename variable</h3>
             <input
@@ -371,7 +387,7 @@ export const App = () => {
                   handleRenameVar();
                 }
                 if (e.key === 'Escape') {
-                  setRenameVarId(null);
+                  closeRenameDialog();
                 }
               }}
             />
@@ -379,7 +395,7 @@ export const App = () => {
               <button onClick={handleRenameVar} disabled={!renameName.trim()}>
                 OK
               </button>
-              <button onClick={() => setRenameVarId(null)}>Cancel</button>
+              <button onClick={closeRenameDialog}>Cancel</button>
             </div>
           </div>
         </div>
