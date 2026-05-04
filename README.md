@@ -119,7 +119,19 @@ For detailed calibration instructions and servo identification, see [hardware se
 
 ## Control
 
-The robot can be controlled via REST API or by sending a Python script over the air to the robot.
+The robot can be controlled via the **Doggo Blocks** desktop app, the REST API, or by sending Python scripts directly over the air.
+
+### Doggo Blocks app
+
+[Doggo Blocks](doggo-blocks/) is a drag-and-drop block programming app (built with Electron and Scratch Blocks). Drag motion and pose blocks into the workspace, hit **Run**, and the app compiles the program to MicroPython and sends it to the robot over Wi-Fi — no terminal needed.
+
+```bash
+cd doggo-blocks
+npm install
+npm start
+```
+
+Enter the robot's hostname and WebREPL password in the gear ⚙ settings menu. See [doggo-blocks/README.md](doggo-blocks/README.md) for full details.
 
 ### Send commands via REST API
 

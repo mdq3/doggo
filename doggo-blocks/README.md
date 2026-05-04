@@ -14,10 +14,9 @@ Block-based programming for the Petoi Bittle X V2. Drag blocks to build a sequen
 
 - Node.js 18+
 - The robot on Wi-Fi with WebREPL enabled (see `../docs/hardware-setup.md`)
-- `wifi_config.py` present in the repo root (copy from `wifi_config_template.py` and fill in credentials)
-- Python dependencies for `webrepl_proxy.py`: `mpremote` installed (`pip install mpremote`)
+- Python with `mpremote` installed (`pip install mpremote`)
 
-## Running
+## Running in development
 
 ```bash
 cd doggo-blocks
@@ -26,13 +25,31 @@ cp -r node_modules/scratch-blocks/media public/media   # copies workspace icons 
 npm start
 ```
 
-The Electron window opens. DevTools are available with Cmd+Option+I.
+The Electron window opens. DevTools are available with Cmd+Option+I (hidden in the packaged build).
+
+## Building a packaged app
+
+```bash
+npm run package
+```
+
+The app is output to `out/DoggoBlocks-darwin-arm64/DoggoBlocks.app` (path varies by platform).
+
+## Configuration
+
+Click the **gear icon ⚙** in the toolbar to open Settings. Enter:
+
+- **Robot hostname** — the mDNS hostname of your robot (default: `doggo.local`)
+- **Robot password** — the WebREPL password set in `wifi_config.py` on the device (default: `doggo`)
+
+Settings are saved automatically and persist across launches.
 
 ## Using the app
 
-1. **Build a program** — drag blocks from the palette on the left into the workspace.
-2. **Hit Run ▶** — the workspace is compiled to a MicroPython script and sent to the robot via `webrepl_proxy.py run`. Output and errors appear in DevTools console.
-3. **Hit Stop ■** — sends SIGTERM to the running proxy process.
+1. **Splash screen** — click **Get Started** to open the workspace.
+2. **Build a program** — drag blocks from the palette on the left into the workspace.
+3. **Hit Run ▶** — the workspace is compiled to a MicroPython script and sent to the robot via `webrepl_proxy.py`. Progress is shown in the toolbar.
+4. **Errors** — if the script exits with a non-zero code, a popup shows the full output. Common errors (hostname not found, wrong password, connection timeout) display a plain-English message instead of a raw traceback.
 
 ## Block categories
 
@@ -46,36 +63,10 @@ The Electron window opens. DevTools are available with Cmd+Option+I.
 
 A **Wait** block (under Control) pauses execution for a given number of seconds.
 
-## Example program
-
-```
-stand
-repeat 3 times
-  walk  2  steps
-  turn left  1  steps
-wait  1  seconds
-rest
-```
-
-Generates and runs:
-
-```python
-from poses import stand, rest
-from gaits.walk import walk
-from gaits.turn import turn_left
-import time
-
-stand()
-for _ in range(3):
-    walk(steps=2)
-    turn_left(steps=1)
-time.sleep(1)
-rest()
-```
 
 ## How it works
 
-1. Blocks generate a MicroPython script using Blockly's code generator.
+1. Blocks generate a MicroPython script via Blockly's code generator.
 2. The script is written to a temp file and passed to `python ../webrepl_proxy.py run <script>`.
-3. `webrepl_proxy.py` connects to the robot's WebREPL WebSocket, authenticates, and runs the script via `mpremote`.
-4. stdout is streamed to the DevTools console; stderr is logged server-side.
+3. `webrepl_proxy.py` connects to the robot's WebREPL WebSocket using the hostname and password from Settings, authenticates, and runs the script via `mpremote`.
+4. stdout and stderr are both streamed back to the app. On success, the toolbar shows **Done ✓**. On failure, an error popup shows the full output.
