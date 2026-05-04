@@ -2,7 +2,7 @@ import { MakerZIP } from '@electron-forge/maker-zip';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 
 export default {
-  packagerConfig: { asar: false, extraResource: ['../webrepl_proxy.py'] },
+  packagerConfig: { asar: false, extraResource: ['../webrepl_proxy.py'], icon: 'assets/icon' },
   rebuildConfig: {},
   makers: [new MakerZIP({}, ['darwin', 'linux', 'win32'])],
   plugins: [
