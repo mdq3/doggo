@@ -227,8 +227,11 @@ export const App = () => {
   }, []);
 
   useEffect(() => {
-    ScratchBlocks.dialog.setPrompt((_message, defaultValue, callback) => {
-      setRenameName(defaultValue);
+    ScratchBlocks.dialog.setPrompt((message, defaultValue, callback) => {
+      // Blockly passes "" as defaultValue for rename — extract the current name
+      // from the message which has the form 'Rename all "varName" variables to:'.
+      const extracted = /"(.+)"/.exec(message)?.[1] ?? '';
+      setRenameName(defaultValue || extracted);
       promptCallbackRef.current = callback;
       setPromptOpen(true);
     });
