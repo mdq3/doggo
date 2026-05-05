@@ -169,8 +169,10 @@ export const App = () => {
       return null;
     };
 
-    // Intercept right-click pointerdown before Blockly starts its gesture.
-    const handlePointerDown = (e: PointerEvent) => {
+    // Intercept right-click before Blockly starts its gesture.
+    // Both pointerdown and mousedown must be stopped — they are separate event chains
+    // and Scratch-Blocks listens on mousedown, so stopping only pointerdown is not enough.
+    const stopRightClickOnVarBlock = (e: MouseEvent) => {
       if (e.button !== 2 || !flyoutVarBlockAt(e.target)) {
         return;
       }
@@ -195,12 +197,14 @@ export const App = () => {
       setCtxMenu({ x: e.clientX, y: e.clientY, varId, varName: variable.getName() });
     };
 
-    blocklyEl.addEventListener('pointerdown', handlePointerDown, true);
+    blocklyEl.addEventListener('pointerdown', stopRightClickOnVarBlock, true);
+    blocklyEl.addEventListener('mousedown', stopRightClickOnVarBlock, true);
     blocklyEl.addEventListener('contextmenu', handleContextMenu, true);
 
     return () => {
       observer.disconnect();
-      blocklyEl.removeEventListener('pointerdown', handlePointerDown, true);
+      blocklyEl.removeEventListener('pointerdown', stopRightClickOnVarBlock, true);
+      blocklyEl.removeEventListener('mousedown', stopRightClickOnVarBlock, true);
       blocklyEl.removeEventListener('contextmenu', handleContextMenu, true);
       ws.dispose();
       workspaceRef.current = null;
