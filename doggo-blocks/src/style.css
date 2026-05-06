@@ -137,6 +137,12 @@ button:disabled {
 
 .blocklyToolbox {
   --colour-toolboxSelected: transparent;
+  padding: 0 10px;
+  box-sizing: content-box;
+}
+
+.blocklyToolboxFlyout {
+  border-right: 1px solid #ddd;
 }
 
 /* ─── Toolbox sidebar category labels ───────────────────────────────── */
@@ -148,11 +154,6 @@ button:disabled {
   border: none;
   outline: none;
   box-shadow: none;
-}
-
-.blocklyToolbox {
-  padding: 0 10px;
-  box-sizing: content-box;
 }
 
 .categoryBubble {
