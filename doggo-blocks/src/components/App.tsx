@@ -1,11 +1,11 @@
 import * as ScratchBlocks from 'scratch-blocks';
 import { useEffect, useRef, useState } from 'react';
 
-import { defineBlocks } from './blocks.js';
-import { createGenerator } from './generator.js';
-import { useBlocklyWorkspace } from './useBlocklyWorkspace.js';
-import { useScriptRunner } from './useScriptRunner.js';
-import { useSettings } from './useSettings.js';
+import { defineBlocks } from '../blocks.js';
+import { createGenerator } from '../generator.js';
+import { useBlocklyWorkspace } from '../useBlocklyWorkspace.js';
+import { useScriptRunner } from '../useScriptRunner.js';
+import { useSettings } from '../useSettings.js';
 import { CodePanel } from './CodePanel.js';
 import { CreateVariableDialog } from './CreateVariableDialog.js';
 import { ErrorDialog } from './ErrorDialog.js';
