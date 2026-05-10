@@ -58,5 +58,10 @@ export const useFileHandling = (
     window.doggo.onMenuSaveFileAs(() => void handleSaveFileRef.current(true));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  return { parseError, setParseError };
+  return {
+    parseError,
+    setParseError,
+    openFile: () => void handleOpenFileRef.current(),
+    saveFile: () => void handleSaveFileRef.current(false),
+  };
 };

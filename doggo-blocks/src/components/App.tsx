@@ -44,7 +44,7 @@ export const App = () => {
   });
 
   const { status, errorDialog, setErrorDialog, handleRun } = useScriptRunner(workspaceRef, pyGen);
-  const { parseError, setParseError } = useFileHandling(
+  const { parseError, setParseError, openFile, saveFile } = useFileHandling(
     workspaceRef,
     refreshVariablesRef,
     generatedCode,
@@ -122,6 +122,8 @@ export const App = () => {
         status={status}
         onRun={handleRun}
         onToggleCode={() => setCodeOpen((o) => !o)}
+        onOpen={openFile}
+        onSave={saveFile}
         onOpenSettings={() => setSettingsOpen(true)}
       />
       <div id="main-area">
