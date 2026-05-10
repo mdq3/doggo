@@ -1,3 +1,4 @@
+import './Toolbar.css';
 import {
   ChevronLeft,
   ChevronRight,

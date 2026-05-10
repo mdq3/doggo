@@ -29,16 +29,6 @@ body {
   min-height: 0;
 }
 
-#toolbar {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: #181825;
-  border-bottom: 1px solid #313244;
-  flex-shrink: 0;
-}
-
 button {
   display: inline-flex;
   align-items: center;
@@ -58,17 +48,6 @@ button:disabled {
   cursor: not-allowed;
 }
 
-#btn-run {
-  background: #a6e3a1;
-  color: #1e1e2e;
-}
-
-#status {
-  font-size: 13px;
-  color: #a6adc8;
-  margin-left: 4px;
-}
-
 #main-area {
   display: flex;
   flex: 1;
@@ -80,56 +59,7 @@ button:disabled {
   min-height: 0;
 }
 
-/* ─── Code panel ─────────────────────────────────────────────────────────── */
-#code-panel {
-  width: 0;
-  overflow: hidden;
-  transition: width 0.2s ease;
-  background: #1e1e2e;
-  border-left: 1px solid #313244;
-  display: flex;
-  flex-direction: column;
-  flex-shrink: 0;
-}
-
-#code-panel.open {
-  width: 360px;
-}
-
-#code-panel-header {
-  display: flex;
-  align-items: center;
-  padding: 6px 12px;
-  background: #181825;
-  border-bottom: 1px solid #313244;
-  flex-shrink: 0;
-  font-size: 12px;
-  font-weight: 600;
-  color: #a6adc8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* SyntaxHighlighter renders its own pre — just ensure the wrapper fills height */
-#code-panel.open > div:last-child {
-  flex: 1;
-  min-height: 0;
-}
-
-#code-panel pre,
-#code-panel code,
-#code-panel span {
-  font-family: var(--font-mono);
-  font-weight: 700;
-}
-
-#btn-code {
-  margin-left: auto;
-  background: #313244;
-  color: #cdd6f4;
-}
-
-/* ─── Toolbox selected state — no background ────────────────────────── */
+/* ─── Blockly workspace overrides ───────────────────────────────────── */
 .blocklyToolboxSelected,
 .blocklyToolboxSelected > div {
   background-color: transparent;
@@ -145,7 +75,6 @@ button:disabled {
   border-right: 1px solid #ddd;
 }
 
-/* ─── Toolbox sidebar category labels ───────────────────────────────── */
 .blocklyToolboxCategoryLabel,
 .blocklyToolboxCategory,
 .blocklyToolboxCategoryContainer {
@@ -160,14 +89,12 @@ button:disabled {
   border: none;
 }
 
-/* ─── Block outlines — remove SVG stroke so blocks appear flat ───────── */
 .blocklyPath,
 .blocklyPathDark,
 .blocklyPathLight {
   stroke: none;
 }
 
-/* ─── Blockly flyout "Make a Variable" button ───────────────────────── */
 .blocklyFlyoutButton .blocklyFlyoutButtonBackground {
   fill: #ff8c1a;
   rx: 4;
@@ -177,299 +104,4 @@ button:disabled {
 }
 .blocklyFlyoutButton text {
   fill: #ffffff;
-}
-
-/* ─── Variable context menu ──────────────────────────────────────────── */
-.context-menu {
-  position: fixed;
-  z-index: 1000;
-  background: #2a2a3e;
-  border: 1px solid #444;
-  border-radius: 6px;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  min-width: 120px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.context-menu button {
-  background: transparent;
-  color: #cdd6f4;
-  padding: 6px 12px;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 500;
-  justify-content: flex-start;
-}
-
-.context-menu button:hover {
-  background: #313244;
-  opacity: 1;
-}
-
-/* ─── Variable creation dialog ───────────────────────────────────────── */
-.dialog-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.dialog {
-  background: #2a2a3e;
-  border: 1px solid #444;
-  border-radius: 10px;
-  padding: 24px;
-  min-width: 280px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.dialog h3 {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 0;
-  font-size: 15px;
-  color: #cdd6f4;
-}
-
-.dialog input {
-  padding: 8px 10px;
-  border-radius: 6px;
-  border: 1px solid #555;
-  background: #1e1e2e;
-  color: #cdd6f4;
-  font-size: 14px;
-  outline: none;
-}
-
-.dialog input:focus {
-  border-color: #ff8c1a;
-}
-
-.dialog-buttons {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.dialog-buttons button {
-  padding: 6px 16px;
-  border-radius: 6px;
-  border: none;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.dialog-buttons button:first-child {
-  background: #ff8c1a;
-  color: #1e1e2e;
-}
-
-.dialog-buttons button:first-child:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.dialog-buttons button:last-child {
-  background: #444;
-  color: #cdd6f4;
-}
-
-/* ─── Splash screen ──────────────────────────────────────────────────── */
-.splash {
-  position: fixed;
-  inset: 0;
-  background: #ffffff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  z-index: 9999;
-}
-
-.splash-image {
-  width: 480px;
-  height: auto;
-}
-
-.splash-title {
-  font-family: var(--font-mono);
-  font-size: 65px;
-  font-weight: bold;
-  letter-spacing: -0.02em;
-  background: linear-gradient(90deg, #ff8c1a, #a855f7, #3b82f6, #22c55e);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.splash-btn {
-  background: #a6e3a1;
-  color: #1e1e2e;
-  font-family: var(--font-mono);
-  font-size: 28px;
-  font-weight: 700;
-  padding: 10px 32px;
-  border-radius: 8px;
-  border: none;
-  cursor: pointer;
-  margin-top: 4px;
-}
-
-.splash-btn:hover {
-  opacity: 0.88;
-}
-
-/* ─── Burger menu ────────────────────────────────────────────────────── */
-#burger-menu {
-  position: relative;
-}
-
-#btn-menu {
-  background: transparent;
-  color: #a6adc8;
-  padding: 6px 8px;
-}
-
-#btn-menu:hover {
-  color: #cdd6f4;
-  opacity: 1;
-}
-
-.menu-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 999;
-}
-
-#burger-dropdown {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  background: #2a2a3e;
-  border: 1px solid #444;
-  border-radius: 6px;
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  min-width: 160px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-  z-index: 1000;
-}
-
-#burger-dropdown button {
-  background: transparent;
-  color: #cdd6f4;
-  padding: 8px 12px;
-  border-radius: 4px;
-  font-size: 13px;
-  font-weight: 500;
-  justify-content: flex-start;
-  white-space: nowrap;
-}
-
-#burger-dropdown button:hover {
-  background: #313244;
-  opacity: 1;
-}
-
-.menu-separator {
-  border: none;
-  border-top: 1px solid #444;
-  margin: 4px 2px;
-}
-
-.burger-dropdown-wide {
-  min-width: 240px;
-}
-
-.menu-item-chevron {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.menu-item-chevron-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.menu-back {
-  color: #a6adc8 !important;
-}
-
-.recents-empty {
-  padding: 8px 12px;
-  font-size: 13px;
-  color: #585b70;
-}
-
-.recent-item {
-  flex-direction: column;
-  align-items: flex-start !important;
-  gap: 2px !important;
-}
-
-.recent-name {
-  font-size: 13px;
-  color: #cdd6f4;
-}
-
-.recent-dir {
-  font-size: 11px;
-  color: #585b70;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 216px;
-}
-
-.settings-label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 11px;
-  font-weight: 600;
-  color: #a6adc8;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-/* ─── Error dialog ───────────────────────────────────────────────────── */
-.error-dialog {
-  max-width: 520px;
-  width: 90vw;
-}
-
-.error-exit-code {
-  font-size: 12px;
-  color: #a6adc8;
-  margin-top: -4px;
-}
-
-.error-output {
-  -webkit-user-select: text;
-  user-select: text;
-  font-family: var(--font-mono);
-  font-size: 12px;
-  line-height: 1.5;
-  background: #1e1e2e;
-  border: 1px solid #555;
-  border-radius: 6px;
-  padding: 10px 12px;
-  color: #f38ba8;
-  max-height: 280px;
-  overflow-y: auto;
-  white-space: pre-wrap;
-  word-break: break-word;
 }

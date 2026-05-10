@@ -1,0 +1,41 @@
+#code-panel {
+  width: 0;
+  overflow: hidden;
+  transition: width 0.2s ease;
+  background: #1e1e2e;
+  border-left: 1px solid #313244;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+#code-panel.open {
+  width: 360px;
+}
+
+#code-panel-header {
+  display: flex;
+  align-items: center;
+  padding: 6px 12px;
+  background: #181825;
+  border-bottom: 1px solid #313244;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #a6adc8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* SyntaxHighlighter renders its own pre — just ensure the wrapper fills height */
+#code-panel.open > div:last-child {
+  flex: 1;
+  min-height: 0;
+}
+
+#code-panel pre,
+#code-panel code,
+#code-panel span {
+  font-family: var(--font-mono);
+  font-weight: 700;
+}

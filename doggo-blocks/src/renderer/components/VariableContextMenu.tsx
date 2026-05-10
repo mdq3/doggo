@@ -1,3 +1,5 @@
+import './VariableContextMenu.css';
+
 export interface VarMenu {
   x: number;
   y: number;

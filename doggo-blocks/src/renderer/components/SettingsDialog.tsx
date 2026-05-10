@@ -1,3 +1,6 @@
+import './SettingsDialog.css';
+import { Dialog } from './Dialog.js';
+
 interface SettingsDialogProps {
   open: boolean;
   hostname: string;
@@ -17,10 +20,6 @@ export const SettingsDialog = ({
   onSave,
   onClose,
 }: SettingsDialogProps) => {
-  if (!open) {
-    return null;
-  }
-
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       onSave();
@@ -31,33 +30,36 @@ export const SettingsDialog = ({
   };
 
   return (
-    <div className="dialog-overlay" onClick={onClose}>
-      <div className="dialog" onClick={(e) => e.stopPropagation()}>
-        <h3>Settings</h3>
-        <label className="settings-label">
-          Robot hostname
-          <input
-            autoFocus
-            value={hostname}
-            placeholder="doggo.local"
-            onChange={(e) => onChangeHostname(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-        </label>
-        <label className="settings-label">
-          Robot password
-          <input
-            value={password}
-            placeholder="doggo"
-            onChange={(e) => onChangePassword(e.target.value)}
-            onKeyDown={handleKeyDown}
-          />
-        </label>
-        <div className="dialog-buttons">
+    <Dialog
+      open={open}
+      onClose={onClose}
+      buttons={
+        <>
           <button onClick={onSave}>Save</button>
           <button onClick={onClose}>Cancel</button>
-        </div>
-      </div>
-    </div>
+        </>
+      }
+    >
+      <h3>Settings</h3>
+      <label className="settings-label">
+        Robot hostname
+        <input
+          autoFocus
+          value={hostname}
+          placeholder="doggo.local"
+          onChange={(e) => onChangeHostname(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      </label>
+      <label className="settings-label">
+        Robot password
+        <input
+          value={password}
+          placeholder="doggo"
+          onChange={(e) => onChangePassword(e.target.value)}
+          onKeyDown={handleKeyDown}
+        />
+      </label>
+    </Dialog>
   );
 };

@@ -1,3 +1,5 @@
+import './SplashScreen.css';
+
 export const SplashScreen = ({ onStart }: { onStart: () => void }) => (
   <div className="splash">
     <h1 className="splash-title">doggo blocks</h1>
