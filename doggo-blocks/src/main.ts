@@ -220,6 +220,17 @@ ipcMain.handle('open-file', async (_event, filePath?: string) => {
   }
 });
 
+ipcMain.on('set-title', (_event, filePath: string | null) => {
+  if (!mainWindow) {
+    return;
+  }
+  const name = filePath ? path.basename(filePath) : null;
+  mainWindow.setTitle(name ? `${name} — Doggo Blocks` : 'Doggo Blocks');
+  if (process.platform === 'darwin') {
+    mainWindow.setRepresentedFilename(filePath ?? '');
+  }
+});
+
 ipcMain.handle('get-recents', () => loadRecents());
 ipcMain.handle('add-recent', (_event, filePath: string) => addToRecents(filePath));
 ipcMain.handle('clear-recents', () => clearRecents());

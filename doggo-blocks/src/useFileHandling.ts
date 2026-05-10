@@ -10,6 +10,10 @@ export const useFileHandling = (
   generatedCode: string,
 ) => {
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
+
+  useEffect(() => {
+    window.doggo.setTitle(currentFilePath);
+  }, [currentFilePath]);
   const [parseError, setParseError] = useState<ErrorData | null>(null);
   const [newFileConfirmOpen, setNewFileConfirmOpen] = useState(false);
   const [recents, setRecents] = useState<string[]>([]);
