@@ -166,6 +166,12 @@ export const useFileHandling = (
         confirmLabel: 'Open',
       }),
     );
+    window.doggo.onBeforeQuit(() =>
+      confirmIfDirtyRef.current(() => window.doggo.confirmQuit(), {
+        title: 'Quit without saving?',
+        confirmLabel: 'Quit',
+      }),
+    );
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {

@@ -8,6 +8,7 @@ import { BrowserWindow, Menu, app, dialog, ipcMain } from 'electron';
 
 let mainWindow: BrowserWindow | null = null;
 let runningProcess: ChildProcess | null = null;
+let allowQuit = false;
 
 // ── Recents ──────────────────────────────────────────────────────────────────
 
@@ -184,6 +185,13 @@ const createWindow = (): void => {
       path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
     );
   }
+
+  mainWindow.on('close', (event) => {
+    if (!allowQuit) {
+      event.preventDefault();
+      mainWindow?.webContents.send('before-quit');
+    }
+  });
 };
 
 void app.whenReady().then(() => {
@@ -291,4 +299,9 @@ ipcMain.handle('run-script', (_event, code: string) => {
     runningProcess = null;
     mainWindow?.webContents.send('script-done', exitCode);
   });
+});
+
+ipcMain.on('confirm-quit', () => {
+  allowQuit = true;
+  mainWindow?.close();
 });

@@ -25,5 +25,7 @@ interface Window {
     onMenuSaveFile: (cb: () => void) => void;
     onMenuSaveFileAs: (cb: () => void) => void;
     onMenuOpenRecent: (cb: (filePath: string) => void) => void;
+    onBeforeQuit: (cb: () => void) => void;
+    confirmQuit: () => void;
   };
 }

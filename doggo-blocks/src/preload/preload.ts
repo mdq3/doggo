@@ -25,4 +25,6 @@ contextBridge.exposeInMainWorld('doggo', {
   onMenuSaveFileAs: (cb: () => void) => ipcRenderer.on('menu-save-file-as', () => cb()),
   onMenuOpenRecent: (cb: (filePath: string) => void) =>
     ipcRenderer.on('menu-open-recent', (_event, filePath: string) => cb(filePath)),
+  onBeforeQuit: (cb: () => void) => ipcRenderer.on('before-quit', () => cb()),
+  confirmQuit: () => ipcRenderer.send('confirm-quit'),
 });
