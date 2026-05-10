@@ -5,9 +5,9 @@ export const useSettings = () => {
   const [password, setPassword] = useState('doggo');
 
   useEffect(() => {
-    window.doggo.getSettings().then(({ hostname, password }) => {
-      setHostname(hostname);
-      setPassword(password);
+    window.doggo.getSettings().then(({ hostname: h, password: p }) => {
+      setHostname(h);
+      setPassword(p);
     });
   }, []);
 

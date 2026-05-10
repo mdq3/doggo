@@ -34,6 +34,8 @@
     "react": "^19.2.5",
     "react-dom": "^19.2.5",
     "react-syntax-highlighter": "^16.1.1",
-    "scratch-blocks": "^2.1.19"
+    "scratch-blocks": "^2.1.19",
+    "tree-sitter-python": "^0.25.0",
+    "web-tree-sitter": "^0.25.10"
   }
 }

@@ -10,4 +10,11 @@ contextBridge.exposeInMainWorld('doggo', {
     ipcRenderer.invoke('get-settings'),
   saveSettings: (settings: { hostname: string; password: string }): Promise<void> =>
     ipcRenderer.invoke('save-settings', settings),
+  openFile: (): Promise<{ filePath: string; content: string } | null> =>
+    ipcRenderer.invoke('open-file'),
+  saveFile: (filePath: string | null, content: string): Promise<string | null> =>
+    ipcRenderer.invoke('save-file', filePath, content),
+  onMenuOpenFile: (cb: () => void) => ipcRenderer.on('menu-open-file', () => cb()),
+  onMenuSaveFile: (cb: () => void) => ipcRenderer.on('menu-save-file', () => cb()),
+  onMenuSaveFileAs: (cb: () => void) => ipcRenderer.on('menu-save-file-as', () => cb()),
 });

@@ -2,13 +2,12 @@ import { Code2, Play, Settings } from 'lucide-react';
 
 interface ToolbarProps {
   status: string;
-  codeOpen: boolean;
   onRun: () => void;
   onToggleCode: () => void;
   onOpenSettings: () => void;
 }
 
-export const Toolbar = ({ status, codeOpen, onRun, onToggleCode, onOpenSettings }: ToolbarProps) => (
+export const Toolbar = ({ status, onRun, onToggleCode, onOpenSettings }: ToolbarProps) => (
   <div id="toolbar">
     <button id="btn-run" onClick={onRun}>
       <Play size={14} /> Run

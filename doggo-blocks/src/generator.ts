@@ -1,5 +1,7 @@
 import * as ScratchBlocks from 'scratch-blocks';
 
+import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
+
 // Python code generator using Blockly 12's forBlock API.
 // Imports are accumulated per-generation and prepended as a header block.
 
@@ -51,34 +53,19 @@ export const createGenerator = (): ScratchBlocks.CodeGenerator => {
   gen.forBlock['doggo_on_start'] = () => '';
 
   // ─── POSES ────────────────────────────────────────────────────────────────
-  gen.forBlock['doggo_stand'] = () => {
-    imports.add('from poses import stand');
-    return 'stand()\n';
-  };
-  gen.forBlock['doggo_sit'] = () => {
-    imports.add('from poses import sit');
-    return 'sit()\n';
-  };
-  gen.forBlock['doggo_rest'] = () => {
-    imports.add('from poses import rest');
-    return 'rest()\n';
-  };
+  for (const def of POSE_COMMANDS) {
+    gen.forBlock[def.blockType] = () => {
+      imports.add(def.importLine);
+      return `${def.functionName}()\n`;
+    };
+  }
 
   // ─── MOTION ───────────────────────────────────────────────────────────────
-  const motionBlocks: [string, string, string][] = [
-    ['doggo_walk', 'from gaits.walk import walk', 'walk'],
-    ['doggo_walk_back', 'from gaits.walk_back import walk_back', 'walk_back'],
-    ['doggo_turn_left', 'from gaits.turn import turn_left', 'turn_left'],
-    ['doggo_turn_right', 'from gaits.turn import turn_right', 'turn_right'],
-    ['doggo_pivot_left', 'from gaits.pivot import pivot_left', 'pivot_left'],
-    ['doggo_pivot_right', 'from gaits.pivot import pivot_right', 'pivot_right'],
-    ['doggo_trot', 'from gaits.trot import trot_forward', 'trot_forward'],
-  ];
-  for (const [type, importLine, fn] of motionBlocks) {
-    gen.forBlock[type] = (block, g) => {
-      imports.add(importLine);
-      const steps = g.valueToCode(block, 'STEPS', 0) || '1';
-      return `${fn}(steps=${steps})\n`;
+  for (const def of MOTION_COMMANDS) {
+    gen.forBlock[def.blockType] = (block, g) => {
+      imports.add(def.importLine);
+      const val = g.valueToCode(block, def.param.toUpperCase(), 0) || '1';
+      return `${def.functionName}(${def.param}=${val})\n`;
     };
   }
 

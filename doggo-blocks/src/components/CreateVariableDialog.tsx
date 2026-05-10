@@ -6,8 +6,16 @@ interface CreateVariableDialogProps {
   onClose: () => void;
 }
 
-export const CreateVariableDialog = ({ open, name, onChange, onCreate, onClose }: CreateVariableDialogProps) => {
-  if (!open) return null;
+export const CreateVariableDialog = ({
+  open,
+  name,
+  onChange,
+  onCreate,
+  onClose,
+}: CreateVariableDialogProps) => {
+  if (!open) {
+    return null;
+  }
   return (
     <div className="dialog-overlay" onClick={onClose}>
       <div className="dialog" onClick={(e) => e.stopPropagation()}>

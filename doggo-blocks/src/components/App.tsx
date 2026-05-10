@@ -1,9 +1,10 @@
-import * as ScratchBlocks from 'scratch-blocks';
 import { useEffect, useRef, useState } from 'react';
+import * as ScratchBlocks from 'scratch-blocks';
 
 import { defineBlocks } from '../blocks.js';
 import { createGenerator } from '../generator.js';
 import { useBlocklyWorkspace } from '../useBlocklyWorkspace.js';
+import { useFileHandling } from '../useFileHandling.js';
 import { useScriptRunner } from '../useScriptRunner.js';
 import { useSettings } from '../useSettings.js';
 import { CodePanel } from './CodePanel.js';
@@ -35,11 +36,19 @@ export const App = () => {
   const { blocklyDivRef, workspaceRef, refreshVariablesRef } = useBlocklyWorkspace({
     pyGen,
     onCodeChange: setGeneratedCode,
-    onCreateVar: () => { setVarName(''); setVarDialog(true); },
+    onCreateVar: () => {
+      setVarName('');
+      setVarDialog(true);
+    },
     onVarContextMenu: setCtxMenu,
   });
 
   const { status, errorDialog, setErrorDialog, handleRun } = useScriptRunner(workspaceRef, pyGen);
+  const { parseError, setParseError } = useFileHandling(
+    workspaceRef,
+    refreshVariablesRef,
+    generatedCode,
+  );
 
   const { hostname, setHostname, password, setPassword, save: saveSettings } = useSettings();
 
@@ -65,7 +74,9 @@ export const App = () => {
 
   const handleRenameVar = () => {
     const newName = renameName.trim();
-    if (!newName) return;
+    if (!newName) {
+      return;
+    }
     if (renameVarId) {
       const ws = workspaceRef.current;
       const variable = ws?.getVariableMap().getVariableById(renameVarId);
@@ -109,7 +120,6 @@ export const App = () => {
       {showSplash && <SplashScreen onStart={() => setShowSplash(false)} />}
       <Toolbar
         status={status}
-        codeOpen={codeOpen}
         onRun={handleRun}
         onToggleCode={() => setCodeOpen((o) => !o)}
         onOpenSettings={() => setSettingsOpen(true)}
@@ -123,9 +133,9 @@ export const App = () => {
         <VariableContextMenu
           menu={ctxMenu}
           onClose={() => setCtxMenu(null)}
-          onRename={(varId, varName) => {
+          onRename={(varId, name) => {
             setRenameVarId(varId);
-            setRenameName(varName);
+            setRenameName(name);
             setCtxMenu(null);
           }}
           onDelete={handleDeleteVar}
@@ -155,6 +165,7 @@ export const App = () => {
         onClose={() => setSettingsOpen(false)}
       />
       <ErrorDialog error={errorDialog} onClose={() => setErrorDialog(null)} />
+      <ErrorDialog error={parseError} onClose={() => setParseError(null)} />
     </>
   );
 };

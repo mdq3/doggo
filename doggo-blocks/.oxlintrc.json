@@ -10,11 +10,12 @@
     "react/rules-of-hooks": "error",
     "no-underscore-dangle": "off",
     "unicorn/consistent-function-scoping": "off",
-    "prefer-template": "warn",
-    "typescript/consistent-type-imports": "warn",
-    "no-multi-assign": "warn",
-    "curly": "warn",
-    "func-style": "warn"
+    "prefer-template": "error",
+    "typescript/consistent-type-imports": "error",
+    "no-multi-assign": "error",
+    "curly": "error",
+    "func-style": "error",
+    "no-shadow": "error"
   },
   "env": {
     "builtin": true,

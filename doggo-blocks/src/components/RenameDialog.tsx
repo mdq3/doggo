@@ -7,7 +7,9 @@ interface RenameDialogProps {
 }
 
 export const RenameDialog = ({ open, name, onChange, onConfirm, onCancel }: RenameDialogProps) => {
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
   return (
     <div className="dialog-overlay" onClick={onCancel}>
       <div className="dialog" onClick={(e) => e.stopPropagation()}>

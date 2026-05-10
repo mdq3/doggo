@@ -39,7 +39,9 @@ export const useBlocklyWorkspace = ({
   onVarContextMenuRef.current = onVarContextMenu;
 
   useEffect(() => {
-    if (!blocklyDivRef.current || workspaceRef.current) return;
+    if (!blocklyDivRef.current || workspaceRef.current) {
+      return;
+    }
 
     const ws = ScratchBlocks.inject(blocklyDivRef.current, {
       toolbox: toolboxConfig,
@@ -100,20 +102,28 @@ export const useBlocklyWorkspace = ({
       while (el && !el.hasAttribute('data-id')) {
         el = el.parentElement;
       }
-      if (!el) return null;
+      if (!el) {
+        return null;
+      }
       const dataId = el.getAttribute('data-id');
-      if (!dataId) return null;
+      if (!dataId) {
+        return null;
+      }
       const flyout = ws.getToolbox()?.getFlyout();
-      if (!flyout) return null;
+      if (!flyout) {
+        return null;
+      }
       let block: ScratchBlocks.Block | null = flyout.getWorkspace().getBlockById(dataId);
-      if (!block?.workspace.isFlyout) return null;
+      if (!block?.workspace.isFlyout) {
+        return null;
+      }
       // Walk up the block parent chain — handles clicks on the shadow number input
       // inside the set block, where the DOM walker resolves to math_number, not variables_set.
       while (block) {
         if (block.type === 'variables_get' || block.type === 'variables_set') {
           return block;
         }
-        block = (block as any).getParent?.() ?? null;
+        block = block.getParent?.() ?? null;
       }
       return null;
     };
@@ -122,20 +132,33 @@ export const useBlocklyWorkspace = ({
     // Both pointerdown and mousedown must be stopped — they are separate event chains
     // and Scratch-Blocks listens on mousedown, so stopping only pointerdown is not enough.
     const stopRightClickOnVarBlock = (e: MouseEvent) => {
-      if (e.button !== 2 || !flyoutVarBlockAt(e.target)) return;
+      if (e.button !== 2 || !flyoutVarBlockAt(e.target)) {
+        return;
+      }
       e.stopPropagation();
     };
 
     const handleContextMenu = (e: MouseEvent) => {
       const block = flyoutVarBlockAt(e.target);
-      if (!block) return;
+      if (!block) {
+        return;
+      }
       const varId = block.getField('VAR')?.getValue();
-      if (!varId) return;
+      if (!varId) {
+        return;
+      }
       const variable = ws.getVariableMap().getVariableById(varId);
-      if (!variable) return;
+      if (!variable) {
+        return;
+      }
       e.preventDefault();
       e.stopPropagation();
-      onVarContextMenuRef.current({ x: e.clientX, y: e.clientY, varId, varName: variable.getName() });
+      onVarContextMenuRef.current({
+        x: e.clientX,
+        y: e.clientY,
+        varId,
+        varName: variable.getName(),
+      });
     };
 
     blocklyEl.addEventListener('pointerdown', stopRightClickOnVarBlock, true);

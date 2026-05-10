@@ -1,5 +1,9 @@
 // Allow Vite-handled CSS and font package imports in TypeScript.
 declare module '*.css';
+declare module '*.wasm?url' {
+  const url: string;
+  export default url;
+}
 declare module '@fontsource-variable/sono';
 
 // Globals injected by @electron-forge/plugin-vite into the main process bundle.
@@ -14,5 +18,10 @@ interface Window {
     onDone: (cb: (exitCode: number | null) => void) => void;
     getSettings: () => Promise<{ hostname: string; password: string }>;
     saveSettings: (settings: { hostname: string; password: string }) => Promise<void>;
+    openFile: () => Promise<{ filePath: string; content: string } | null>;
+    saveFile: (filePath: string | null, content: string) => Promise<string | null>;
+    onMenuOpenFile: (cb: () => void) => void;
+    onMenuSaveFile: (cb: () => void) => void;
+    onMenuSaveFileAs: (cb: () => void) => void;
   };
 }
