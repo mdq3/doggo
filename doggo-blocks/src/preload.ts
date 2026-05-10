@@ -14,7 +14,8 @@ contextBridge.exposeInMainWorld('doggo', {
     ipcRenderer.invoke('open-file', filePath),
   saveFile: (filePath: string | null, content: string): Promise<string | null> =>
     ipcRenderer.invoke('save-file', filePath, content),
-  setTitle: (filePath: string | null): void => ipcRenderer.send('set-title', filePath),
+  setTitle: (filePath: string | null, isEdited: boolean): void =>
+    ipcRenderer.send('set-title', filePath, isEdited),
   getRecents: (): Promise<string[]> => ipcRenderer.invoke('get-recents'),
   addRecent: (filePath: string): Promise<void> => ipcRenderer.invoke('add-recent', filePath),
   clearRecents: (): Promise<void> => ipcRenderer.invoke('clear-recents'),

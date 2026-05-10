@@ -220,7 +220,7 @@ ipcMain.handle('open-file', async (_event, filePath?: string) => {
   }
 });
 
-ipcMain.on('set-title', (_event, filePath: string | null) => {
+ipcMain.on('set-title', (_event, filePath: string | null, isEdited: boolean) => {
   if (!mainWindow) {
     return;
   }
@@ -228,6 +228,7 @@ ipcMain.on('set-title', (_event, filePath: string | null) => {
   mainWindow.setTitle(name ? `${name} — Doggo Blocks` : 'Doggo Blocks');
   if (process.platform === 'darwin') {
     mainWindow.setRepresentedFilename(filePath ?? '');
+    mainWindow.setDocumentEdited(isEdited);
   }
 });
 

@@ -49,9 +49,10 @@ export const App = () => {
     parseError,
     setParseError,
     newFile,
-    newFileConfirmOpen,
-    confirmNewFile,
-    cancelNewFile,
+    discardConfirmOpen,
+    discardContext,
+    confirmDiscard,
+    cancelDiscard,
     openFile,
     saveFile,
     saveFileAs,
@@ -184,12 +185,12 @@ export const App = () => {
       <ErrorDialog error={errorDialog} onClose={() => setErrorDialog(null)} />
       <ErrorDialog error={parseError} onClose={() => setParseError(null)} />
       <ConfirmDialog
-        open={newFileConfirmOpen}
-        title="Create new file?"
-        message="Your current workspace will be cleared. Any unsaved changes will be lost."
-        confirmLabel="Create New"
-        onConfirm={confirmNewFile}
-        onCancel={cancelNewFile}
+        open={discardConfirmOpen}
+        title={discardContext.title}
+        message="Your unsaved changes will be lost."
+        confirmLabel={discardContext.confirmLabel}
+        onConfirm={confirmDiscard}
+        onCancel={cancelDiscard}
       />
     </>
   );
