@@ -1,6 +1,9 @@
+import { fileURLToPath } from 'url';
+
 import { defineConfig } from 'vite-plus';
 
 export default defineConfig({
+  root: fileURLToPath(new URL('../../', import.meta.url)),
   build: {
     lib: {
       entry: './src/preload/preload.ts',

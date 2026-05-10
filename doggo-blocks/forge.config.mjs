@@ -8,11 +8,11 @@ export default {
   plugins: [
     new VitePlugin({
       build: [
-        { entry: 'src/main/main.ts', config: 'vite.main.config.mjs', target: 'main' },
-        { entry: 'src/preload/preload.ts', config: 'vite.preload.config.mjs', target: 'preload' },
+        { entry: 'src/main/main.ts', config: 'src/main/vite.config.mjs', target: 'main' },
+        { entry: 'src/preload/preload.ts', config: 'src/preload/vite.config.mjs', target: 'preload' },
       ],
       renderer: [
-        { name: 'main_window', config: 'vite.renderer.config.mjs' },
+        { name: 'main_window', config: 'src/renderer/vite.config.mjs' },
       ],
     }),
   ],
