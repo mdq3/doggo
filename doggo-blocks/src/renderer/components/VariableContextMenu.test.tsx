@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 import { VariableContextMenu } from './VariableContextMenu.js';
 
@@ -43,7 +43,7 @@ describe('VariableContextMenu', () => {
     const { container } = render(
       <VariableContextMenu menu={menu} onClose={onClose} onRename={vi.fn()} onDelete={vi.fn()} />,
     );
-    fireEvent.click(container.firstChild as Element);
+    fireEvent.click(container.firstChild!);
     expect(onClose).toHaveBeenCalledOnce();
   });
 });

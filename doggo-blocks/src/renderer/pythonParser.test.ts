@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it, vi } from 'vite-plus/test';
 
 // Redirect ?url imports to absolute filesystem paths.
 // Parser.init uses the path directly via Emscripten's fs; Language.load uses
@@ -125,6 +125,8 @@ describe('parsePython', () => {
   it('includes the line number in a ParseError', async () => {
     const err = await parsePython('stand()\nunknown_fn()\n').catch((e) => e);
     expect(err).toBeInstanceOf(ParseError);
-    expect((err as ParseError).line).toBe(2);
+    if (err instanceof ParseError) {
+      expect(err.line).toBe(2);
+    }
   });
 });

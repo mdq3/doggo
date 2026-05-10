@@ -43,7 +43,7 @@ export const useScriptRunner = (
     console.log(`[doggo-blocks] generated script:\n${code}`);
     outputRef.current = [];
     setStatus('Running…');
-    window.doggo.runScript(code);
+    void window.doggo.runScript(code);
   };
 
   return { status, errorDialog, setErrorDialog, handleRun };

@@ -5,7 +5,26 @@ import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
 // Python code generator using Blockly 12's forBlock API.
 // Imports are accumulated per-generation and prepended as a header block.
 
-export const createGenerator = (): ScratchBlocks.CodeGenerator => {
+// Minimal structural interfaces — matches what blockToCode actually reads from blocks.
+// ScratchBlocks.Block and WorkspaceSvg both satisfy these, as does MockBlock in tests.
+export interface MinBlock {
+  type: string;
+  isEnabled(): boolean;
+  isInsertionMarker(): boolean;
+  outputConnection: object | null;
+  suppressPrefixSuffix: boolean | null;
+  getFieldValue(name: string): string;
+  getField(name: string): { getText(): string } | null;
+  getInputTargetBlock(name: string): MinBlock | null;
+  getInput(name: string): object | null;
+  nextConnection: { targetBlock(): MinBlock | null } | null;
+}
+
+export interface MinWorkspace {
+  getTopBlocks(ordered?: boolean): MinBlock[];
+}
+
+export const createGenerator = (): { workspaceToCode(workspace: MinWorkspace): string } => {
   const gen = new ScratchBlocks.CodeGenerator('Python');
   gen.INDENT = '    ';
 
@@ -17,24 +36,6 @@ export const createGenerator = (): ScratchBlocks.CodeGenerator => {
     const next = block.nextConnection?.targetBlock() ?? null;
     const nextCode = opt_thisOnly || !next ? '' : this.blockToCode(next);
     return code + nextCode;
-  };
-
-  // Only generate code for block stacks that start with a doggo_on_start hat.
-  // Disconnected blocks are silently ignored — same model as Scratch.
-  gen.workspaceToCode = (workspace: ScratchBlocks.Workspace): string => {
-    imports.clear();
-    const body = workspace
-      .getTopBlocks(true)
-      .filter((b) => b.type === 'doggo_on_start')
-      .map((hat) => {
-        const first = hat.nextConnection?.targetBlock() ?? null;
-        return first ? gen.blockToCode(first) : '';
-      })
-      .join('');
-    if (!imports.size) {
-      return body;
-    }
-    return `${[...imports].toSorted().join('\n')}\n\n${body}`;
   };
 
   // ─── UTILITY BLOCKS ───────────────────────────────────────────────────────
@@ -140,5 +141,24 @@ export const createGenerator = (): ScratchBlocks.CodeGenerator => {
     };
   }
 
-  return gen;
+  // Only generate code for block stacks that start with a doggo_on_start hat.
+  // Disconnected blocks are silently ignored — same model as Scratch.
+  const workspaceToCode = (workspace: MinWorkspace): string => {
+    imports.clear();
+    const body = workspace
+      .getTopBlocks(true)
+      .filter((b) => b.type === 'doggo_on_start')
+      .map((hat) => {
+        const first = hat.nextConnection?.targetBlock() ?? null;
+        // eslint-disable-next-line typescript-eslint/no-unsafe-type-assertion -- MinBlock satisfies Block for all methods blockToCode calls
+        return first ? gen.blockToCode(first as unknown as ScratchBlocks.Block) : '';
+      })
+      .join('');
+    if (!imports.size) {
+      return body;
+    }
+    return `${[...imports].toSorted().join('\n')}\n\n${body}`;
+  };
+
+  return { workspaceToCode };
 };

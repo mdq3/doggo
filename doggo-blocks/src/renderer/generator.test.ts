@@ -1,24 +1,14 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { createGenerator } from './generator.js';
+import type { MinBlock, MinWorkspace } from './generator.js';
 
 // ── Mock block builders ───────────────────────────────────────────────────────
 // scratch-blocks' blockToCode needs: isEnabled, isInsertionMarker, type,
 // outputConnection (null for statements, non-null for value blocks),
 // getFieldValue, getField, getInputTargetBlock, getInput, nextConnection.
 
-type MockBlock = {
-  type: string;
-  isEnabled: () => boolean;
-  isInsertionMarker: () => boolean;
-  outputConnection: object | null;
-  suppressPrefixSuffix: boolean;
-  getFieldValue: (name: string) => string;
-  getField: (name: string) => { getText: () => string } | null;
-  getInputTargetBlock: (name: string) => MockBlock | null;
-  getInput: (name: string) => object | null;
-  nextConnection: { targetBlock: () => MockBlock | null } | null;
-};
+type MockBlock = MinBlock;
 
 const baseBlock = (type: string, extra: Partial<MockBlock> = {}): MockBlock => ({
   type,
@@ -60,7 +50,7 @@ const varGetBlock = (varName: string): MockBlock =>
   });
 
 // Workspace mock — only top-level hat blocks are used by workspaceToCode
-const workspace = (...topBlocks: MockBlock[]) => ({ getTopBlocks: () => topBlocks });
+const workspace = (...topBlocks: MockBlock[]): MinWorkspace => ({ getTopBlocks: () => topBlocks });
 
 // Hat block: workspaceToCode reads hat.nextConnection.targetBlock() for the body
 const hat = (first?: MockBlock): MockBlock =>
@@ -73,34 +63,34 @@ const hat = (first?: MockBlock): MockBlock =>
 describe('createGenerator', () => {
   it('returns empty string for a workspace with no top blocks', () => {
     const gen = createGenerator();
-    expect(gen.workspaceToCode(workspace() as any)).toBe('');
+    expect(gen.workspaceToCode(workspace())).toBe('');
   });
 
   it('ignores top-level blocks that are not doggo_on_start', () => {
     const gen = createGenerator();
-    expect(gen.workspaceToCode(workspace(stmtBlock('doggo_stand')) as any)).toBe('');
+    expect(gen.workspaceToCode(workspace(stmtBlock('doggo_stand')))).toBe('');
   });
 
   it('returns empty string for a hat block with no body', () => {
     const gen = createGenerator();
-    expect(gen.workspaceToCode(workspace(hat()) as any)).toBe('');
+    expect(gen.workspaceToCode(workspace(hat()))).toBe('');
   });
 
   it('generates stand() with its import', () => {
     const gen = createGenerator();
-    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_stand'))) as any);
+    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_stand'))));
     expect(out).toBe('from poses import stand\n\nstand()\n');
   });
 
   it('generates sit() with its import', () => {
     const gen = createGenerator();
-    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_sit'))) as any);
+    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_sit'))));
     expect(out).toBe('from poses import sit\n\nsit()\n');
   });
 
   it('generates rest() with its import', () => {
     const gen = createGenerator();
-    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_rest'))) as any);
+    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_rest'))));
     expect(out).toBe('from poses import rest\n\nrest()\n');
   });
 
@@ -108,7 +98,7 @@ describe('createGenerator', () => {
     const gen = createGenerator();
     const sit = stmtBlock('doggo_sit');
     const stand = stmtBlock('doggo_stand', {}, sit);
-    const out = gen.workspaceToCode(workspace(hat(stand)) as any);
+    const out = gen.workspaceToCode(workspace(hat(stand)));
     expect(out).toContain('stand()\n');
     expect(out).toContain('sit()\n');
     expect(out.indexOf('stand()')).toBeLessThan(out.indexOf('sit()'));
@@ -118,7 +108,7 @@ describe('createGenerator', () => {
     const gen = createGenerator();
     const sit = stmtBlock('doggo_sit');
     const stand = stmtBlock('doggo_stand', {}, sit);
-    const out = gen.workspaceToCode(workspace(hat(stand)) as any);
+    const out = gen.workspaceToCode(workspace(hat(stand)));
     const header = out.split('\n\n')[0];
     const lines = header.split('\n');
     expect(lines).toHaveLength(2);
@@ -128,21 +118,21 @@ describe('createGenerator', () => {
   it('generates walk(steps=2) with connected value', () => {
     const gen = createGenerator();
     const block = stmtBlock('doggo_walk', { STEPS: numBlock(2) });
-    const out = gen.workspaceToCode(workspace(hat(block)) as any);
+    const out = gen.workspaceToCode(workspace(hat(block)));
     expect(out).toContain('walk(steps=2)');
     expect(out).toContain('from gaits.walk import walk');
   });
 
   it('falls back to steps=1 when no STEPS value is connected', () => {
     const gen = createGenerator();
-    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_walk'))) as any);
+    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_walk'))));
     expect(out).toContain('walk(steps=1)');
   });
 
   it('generates time.sleep() for doggo_wait', () => {
     const gen = createGenerator();
     const block = stmtBlock('doggo_wait', { SECONDS: numBlock(3) });
-    const out = gen.workspaceToCode(workspace(hat(block)) as any);
+    const out = gen.workspaceToCode(workspace(hat(block)));
     expect(out).toContain('import time');
     expect(out).toContain('time.sleep(3)');
   });
@@ -151,7 +141,7 @@ describe('createGenerator', () => {
     const gen = createGenerator();
     const body = stmtBlock('doggo_stand');
     const block = stmtBlock('doggo_repeat', { TIMES: numBlock(5), SUBSTACK: body });
-    const out = gen.workspaceToCode(workspace(hat(block)) as any);
+    const out = gen.workspaceToCode(workspace(hat(block)));
     expect(out).toContain('for _ in range(5):');
     expect(out).toContain('    stand()');
   });
@@ -159,7 +149,7 @@ describe('createGenerator', () => {
   it('falls back to pass when doggo_repeat body is empty', () => {
     const gen = createGenerator();
     const block = stmtBlock('doggo_repeat', { TIMES: numBlock(3) });
-    const out = gen.workspaceToCode(workspace(hat(block)) as any);
+    const out = gen.workspaceToCode(workspace(hat(block)));
     expect(out).toContain('for _ in range(3):');
     expect(out).toContain('    pass');
   });
@@ -168,7 +158,7 @@ describe('createGenerator', () => {
     const gen = createGenerator();
     const body = stmtBlock('doggo_stand');
     const block = stmtBlock('doggo_forever', { SUBSTACK: body });
-    const out = gen.workspaceToCode(workspace(hat(block)) as any);
+    const out = gen.workspaceToCode(workspace(hat(block)));
     expect(out).toContain('while True:');
     expect(out).toContain('    stand()');
   });
@@ -180,7 +170,7 @@ describe('createGenerator', () => {
       getField: (name) => (name === 'VAR' ? { getText: () => 'x' } : null),
       getInputTargetBlock: (name) => (name === 'VALUE' ? numBlock(42) : null),
     });
-    const out = gen.workspaceToCode(workspace(hat(block)) as any);
+    const out = gen.workspaceToCode(workspace(hat(block)));
     expect(out).toContain('x = 42');
   });
 
@@ -195,7 +185,7 @@ describe('createGenerator', () => {
       getField: (name) => (name === 'VAR' ? { getText: () => 'n' } : null),
       getInputTargetBlock: (name) => (name === 'VALUE' ? addBlock : null),
     });
-    const out = gen.workspaceToCode(workspace(hat(setBlock)) as any);
+    const out = gen.workspaceToCode(workspace(hat(setBlock)));
     expect(out).toContain('(1) + (2)');
   });
 
@@ -210,7 +200,7 @@ describe('createGenerator', () => {
       getField: (name) => (name === 'VAR' ? { getText: () => 'r' } : null),
       getInputTargetBlock: (name) => (name === 'VALUE' ? ltBlock : null),
     });
-    const out = gen.workspaceToCode(workspace(hat(setBlock)) as any);
+    const out = gen.workspaceToCode(workspace(hat(setBlock)));
     expect(out).toContain('(0) < (10)');
   });
 
@@ -225,14 +215,14 @@ describe('createGenerator', () => {
       getField: (name) => (name === 'VAR' ? { getText: () => 'r' } : null),
       getInputTargetBlock: (name) => (name === 'VALUE' ? notBlock : null),
     });
-    const out = gen.workspaceToCode(workspace(hat(setBlock)) as any);
+    const out = gen.workspaceToCode(workspace(hat(setBlock)));
     expect(out).toContain('not (flag)');
   });
 
   it('clears imports between workspaceToCode calls', () => {
     const gen = createGenerator();
-    gen.workspaceToCode(workspace(hat(stmtBlock('doggo_stand'))) as any);
-    const out = gen.workspaceToCode(workspace(hat()) as any);
+    gen.workspaceToCode(workspace(hat(stmtBlock('doggo_stand'))));
+    const out = gen.workspaceToCode(workspace(hat()));
     expect(out).toBe('');
   });
 });

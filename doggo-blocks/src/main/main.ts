@@ -16,7 +16,8 @@ const MAX_RECENTS = 10;
 const loadRecents = (): string[] => {
   try {
     const raw = readFileSync(path.join(app.getPath('userData'), 'recents.json'), 'utf8');
-    return JSON.parse(raw) as string[];
+    const parsed: unknown = JSON.parse(raw);
+    return Array.isArray(parsed) && parsed.every((v) => typeof v === 'string') ? parsed : [];
   } catch {
     return [];
   }
@@ -177,13 +178,15 @@ const createWindow = (): void => {
   });
 
   if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+    void mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
   } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+    void mainWindow.loadFile(
+      path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`),
+    );
   }
 };
 
-app.whenReady().then(() => {
+void app.whenReady().then(() => {
   rebuildMenu();
   createWindow();
 });

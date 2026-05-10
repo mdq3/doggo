@@ -40,7 +40,7 @@ export const useBlocklyWorkspace = ({
 
   useEffect(() => {
     if (!blocklyDivRef.current || workspaceRef.current) {
-      return;
+      return () => {};
     }
 
     const ws = ScratchBlocks.inject(blocklyDivRef.current, {
@@ -98,7 +98,7 @@ export const useBlocklyWorkspace = ({
     // Resolve the flyout variable block (if any) under the event target.
     // Block SVG groups carry data-id; walk up to find it.
     const flyoutVarBlockAt = (target: EventTarget | null) => {
-      let el: Element | null = target as Element | null;
+      let el: Element | null = target instanceof Element ? target : null;
       while (el && !el.hasAttribute('data-id')) {
         el = el.parentElement;
       }

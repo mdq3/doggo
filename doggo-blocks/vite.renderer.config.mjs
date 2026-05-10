@@ -2,7 +2,7 @@ import { cpSync, readFileSync } from 'fs';
 import { extname, join } from 'path';
 
 import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vite-plus';
 
 const SKIP = (src) => /\.(mp3|ogg|wav)$/.test(src) || src.includes('/extensions/');
 

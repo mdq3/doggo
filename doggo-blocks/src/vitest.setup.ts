@@ -8,7 +8,7 @@ import { resolve } from 'node:path';
 const realFetch = globalThis.fetch;
 
 globalThis.fetch = async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-  const url = input.toString();
+  const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
   if (url.endsWith('.wasm') && !url.startsWith('http')) {
     const data = readFileSync(url.startsWith('/') ? url : resolve(url));
     return new Response(data, {

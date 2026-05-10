@@ -49,7 +49,7 @@ export const Toolbar = ({
   useEffect(() => {
     if (!menuOpen) {
       setPanel('main');
-      return;
+      return () => {};
     }
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {

@@ -1,10 +1,38 @@
-import { describe, expect, it } from 'vitest';
+import type * as ScratchBlocks from 'scratch-blocks';
+import { describe, expect, it } from 'vite-plus/test';
 
 import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
 import { buildToolboxItems, toolboxConfig } from './toolbox.js';
 
-const mockVar = (id: string, name: string) =>
-  ({ getId: () => id, getName: () => name, getType: () => '' }) as any;
+type FlyoutItem = ScratchBlocks.utils.toolbox.FlyoutItemInfo;
+type BlockItem = ScratchBlocks.utils.toolbox.BlockInfo;
+
+const isBlock = (i: FlyoutItem): i is BlockItem => 'type' in i;
+const isLabel = (i: FlyoutItem): i is ScratchBlocks.utils.toolbox.LabelInfo =>
+  i.kind === 'label' && 'text' in i && !('callbackkey' in i);
+const isButton = (i: FlyoutItem): i is ScratchBlocks.utils.toolbox.ButtonInfo =>
+  i.kind === 'button' && 'callbackkey' in i;
+
+const mockVar = (
+  id: string,
+  name: string,
+): ScratchBlocks.IVariableModel<ScratchBlocks.IVariableState> => ({
+  getId: () => id,
+  getName: () => name,
+  getType: () => '',
+  setName(_: string) {
+    return this;
+  },
+  setType(_: string) {
+    return this;
+  },
+  getWorkspace: (): never => {
+    throw new Error('not used in test');
+  },
+  save: (): never => {
+    throw new Error('not used in test');
+  },
+});
 
 describe('toolboxConfig', () => {
   it('contains a Poses category', () => {
@@ -17,7 +45,7 @@ describe('toolboxConfig', () => {
 
   it('Poses category lists every POSE_COMMAND block type', () => {
     const poses = toolboxConfig.contents.find((c) => c.name === 'Poses')!;
-    const types = poses.contents.map((item: any) => item.type);
+    const types = poses.contents.filter(isBlock).map((item) => item.type);
     for (const cmd of POSE_COMMANDS) {
       expect(types).toContain(cmd.blockType);
     }
@@ -25,7 +53,7 @@ describe('toolboxConfig', () => {
 
   it('Motion category lists every MOTION_COMMAND block type', () => {
     const motion = toolboxConfig.contents.find((c) => c.name === 'Motion')!;
-    const types = motion.contents.map((item: any) => item.type);
+    const types = motion.contents.filter(isBlock).map((item) => item.type);
     for (const cmd of MOTION_COMMANDS) {
       expect(types).toContain(cmd.blockType);
     }
@@ -33,9 +61,9 @@ describe('toolboxConfig', () => {
 
   it('Motion blocks include a shadow input keyed by param', () => {
     const motion = toolboxConfig.contents.find((c) => c.name === 'Motion')!;
-    for (const item of motion.contents as any[]) {
+    for (const item of motion.contents.filter(isBlock)) {
       const cmd = MOTION_COMMANDS.find((c) => c.blockType === item.type)!;
-      expect(item.inputs[cmd.param.toUpperCase()]).toBeDefined();
+      expect(item.inputs?.[cmd.param.toUpperCase()]).toBeDefined();
     }
   });
 });
@@ -43,7 +71,7 @@ describe('toolboxConfig', () => {
 describe('buildToolboxItems', () => {
   it('emits a label for each toolbox category', () => {
     const items = buildToolboxItems([]);
-    const labels = items.filter((i: any) => i.kind === 'label').map((i: any) => i.text);
+    const labels = items.filter(isLabel).map((i) => i.text);
     for (const cat of toolboxConfig.contents) {
       expect(labels).toContain(cat.name);
     }
@@ -51,31 +79,31 @@ describe('buildToolboxItems', () => {
 
   it('includes Create Variable button when there are no variables', () => {
     const items = buildToolboxItems([]);
-    expect(items.some((i: any) => i.kind === 'button' && i.text === 'Create Variable')).toBe(true);
+    expect(items.some((i) => isButton(i) && i.text === 'Create Variable')).toBe(true);
   });
 
   it('does not include variable blocks when there are no variables', () => {
     const items = buildToolboxItems([]);
-    expect(items.some((i: any) => i.type === 'variables_set')).toBe(false);
-    expect(items.some((i: any) => i.type === 'variables_get')).toBe(false);
+    expect(items.filter(isBlock).some((i) => i.type === 'variables_set')).toBe(false);
+    expect(items.filter(isBlock).some((i) => i.type === 'variables_get')).toBe(false);
   });
 
   it('includes one variables_set block for the first variable', () => {
     const items = buildToolboxItems([mockVar('id-1', 'x')]);
-    const setBlocks = items.filter((i: any) => i.type === 'variables_set');
+    const setBlocks = items.filter(isBlock).filter((i) => i.type === 'variables_set');
     expect(setBlocks).toHaveLength(1);
   });
 
   it('includes one variables_get block per variable', () => {
     const items = buildToolboxItems([mockVar('id-1', 'x'), mockVar('id-2', 'y')]);
-    const getBlocks = items.filter((i: any) => i.type === 'variables_get');
+    const getBlocks = items.filter(isBlock).filter((i) => i.type === 'variables_get');
     expect(getBlocks).toHaveLength(2);
   });
 
   it('variables_get block carries the variable id and name', () => {
     const items = buildToolboxItems([mockVar('id-1', 'myVar')]);
-    const getBlock = items.find((i: any) => i.type === 'variables_get') as any;
-    expect(getBlock.fields.VAR.id).toBe('id-1');
-    expect(getBlock.fields.VAR.name).toBe('myVar');
+    const getBlock = items.filter(isBlock).find((i) => i.type === 'variables_get');
+    expect(getBlock?.fields?.['VAR'].id).toBe('id-1');
+    expect(getBlock?.fields?.['VAR'].name).toBe('myVar');
   });
 });
