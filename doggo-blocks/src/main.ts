@@ -4,7 +4,7 @@ import { mkdtempSync, readFileSync, writeFileSync } from 'fs';
 import { tmpdir } from 'os';
 import path from 'path';
 
-import { BrowserWindow, Menu, app, ipcMain } from 'electron';
+import { BrowserWindow, Menu, app, dialog, ipcMain } from 'electron';
 
 let mainWindow: BrowserWindow | null = null;
 let runningProcess: ChildProcess | null = null;
@@ -73,6 +73,27 @@ app.whenReady().then(() => {
           ]
         : []),
       {
+        label: 'File',
+        submenu: [
+          {
+            label: 'Open…',
+            accelerator: 'CmdOrCtrl+O',
+            click: () => mainWindow?.webContents.send('menu-open-file'),
+          },
+          { type: 'separator' as const },
+          {
+            label: 'Save',
+            accelerator: 'CmdOrCtrl+S',
+            click: () => mainWindow?.webContents.send('menu-save-file'),
+          },
+          {
+            label: 'Save As…',
+            accelerator: 'CmdOrCtrl+Shift+S',
+            click: () => mainWindow?.webContents.send('menu-save-file-as'),
+          },
+        ],
+      },
+      {
         label: 'Edit',
         submenu: [
           { role: 'cut' as const },
@@ -119,6 +140,35 @@ app.on('activate', () => {
   if (BrowserWindow.getAllWindows().length === 0) {
     createWindow();
   }
+});
+
+ipcMain.handle('open-file', async () => {
+  const result = await dialog.showOpenDialog({
+    filters: [{ name: 'Python', extensions: ['py'] }],
+    properties: ['openFile'],
+  });
+  if (result.canceled || !result.filePaths.length) {
+    return null;
+  }
+  const filePath = result.filePaths[0];
+  const content = readFileSync(filePath, 'utf8');
+  return { filePath, content };
+});
+
+ipcMain.handle('save-file', async (_event, filePath: string | null, content: string) => {
+  let targetPath = filePath;
+  if (!targetPath) {
+    const result = await dialog.showSaveDialog({
+      filters: [{ name: 'Python', extensions: ['py'] }],
+      defaultPath: 'program.py',
+    });
+    if (result.canceled || !result.filePath) {
+      return null;
+    }
+    targetPath = result.filePath;
+  }
+  writeFileSync(targetPath, content, 'utf8');
+  return targetPath;
 });
 
 ipcMain.handle('get-settings', () => loadSettings());

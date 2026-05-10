@@ -1,5 +1,7 @@
 import type * as ScratchBlocks from 'scratch-blocks';
 
+import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
+
 type FlyoutItem = ScratchBlocks.utils.toolbox.FlyoutItemInfo;
 type Category = { colour: string; contents: FlyoutItem[]; kind: string; name: string };
 
@@ -18,25 +20,17 @@ export const toolboxConfig: { kind: string; contents: Category[] } = {
       kind: 'category',
       name: 'Poses',
       colour: '#9966FF',
-      contents: [
-        { kind: 'block', type: 'doggo_stand' },
-        { kind: 'block', type: 'doggo_sit' },
-        { kind: 'block', type: 'doggo_rest' },
-      ],
+      contents: POSE_COMMANDS.map((def) => ({ kind: 'block', type: def.blockType })),
     },
     {
       kind: 'category',
       name: 'Motion',
       colour: '#4C97FF',
-      contents: [
-        { kind: 'block', type: 'doggo_walk', inputs: { STEPS: numShadow(2) } },
-        { kind: 'block', type: 'doggo_walk_back', inputs: { STEPS: numShadow(2) } },
-        { kind: 'block', type: 'doggo_turn_left', inputs: { STEPS: numShadow(2) } },
-        { kind: 'block', type: 'doggo_turn_right', inputs: { STEPS: numShadow(2) } },
-        { kind: 'block', type: 'doggo_pivot_left', inputs: { STEPS: numShadow(2) } },
-        { kind: 'block', type: 'doggo_pivot_right', inputs: { STEPS: numShadow(2) } },
-        { kind: 'block', type: 'doggo_trot', inputs: { STEPS: numShadow(2) } },
-      ],
+      contents: MOTION_COMMANDS.map((def) => ({
+        kind: 'block',
+        type: def.blockType,
+        inputs: { [def.param.toUpperCase()]: numShadow(def.defaultValue) },
+      })),
     },
     {
       kind: 'category',

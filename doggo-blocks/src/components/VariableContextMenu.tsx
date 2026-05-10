@@ -12,7 +12,12 @@ interface VariableContextMenuProps {
   onDelete: (varId: string) => void;
 }
 
-export const VariableContextMenu = ({ menu, onClose, onRename, onDelete }: VariableContextMenuProps) => (
+export const VariableContextMenu = ({
+  menu,
+  onClose,
+  onRename,
+  onDelete,
+}: VariableContextMenuProps) => (
   <>
     <div style={{ position: 'fixed', inset: 0, zIndex: 999 }} onClick={onClose} />
     <div className="context-menu" style={{ left: menu.x, top: menu.y }}>

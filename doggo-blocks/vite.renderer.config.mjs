@@ -42,6 +42,7 @@ export default defineConfig({
   optimizeDeps: {
     include: ['scratch-blocks'],
   },
+  assetsInclude: ['**/*.wasm'],
   server: {
     fs: { allow: ['..'] },
   },

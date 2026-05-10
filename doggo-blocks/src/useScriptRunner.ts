@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import type * as ScratchBlocks from 'scratch-blocks';
 
+import type { ErrorData } from './components/ErrorDialog.js';
+
 interface CodeGenerator {
   workspaceToCode(ws: ScratchBlocks.WorkspaceSvg): string;
 }
@@ -11,7 +13,7 @@ export const useScriptRunner = (
 ) => {
   const outputRef = useRef<string[]>([]);
   const [status, setStatus] = useState('');
-  const [errorDialog, setErrorDialog] = useState<{ exitCode: number; output: string } | null>(null);
+  const [errorDialog, setErrorDialog] = useState<ErrorData | null>(null);
 
   useEffect(() => {
     window.doggo.onOutput((line) => {
@@ -23,14 +25,20 @@ export const useScriptRunner = (
         setStatus('Done ✓');
         setTimeout(() => setStatus(''), 3000);
       } else {
-        setErrorDialog({ exitCode: exitCode ?? 1, output: outputRef.current.join('') });
+        setErrorDialog({
+          title: 'Run failed',
+          detail: `Exit code ${exitCode ?? 1}`,
+          body: outputRef.current.join(''),
+        });
       }
     });
   }, []);
 
   const handleRun = () => {
     const ws = workspaceRef.current;
-    if (!ws) return;
+    if (!ws) {
+      return;
+    }
     const code = pyGen.workspaceToCode(ws);
     console.log(`[doggo-blocks] generated script:\n${code}`);
     outputRef.current = [];

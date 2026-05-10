@@ -1,5 +1,7 @@
 import * as ScratchBlocks from 'scratch-blocks';
 
+import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
+
 // All block definitions for Doggo Blocks.
 // Style names must exist in Themes.Zelos (our theme) with full colour values.
 // Zelos styles: list_blocks=purple, logic_blocks=blue, loop_blocks=teal,
@@ -79,39 +81,27 @@ export const defineBlocks = (): void => {
   };
 
   // ─── POSES ────────────────────────────────────────────────────────────────
-  for (const [type, label] of [
-    ['doggo_stand', 'stand'],
-    ['doggo_sit', 'sit'],
-    ['doggo_rest', 'rest'],
-  ]) {
-    Blocks[type] = {
+  for (const def of POSE_COMMANDS) {
+    Blocks[def.blockType] = {
       init(this: ScratchBlocks.Block) {
-        this.appendDummyInput().appendField(label);
+        this.appendDummyInput().appendField(def.label);
         this.setPreviousStatement(true);
         this.setNextStatement(true);
-        this.setStyle('list_blocks');
+        this.setStyle(def.style);
       },
     };
   }
 
   // ─── MOTION ───────────────────────────────────────────────────────────────
-  for (const [type, label] of [
-    ['doggo_walk', 'walk'],
-    ['doggo_walk_back', 'walk back'],
-    ['doggo_turn_left', 'turn left'],
-    ['doggo_turn_right', 'turn right'],
-    ['doggo_pivot_left', 'pivot left'],
-    ['doggo_pivot_right', 'pivot right'],
-    ['doggo_trot', 'trot'],
-  ]) {
-    Blocks[type] = {
+  for (const def of MOTION_COMMANDS) {
+    Blocks[def.blockType] = {
       init(this: ScratchBlocks.Block) {
-        this.appendValueInput('STEPS').setCheck('Number').appendField(label);
-        this.appendDummyInput().appendField('steps');
+        this.appendValueInput(def.param.toUpperCase()).setCheck('Number').appendField(def.label);
+        this.appendDummyInput().appendField(def.param);
         this.setInputsInline(true);
         this.setPreviousStatement(true);
         this.setNextStatement(true);
-        this.setStyle('logic_blocks');
+        this.setStyle(def.style);
       },
     };
   }

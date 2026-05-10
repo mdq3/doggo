@@ -17,11 +17,17 @@ export const SettingsDialog = ({
   onSave,
   onClose,
 }: SettingsDialogProps) => {
-  if (!open) return null;
+  if (!open) {
+    return null;
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') onSave();
-    if (e.key === 'Escape') onClose();
+    if (e.key === 'Enter') {
+      onSave();
+    }
+    if (e.key === 'Escape') {
+      onClose();
+    }
   };
 
   return (

@@ -326,16 +326,56 @@ button:disabled {
   opacity: 0.88;
 }
 
-/* ─── Settings ───────────────────────────────────────────────────────── */
-#btn-settings {
+/* ─── Burger menu ────────────────────────────────────────────────────── */
+#burger-menu {
+  position: relative;
+}
+
+#btn-menu {
   background: transparent;
   color: #a6adc8;
   padding: 6px 8px;
 }
 
-#btn-settings:hover {
+#btn-menu:hover {
   color: #cdd6f4;
   opacity: 1;
+}
+
+#burger-dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: #2a2a3e;
+  border: 1px solid #444;
+  border-radius: 6px;
+  padding: 4px;
+  display: flex;
+  flex-direction: column;
+  min-width: 160px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  z-index: 1000;
+}
+
+#burger-dropdown button {
+  background: transparent;
+  color: #cdd6f4;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  justify-content: flex-start;
+}
+
+#burger-dropdown button:hover {
+  background: #313244;
+  opacity: 1;
+}
+
+.menu-separator {
+  border: none;
+  border-top: 1px solid #444;
+  margin: 4px 2px;
 }
 
 .settings-label {
