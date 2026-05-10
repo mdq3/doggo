@@ -6,6 +6,7 @@ export default defineConfig({
   assetsInclude: ['**/*.wasm'],
   test: {
     environment: 'jsdom',
+    globals: true,
     setupFiles: ['./src/vitest.setup.ts'],
     include: ['src/**/*.test.{ts,tsx}'],
   },
