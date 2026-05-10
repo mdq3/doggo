@@ -1,230 +1,47 @@
-import { AlertTriangle, Code2, Play, Settings } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import * as ScratchBlocks from 'scratch-blocks';
+import { useEffect, useRef, useState } from 'react';
 
 import { defineBlocks } from './blocks.js';
 import { createGenerator } from './generator.js';
-import { doggoTheme } from './theme.js';
-import { toolboxConfig } from './toolbox.js';
+import { useBlocklyWorkspace } from './useBlocklyWorkspace.js';
+import { useScriptRunner } from './useScriptRunner.js';
+import { useSettings } from './useSettings.js';
+import { CodePanel } from './CodePanel.js';
+import { CreateVariableDialog } from './CreateVariableDialog.js';
+import { ErrorDialog } from './ErrorDialog.js';
+import { RenameDialog } from './RenameDialog.js';
+import { SettingsDialog } from './SettingsDialog.js';
+import { SplashScreen } from './SplashScreen.js';
+import { Toolbar } from './Toolbar.js';
+import { VariableContextMenu, type VarMenu } from './VariableContextMenu.js';
 
 ScratchBlocks.ScratchMsgs.setLocale('en');
 defineBlocks();
 const pyGen = createGenerator();
 
-// Build the flat flyout item array that show() expects — one label + contents
-// per toolbox category, with Variables section updated for current variables.
-const buildFlyoutItems = (
-  vars: ScratchBlocks.IVariableModel<ScratchBlocks.IVariableState>[],
-): ScratchBlocks.utils.toolbox.FlyoutItemInfoArray => {
-  const numShadow = { shadow: { type: 'math_number', fields: { NUM: 0 } } };
-  // FieldVariable.loadState() expects { id, name, type } not a bare UUID string.
-  // One set block is enough (it has a dropdown); one get block per variable.
-  const firstVar = vars[0];
-  const varBlocks = [
-    ...(firstVar
-      ? [
-          {
-            kind: 'block',
-            type: 'variables_set',
-            fields: {
-              VAR: { id: firstVar.getId(), name: firstVar.getName(), type: firstVar.getType() },
-            },
-            inputs: { VALUE: numShadow },
-          },
-        ]
-      : []),
-    ...vars.map((v) => ({
-      kind: 'block',
-      type: 'variables_get',
-      fields: { VAR: { id: v.getId(), name: v.getName(), type: v.getType() } },
-    })),
-  ];
-
-  return toolboxConfig.contents.flatMap((cat): ScratchBlocks.utils.toolbox.FlyoutItemInfo[] => {
-    const label = { kind: 'label', text: cat.name };
-    if (cat.name === 'Variables') {
-      const button = { kind: 'button', text: 'Create Variable', callbackkey: 'CREATE_VARIABLE' };
-      return [label, button, ...varBlocks];
-    }
-    return [label, ...cat.contents];
-  });
-};
-
 export const App = () => {
-  const blocklyDivRef = useRef<HTMLDivElement>(null);
-  const workspaceRef = useRef<ScratchBlocks.WorkspaceSvg | null>(null);
-  const refreshVariablesRef = useRef<(() => void) | null>(null);
   const [showSplash, setShowSplash] = useState(true);
-  const outputRef = useRef<string[]>([]);
-  const [status, setStatus] = useState('');
-  const [errorDialog, setErrorDialog] = useState<{ exitCode: number; output: string } | null>(null);
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const [settingsHostname, setSettingsHostname] = useState('doggo.local');
-  const [settingsPassword, setSettingsPassword] = useState('doggo');
-  const [varDialog, setVarDialog] = useState(false);
-  const [varName, setVarName] = useState('');
   const [codeOpen, setCodeOpen] = useState(false);
   const [generatedCode, setGeneratedCode] = useState('# Place blocks to generate code');
-  const [ctxMenu, setCtxMenu] = useState<{
-    x: number;
-    y: number;
-    varId: string;
-    varName: string;
-  } | null>(null);
+  const [ctxMenu, setCtxMenu] = useState<VarMenu | null>(null);
   const [renameVarId, setRenameVarId] = useState<string | null>(null);
   const [renameName, setRenameName] = useState('');
   const [promptOpen, setPromptOpen] = useState(false);
   const promptCallbackRef = useRef<((name: string | null) => void) | null>(null);
+  const [varDialog, setVarDialog] = useState(false);
+  const [varName, setVarName] = useState('');
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
-  useEffect(() => {
-    if (!blocklyDivRef.current || workspaceRef.current) {
-      return;
-    }
+  const { blocklyDivRef, workspaceRef, refreshVariablesRef } = useBlocklyWorkspace({
+    pyGen,
+    onCodeChange: setGeneratedCode,
+    onCreateVar: () => { setVarName(''); setVarDialog(true); },
+    onVarContextMenu: setCtxMenu,
+  });
 
-    const ws = ScratchBlocks.inject(blocklyDivRef.current, {
-      toolbox: toolboxConfig,
-      theme: doggoTheme,
-      media: './media/',
-      grid: { spacing: 24, length: 1, colour: '#c0c0c0', snap: true },
-      scrollbars: true,
-      zoom: { controls: true, wheel: true, startScale: 0.85 },
-      sounds: false,
-    });
-    workspaceRef.current = ws;
+  const { status, errorDialog, setErrorDialog, handleRun } = useScriptRunner(workspaceRef, pyGen);
 
-    ws.registerButtonCallback('CREATE_VARIABLE', () => {
-      setVarName('');
-      setVarDialog(true);
-    });
-
-    const refreshVariables = () => {
-      const vars = ws.getVariableMap().getAllVariables();
-      const items = buildFlyoutItems(vars);
-      ws.getToolbox()?.getFlyout()?.show(items);
-    };
-    refreshVariablesRef.current = refreshVariables;
-
-    ws.addChangeListener((event: ScratchBlocks.Events.Abstract) => {
-      setGeneratedCode(pyGen.workspaceToCode(ws) || '# Place blocks to generate code');
-
-      if (event.type === 'delete') {
-        ws.trashcan?.emptyContents();
-      }
-
-      if (event.type === 'var_delete' || event.type === 'var_rename') {
-        refreshVariables();
-      }
-    });
-
-    for (const [cls, label] of [
-      ['blocklyZoomIn', 'Zoom in'],
-      ['blocklyZoomOut', 'Zoom out'],
-      ['blocklyZoomReset', 'Reset zoom'],
-    ]) {
-      const el = blocklyDivRef.current.querySelector(`.${cls}`);
-      if (el) {
-        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
-        title.textContent = label;
-        el.prepend(title);
-      }
-    }
-
-    const observer = new ResizeObserver(() => ScratchBlocks.svgResize(ws));
-    observer.observe(blocklyDivRef.current);
-
-    const blocklyEl = blocklyDivRef.current;
-
-    // Resolve the flyout variable block (if any) under the event target.
-    // Block SVG groups carry data-id; walk up to find it.
-    const flyoutVarBlockAt = (target: EventTarget | null) => {
-      let el: Element | null = target as Element | null;
-      while (el && !el.hasAttribute('data-id')) {
-        el = el.parentElement;
-      }
-      if (!el) {
-        return null;
-      }
-      const dataId = el.getAttribute('data-id');
-      if (!dataId) {
-        return null;
-      }
-      const flyout = ws.getToolbox()?.getFlyout();
-      if (!flyout) {
-        return null;
-      }
-      let block: ScratchBlocks.Block | null = flyout.getWorkspace().getBlockById(dataId);
-      if (!block?.workspace.isFlyout) {
-        return null;
-      }
-      // Walk up the block parent chain — handles clicks on the shadow number input
-      // inside the set block, where the DOM walker resolves to math_number, not variables_set.
-      while (block) {
-        if (block.type === 'variables_get' || block.type === 'variables_set') {
-          return block;
-        }
-        block = (block as any).getParent?.() ?? null;
-      }
-      return null;
-    };
-
-    // Intercept right-click before Blockly starts its gesture.
-    // Both pointerdown and mousedown must be stopped — they are separate event chains
-    // and Scratch-Blocks listens on mousedown, so stopping only pointerdown is not enough.
-    const stopRightClickOnVarBlock = (e: MouseEvent) => {
-      if (e.button !== 2 || !flyoutVarBlockAt(e.target)) {
-        return;
-      }
-      e.stopPropagation();
-    };
-
-    const handleContextMenu = (e: MouseEvent) => {
-      const block = flyoutVarBlockAt(e.target);
-      if (!block) {
-        return;
-      }
-      const varId = block.getField('VAR')?.getValue();
-      if (!varId) {
-        return;
-      }
-      const variable = ws.getVariableMap().getVariableById(varId);
-      if (!variable) {
-        return;
-      }
-      e.preventDefault();
-      e.stopPropagation();
-      setCtxMenu({ x: e.clientX, y: e.clientY, varId, varName: variable.getName() });
-    };
-
-    blocklyEl.addEventListener('pointerdown', stopRightClickOnVarBlock, true);
-    blocklyEl.addEventListener('mousedown', stopRightClickOnVarBlock, true);
-    blocklyEl.addEventListener('contextmenu', handleContextMenu, true);
-
-    return () => {
-      observer.disconnect();
-      blocklyEl.removeEventListener('pointerdown', stopRightClickOnVarBlock, true);
-      blocklyEl.removeEventListener('mousedown', stopRightClickOnVarBlock, true);
-      blocklyEl.removeEventListener('contextmenu', handleContextMenu, true);
-      ws.dispose();
-      workspaceRef.current = null;
-    };
-  }, []);
-
-  useEffect(() => {
-    window.doggo.onOutput((line) => {
-      outputRef.current.push(line);
-    });
-    window.doggo.onDone((exitCode) => {
-      setStatus('');
-      if (exitCode === 0) {
-        setStatus('Done ✓');
-        setTimeout(() => setStatus(''), 3000);
-      } else {
-        setErrorDialog({ exitCode: exitCode ?? 1, output: outputRef.current.join('') });
-      }
-    });
-  }, []);
+  const { hostname, setHostname, password, setPassword, save: saveSettings } = useSettings();
 
   useEffect(() => {
     ScratchBlocks.dialog.setPrompt((message, defaultValue, callback) => {
@@ -236,30 +53,6 @@ export const App = () => {
       setPromptOpen(true);
     });
   }, []);
-
-  useEffect(() => {
-    window.doggo.getSettings().then(({ hostname, password }) => {
-      setSettingsHostname(hostname);
-      setSettingsPassword(password);
-    });
-  }, []);
-
-  const handleSaveSettings = async () => {
-    await window.doggo.saveSettings({ hostname: settingsHostname, password: settingsPassword });
-    setSettingsOpen(false);
-  };
-
-  const handleRun = () => {
-    const ws = workspaceRef.current;
-    if (!ws) {
-      return;
-    }
-    const code = pyGen.workspaceToCode(ws);
-    console.log(`[doggo-blocks] generated script:\n${code}`);
-    outputRef.current = [];
-    setStatus('Running…');
-    window.doggo.runScript(code);
-  };
 
   const closeRenameDialog = () => {
     if (promptCallbackRef.current) {
@@ -273,7 +66,6 @@ export const App = () => {
   const handleRenameVar = () => {
     const newName = renameName.trim();
     if (!newName) return;
-
     if (renameVarId) {
       const ws = workspaceRef.current;
       const variable = ws?.getVariableMap().getVariableById(renameVarId);
@@ -307,197 +99,62 @@ export const App = () => {
     setVarDialog(false);
   };
 
+  const handleSaveSettings = async () => {
+    await saveSettings();
+    setSettingsOpen(false);
+  };
+
   return (
     <>
-      {showSplash && (
-        <div className="splash">
-          <h1 className="splash-title">doggo blocks</h1>
-          <img src="doggo-blocks-sparkle.png" alt="doggo blocks" className="splash-image" />
-
-          <button className="splash-btn" onClick={() => setShowSplash(false)}>
-            Start Coding
-          </button>
-        </div>
-      )}
-      <div id="toolbar">
-        <button id="btn-run" onClick={handleRun}>
-          <Play size={14} /> Run
-        </button>
-        <span id="status">{status}</span>
-        <button
-          id="btn-code"
-          onClick={() => setCodeOpen((o) => !o)}
-          title="Toggle Python code viewer"
-        >
-          <Code2 size={14} /> Code
-        </button>
-        <button id="btn-settings" onClick={() => setSettingsOpen(true)} title="Settings">
-          <Settings size={14} />
-        </button>
-      </div>
+      {showSplash && <SplashScreen onStart={() => setShowSplash(false)} />}
+      <Toolbar
+        status={status}
+        codeOpen={codeOpen}
+        onRun={handleRun}
+        onToggleCode={() => setCodeOpen((o) => !o)}
+        onOpenSettings={() => setSettingsOpen(true)}
+      />
       <div id="main-area">
         <div id="blockly-div" ref={blocklyDivRef} onClick={() => setCtxMenu(null)} />
-        <div id="code-panel" className={codeOpen ? 'open' : ''}>
-          <div id="code-panel-header">
-            <span>Generated Python</span>
-          </div>
-          <SyntaxHighlighter
-            language="python"
-            style={vscDarkPlus}
-            customStyle={{
-              margin: 0,
-              flex: 1,
-              fontSize: '13px',
-              lineHeight: '1.6',
-              background: '#1e1e2e',
-              minWidth: '360px',
-              height: '100%',
-              overflow: 'auto',
-            }}
-          >
-            {generatedCode}
-          </SyntaxHighlighter>
-        </div>
+        <CodePanel open={codeOpen} code={generatedCode} />
       </div>
 
       {ctxMenu && (
-        <>
-          <div
-            style={{ position: 'fixed', inset: 0, zIndex: 999 }}
-            onClick={() => setCtxMenu(null)}
-          />
-          <div className="context-menu" style={{ left: ctxMenu.x, top: ctxMenu.y }}>
-            <button
-              onClick={() => {
-                setRenameVarId(ctxMenu.varId);
-                setRenameName(ctxMenu.varName);
-                setCtxMenu(null);
-              }}
-            >
-              Rename
-            </button>
-            <button onClick={() => handleDeleteVar(ctxMenu.varId)}>Delete</button>
-          </div>
-        </>
+        <VariableContextMenu
+          menu={ctxMenu}
+          onClose={() => setCtxMenu(null)}
+          onRename={(varId, varName) => {
+            setRenameVarId(varId);
+            setRenameName(varName);
+            setCtxMenu(null);
+          }}
+          onDelete={handleDeleteVar}
+        />
       )}
-
-      {(renameVarId || promptOpen) && (
-        <div className="dialog-overlay" onClick={closeRenameDialog}>
-          <div className="dialog" onClick={(e) => e.stopPropagation()}>
-            <h3>Rename variable</h3>
-            <input
-              autoFocus
-              value={renameName}
-              onChange={(e) => setRenameName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleRenameVar();
-                }
-                if (e.key === 'Escape') {
-                  closeRenameDialog();
-                }
-              }}
-            />
-            <div className="dialog-buttons">
-              <button onClick={handleRenameVar} disabled={!renameName.trim()}>
-                OK
-              </button>
-              <button onClick={closeRenameDialog}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {settingsOpen && (
-        <div className="dialog-overlay" onClick={() => setSettingsOpen(false)}>
-          <div className="dialog" onClick={(e) => e.stopPropagation()}>
-            <h3>Settings</h3>
-            <label className="settings-label">
-              Robot hostname
-              <input
-                autoFocus
-                value={settingsHostname}
-                placeholder="doggo.local"
-                onChange={(e) => setSettingsHostname(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSaveSettings();
-                  }
-                  if (e.key === 'Escape') {
-                    setSettingsOpen(false);
-                  }
-                }}
-              />
-            </label>
-            <label className="settings-label">
-              Robot password
-              <input
-                value={settingsPassword}
-                placeholder="doggo"
-                onChange={(e) => setSettingsPassword(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    handleSaveSettings();
-                  }
-                  if (e.key === 'Escape') {
-                    setSettingsOpen(false);
-                  }
-                }}
-              />
-            </label>
-            <div className="dialog-buttons">
-              <button onClick={handleSaveSettings}>Save</button>
-              <button onClick={() => setSettingsOpen(false)}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {errorDialog && (
-        <div className="dialog-overlay" onClick={() => setErrorDialog(null)}>
-          <div className="dialog error-dialog" onClick={(e) => e.stopPropagation()}>
-            <h3>
-              <AlertTriangle size={16} style={{ color: '#f38ba8', flexShrink: 0 }} />
-              Run failed
-            </h3>
-            <p className="error-exit-code">Exit code {errorDialog.exitCode}</p>
-            <pre className="error-output">{errorDialog.output || '(no output)'}</pre>
-            <div className="dialog-buttons">
-              <button onClick={() => setErrorDialog(null)}>OK</button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {varDialog && (
-        <div className="dialog-overlay" onClick={() => setVarDialog(false)}>
-          <div className="dialog" onClick={(e) => e.stopPropagation()}>
-            <h3>New variable</h3>
-            <input
-              autoFocus
-              placeholder="Variable name"
-              value={varName}
-              onChange={(e) => setVarName(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault();
-                  handleCreateVar();
-                }
-                if (e.key === 'Escape') {
-                  setVarDialog(false);
-                }
-              }}
-            />
-            <div className="dialog-buttons">
-              <button onClick={handleCreateVar} disabled={!varName.trim()}>
-                OK
-              </button>
-              <button onClick={() => setVarDialog(false)}>Cancel</button>
-            </div>
-          </div>
-        </div>
-      )}
+      <RenameDialog
+        open={!!(renameVarId || promptOpen)}
+        name={renameName}
+        onChange={setRenameName}
+        onConfirm={handleRenameVar}
+        onCancel={closeRenameDialog}
+      />
+      <CreateVariableDialog
+        open={varDialog}
+        name={varName}
+        onChange={setVarName}
+        onCreate={handleCreateVar}
+        onClose={() => setVarDialog(false)}
+      />
+      <SettingsDialog
+        open={settingsOpen}
+        hostname={hostname}
+        password={password}
+        onChangeHostname={setHostname}
+        onChangePassword={setPassword}
+        onSave={handleSaveSettings}
+        onClose={() => setSettingsOpen(false)}
+      />
+      <ErrorDialog error={errorDialog} onClose={() => setErrorDialog(null)} />
     </>
   );
 };

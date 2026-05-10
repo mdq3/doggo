@@ -78,3 +78,37 @@ export const toolboxConfig: { kind: string; contents: Category[] } = {
     },
   ],
 };
+
+export const buildToolboxItems = (
+  vars: ScratchBlocks.IVariableModel<ScratchBlocks.IVariableState>[],
+): ScratchBlocks.utils.toolbox.FlyoutItemInfoArray => {
+  const firstVar = vars[0];
+  const varBlocks = [
+    ...(firstVar
+      ? [
+          {
+            kind: 'block',
+            type: 'variables_set',
+            fields: {
+              VAR: { id: firstVar.getId(), name: firstVar.getName(), type: firstVar.getType() },
+            },
+            inputs: { VALUE: numShadow(0) },
+          },
+        ]
+      : []),
+    ...vars.map((v) => ({
+      kind: 'block',
+      type: 'variables_get',
+      fields: { VAR: { id: v.getId(), name: v.getName(), type: v.getType() } },
+    })),
+  ];
+
+  return toolboxConfig.contents.flatMap((cat): ScratchBlocks.utils.toolbox.FlyoutItemInfo[] => {
+    const label = { kind: 'label', text: cat.name };
+    if (cat.name === 'Variables') {
+      const button = { kind: 'button', text: 'Create Variable', callbackkey: 'CREATE_VARIABLE' };
+      return [label, button, ...varBlocks];
+    }
+    return [label, ...cat.contents];
+  });
+};
