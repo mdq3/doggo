@@ -11,6 +11,26 @@ export const useFileHandling = (
 ) => {
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
   const [parseError, setParseError] = useState<ErrorData | null>(null);
+  const [newFileConfirmOpen, setNewFileConfirmOpen] = useState(false);
+
+  const doNewFile = () => {
+    const ws = workspaceRef.current;
+    if (ws) {
+      ws.clear();
+      refreshVariablesRef.current?.();
+    }
+    setCurrentFilePath(null);
+    setNewFileConfirmOpen(false);
+  };
+
+  const newFile = () => {
+    const ws = workspaceRef.current;
+    if ((ws?.getAllBlocks(false).length ?? 0) > 0) {
+      setNewFileConfirmOpen(true);
+    } else {
+      doNewFile();
+    }
+  };
 
   const handleOpenFile = async () => {
     const result = await window.doggo.openFile();
@@ -47,12 +67,15 @@ export const useFileHandling = (
     }
   };
 
+  const newFileRef = useRef(newFile);
+  newFileRef.current = newFile;
   const handleOpenFileRef = useRef(handleOpenFile);
   handleOpenFileRef.current = handleOpenFile;
   const handleSaveFileRef = useRef(handleSaveFile);
   handleSaveFileRef.current = handleSaveFile;
 
   useEffect(() => {
+    window.doggo.onMenuNewFile(() => newFileRef.current());
     window.doggo.onMenuOpenFile(() => void handleOpenFileRef.current());
     window.doggo.onMenuSaveFile(() => void handleSaveFileRef.current(false));
     window.doggo.onMenuSaveFileAs(() => void handleSaveFileRef.current(true));
@@ -61,6 +84,10 @@ export const useFileHandling = (
   return {
     parseError,
     setParseError,
+    newFile,
+    newFileConfirmOpen,
+    confirmNewFile: doNewFile,
+    cancelNewFile: () => setNewFileConfirmOpen(false),
     openFile: () => void handleOpenFileRef.current(),
     saveFile: () => void handleSaveFileRef.current(false),
   };

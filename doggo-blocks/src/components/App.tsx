@@ -8,6 +8,7 @@ import { useFileHandling } from '../useFileHandling.js';
 import { useScriptRunner } from '../useScriptRunner.js';
 import { useSettings } from '../useSettings.js';
 import { CodePanel } from './CodePanel.js';
+import { ConfirmDialog } from './ConfirmDialog.js';
 import { CreateVariableDialog } from './CreateVariableDialog.js';
 import { ErrorDialog } from './ErrorDialog.js';
 import { RenameDialog } from './RenameDialog.js';
@@ -44,11 +45,16 @@ export const App = () => {
   });
 
   const { status, errorDialog, setErrorDialog, handleRun } = useScriptRunner(workspaceRef, pyGen);
-  const { parseError, setParseError, openFile, saveFile } = useFileHandling(
-    workspaceRef,
-    refreshVariablesRef,
-    generatedCode,
-  );
+  const {
+    parseError,
+    setParseError,
+    newFile,
+    newFileConfirmOpen,
+    confirmNewFile,
+    cancelNewFile,
+    openFile,
+    saveFile,
+  } = useFileHandling(workspaceRef, refreshVariablesRef, generatedCode);
 
   const { hostname, setHostname, password, setPassword, save: saveSettings } = useSettings();
 
@@ -122,6 +128,7 @@ export const App = () => {
         status={status}
         onRun={handleRun}
         onToggleCode={() => setCodeOpen((o) => !o)}
+        onNew={newFile}
         onOpen={openFile}
         onSave={saveFile}
         onOpenSettings={() => setSettingsOpen(true)}
@@ -168,6 +175,14 @@ export const App = () => {
       />
       <ErrorDialog error={errorDialog} onClose={() => setErrorDialog(null)} />
       <ErrorDialog error={parseError} onClose={() => setParseError(null)} />
+      <ConfirmDialog
+        open={newFileConfirmOpen}
+        title="Create new file?"
+        message="Your current workspace will be cleared. Any unsaved changes will be lost."
+        confirmLabel="Create New"
+        onConfirm={confirmNewFile}
+        onCancel={cancelNewFile}
+      />
     </>
   );
 };

@@ -20,6 +20,7 @@ interface Window {
     saveSettings: (settings: { hostname: string; password: string }) => Promise<void>;
     openFile: () => Promise<{ filePath: string; content: string } | null>;
     saveFile: (filePath: string | null, content: string) => Promise<string | null>;
+    onMenuNewFile: (cb: () => void) => void;
     onMenuOpenFile: (cb: () => void) => void;
     onMenuSaveFile: (cb: () => void) => void;
     onMenuSaveFileAs: (cb: () => void) => void;

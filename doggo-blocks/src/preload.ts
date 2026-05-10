@@ -14,6 +14,7 @@ contextBridge.exposeInMainWorld('doggo', {
     ipcRenderer.invoke('open-file'),
   saveFile: (filePath: string | null, content: string): Promise<string | null> =>
     ipcRenderer.invoke('save-file', filePath, content),
+  onMenuNewFile: (cb: () => void) => ipcRenderer.on('menu-new-file', () => cb()),
   onMenuOpenFile: (cb: () => void) => ipcRenderer.on('menu-open-file', () => cb()),
   onMenuSaveFile: (cb: () => void) => ipcRenderer.on('menu-save-file', () => cb()),
   onMenuSaveFileAs: (cb: () => void) => ipcRenderer.on('menu-save-file-as', () => cb()),

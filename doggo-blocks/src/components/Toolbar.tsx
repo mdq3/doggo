@@ -1,10 +1,11 @@
-import { Code2, FolderOpen, Menu, Play, Save, Settings } from 'lucide-react';
+import { Code2, FilePlus, FolderOpen, Menu, Play, Save, Settings } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 
 interface ToolbarProps {
   status: string;
   onRun: () => void;
   onToggleCode: () => void;
+  onNew: () => void;
   onOpen: () => void;
   onSave: () => void;
   onOpenSettings: () => void;
@@ -14,6 +15,7 @@ export const Toolbar = ({
   status,
   onRun,
   onToggleCode,
+  onNew,
   onOpen,
   onSave,
   onOpenSettings,
@@ -60,6 +62,14 @@ export const Toolbar = ({
         </button>
         {menuOpen && (
           <div id="burger-dropdown">
+            <button
+              onClick={() => {
+                onNew();
+                close();
+              }}
+            >
+              <FilePlus size={14} /> New
+            </button>
             <button
               onClick={() => {
                 onOpen();

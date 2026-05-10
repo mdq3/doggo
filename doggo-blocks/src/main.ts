@@ -76,6 +76,12 @@ app.whenReady().then(() => {
         label: 'File',
         submenu: [
           {
+            label: 'New',
+            accelerator: 'CmdOrCtrl+N',
+            click: () => mainWindow?.webContents.send('menu-new-file'),
+          },
+          { type: 'separator' as const },
+          {
             label: 'Open…',
             accelerator: 'CmdOrCtrl+O',
             click: () => mainWindow?.webContents.send('menu-open-file'),
