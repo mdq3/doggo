@@ -12,6 +12,7 @@ export const useFileHandling = (
   const [currentFilePath, setCurrentFilePath] = useState<string | null>(null);
   const [parseError, setParseError] = useState<ErrorData | null>(null);
   const [newFileConfirmOpen, setNewFileConfirmOpen] = useState(false);
+  const [recents, setRecents] = useState<string[]>([]);
 
   const doNewFile = () => {
     const ws = workspaceRef.current;
@@ -32,8 +33,13 @@ export const useFileHandling = (
     }
   };
 
-  const handleOpenFile = async () => {
-    const result = await window.doggo.openFile();
+  const pushRecent = (filePath: string) => {
+    void window.doggo.addRecent(filePath);
+    setRecents((prev) => [filePath, ...prev.filter((p) => p !== filePath)].slice(0, 10));
+  };
+
+  const handleOpenFile = async (filePath?: string) => {
+    const result = await window.doggo.openFile(filePath);
     if (!result) {
       return;
     }
@@ -46,6 +52,7 @@ export const useFileHandling = (
       ScratchBlocks.Xml.clearWorkspaceAndLoadFromXml(dom, ws);
       refreshVariablesRef.current?.();
       setCurrentFilePath(result.filePath);
+      pushRecent(result.filePath);
     } catch (err) {
       setParseError(
         err instanceof ParseError
@@ -64,6 +71,7 @@ export const useFileHandling = (
     const savedPath = await window.doggo.saveFile(filePath, generatedCode);
     if (savedPath) {
       setCurrentFilePath(savedPath);
+      pushRecent(savedPath);
     }
   };
 
@@ -75,10 +83,12 @@ export const useFileHandling = (
   handleSaveFileRef.current = handleSaveFile;
 
   useEffect(() => {
+    void window.doggo.getRecents().then(setRecents);
     window.doggo.onMenuNewFile(() => newFileRef.current());
     window.doggo.onMenuOpenFile(() => void handleOpenFileRef.current());
     window.doggo.onMenuSaveFile(() => void handleSaveFileRef.current(false));
     window.doggo.onMenuSaveFileAs(() => void handleSaveFileRef.current(true));
+    window.doggo.onMenuOpenRecent((filePath) => void handleOpenFileRef.current(filePath));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   return {
@@ -90,5 +100,11 @@ export const useFileHandling = (
     cancelNewFile: () => setNewFileConfirmOpen(false),
     openFile: () => void handleOpenFileRef.current(),
     saveFile: () => void handleSaveFileRef.current(false),
+    recents,
+    openRecent: (filePath: string) => void handleOpenFileRef.current(filePath),
+    clearRecents: () => {
+      void window.doggo.clearRecents();
+      setRecents([]);
+    },
   };
 };

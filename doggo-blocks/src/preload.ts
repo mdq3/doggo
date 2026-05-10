@@ -10,12 +10,17 @@ contextBridge.exposeInMainWorld('doggo', {
     ipcRenderer.invoke('get-settings'),
   saveSettings: (settings: { hostname: string; password: string }): Promise<void> =>
     ipcRenderer.invoke('save-settings', settings),
-  openFile: (): Promise<{ filePath: string; content: string } | null> =>
-    ipcRenderer.invoke('open-file'),
+  openFile: (filePath?: string): Promise<{ filePath: string; content: string } | null> =>
+    ipcRenderer.invoke('open-file', filePath),
   saveFile: (filePath: string | null, content: string): Promise<string | null> =>
     ipcRenderer.invoke('save-file', filePath, content),
+  getRecents: (): Promise<string[]> => ipcRenderer.invoke('get-recents'),
+  addRecent: (filePath: string): Promise<void> => ipcRenderer.invoke('add-recent', filePath),
+  clearRecents: (): Promise<void> => ipcRenderer.invoke('clear-recents'),
   onMenuNewFile: (cb: () => void) => ipcRenderer.on('menu-new-file', () => cb()),
   onMenuOpenFile: (cb: () => void) => ipcRenderer.on('menu-open-file', () => cb()),
   onMenuSaveFile: (cb: () => void) => ipcRenderer.on('menu-save-file', () => cb()),
   onMenuSaveFileAs: (cb: () => void) => ipcRenderer.on('menu-save-file-as', () => cb()),
+  onMenuOpenRecent: (cb: (filePath: string) => void) =>
+    ipcRenderer.on('menu-open-recent', (_event, filePath: string) => cb(filePath)),
 });

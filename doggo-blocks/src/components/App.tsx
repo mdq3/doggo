@@ -54,6 +54,9 @@ export const App = () => {
     cancelNewFile,
     openFile,
     saveFile,
+    recents,
+    openRecent,
+    clearRecents,
   } = useFileHandling(workspaceRef, refreshVariablesRef, generatedCode);
 
   const { hostname, setHostname, password, setPassword, save: saveSettings } = useSettings();
@@ -132,6 +135,9 @@ export const App = () => {
         onOpen={openFile}
         onSave={saveFile}
         onOpenSettings={() => setSettingsOpen(true)}
+        recents={recents}
+        onOpenRecent={openRecent}
+        onClearRecents={clearRecents}
       />
       <div id="main-area">
         <div id="blockly-div" ref={blocklyDivRef} onClick={() => setCtxMenu(null)} />

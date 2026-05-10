@@ -9,6 +9,38 @@ import { BrowserWindow, Menu, app, dialog, ipcMain } from 'electron';
 let mainWindow: BrowserWindow | null = null;
 let runningProcess: ChildProcess | null = null;
 
+// ── Recents ──────────────────────────────────────────────────────────────────
+
+const MAX_RECENTS = 10;
+
+const loadRecents = (): string[] => {
+  try {
+    const raw = readFileSync(path.join(app.getPath('userData'), 'recents.json'), 'utf8');
+    return JSON.parse(raw) as string[];
+  } catch {
+    return [];
+  }
+};
+
+const persistRecents = (recents: string[]): void => {
+  writeFileSync(
+    path.join(app.getPath('userData'), 'recents.json'),
+    JSON.stringify(recents),
+    'utf8',
+  );
+};
+
+const addToRecents = (filePath: string): void => {
+  const next = [filePath, ...loadRecents().filter((p) => p !== filePath)].slice(0, MAX_RECENTS);
+  persistRecents(next);
+  rebuildMenu();
+};
+
+const clearRecents = (): void => {
+  persistRecents([]);
+  rebuildMenu();
+};
+
 interface Settings {
   hostname: string;
   password: string;
@@ -33,27 +65,23 @@ const saveSettings = (settings: Settings): void => {
   );
 };
 
-const createWindow = (): void => {
-  mainWindow = new BrowserWindow({
-    width: 1280,
-    height: 800,
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false,
-      devTools: !app.isPackaged,
-    },
-  });
+// ── Menu ─────────────────────────────────────────────────────────────────────
 
-  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
-    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
-  } else {
-    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
-  }
-};
-
-app.whenReady().then(() => {
+const rebuildMenu = (): void => {
   const isMac = process.platform === 'darwin';
+  const recents = loadRecents();
+  const recentSubmenu =
+    recents.length > 0
+      ? [
+          ...recents.map((p) => ({
+            label: path.basename(p),
+            click: () => mainWindow?.webContents.send('menu-open-recent', p),
+          })),
+          { type: 'separator' as const },
+          { label: 'Clear Recents', click: clearRecents },
+        ]
+      : [{ label: 'No Recent Files', enabled: false }];
+
   Menu.setApplicationMenu(
     Menu.buildFromTemplate([
       ...(isMac
@@ -86,6 +114,7 @@ app.whenReady().then(() => {
             accelerator: 'CmdOrCtrl+O',
             click: () => mainWindow?.webContents.send('menu-open-file'),
           },
+          { label: 'Open Recent', submenu: recentSubmenu },
           { type: 'separator' as const },
           {
             label: 'Save',
@@ -133,6 +162,29 @@ app.whenReady().then(() => {
       },
     ]),
   );
+};
+
+const createWindow = (): void => {
+  mainWindow = new BrowserWindow({
+    width: 1280,
+    height: 800,
+    webPreferences: {
+      preload: path.join(__dirname, 'preload.js'),
+      contextIsolation: true,
+      nodeIntegration: false,
+      devTools: !app.isPackaged,
+    },
+  });
+
+  if (MAIN_WINDOW_VITE_DEV_SERVER_URL) {
+    mainWindow.loadURL(MAIN_WINDOW_VITE_DEV_SERVER_URL);
+  } else {
+    mainWindow.loadFile(path.join(__dirname, `../renderer/${MAIN_WINDOW_VITE_NAME}/index.html`));
+  }
+};
+
+app.whenReady().then(() => {
+  rebuildMenu();
   createWindow();
 });
 
@@ -148,18 +200,29 @@ app.on('activate', () => {
   }
 });
 
-ipcMain.handle('open-file', async () => {
-  const result = await dialog.showOpenDialog({
-    filters: [{ name: 'Python', extensions: ['py'] }],
-    properties: ['openFile'],
-  });
-  if (result.canceled || !result.filePaths.length) {
+ipcMain.handle('open-file', async (_event, filePath?: string) => {
+  let targetPath = filePath;
+  if (!targetPath) {
+    const result = await dialog.showOpenDialog({
+      filters: [{ name: 'Python', extensions: ['py'] }],
+      properties: ['openFile'],
+    });
+    if (result.canceled || !result.filePaths.length) {
+      return null;
+    }
+    targetPath = result.filePaths[0];
+  }
+  try {
+    const content = readFileSync(targetPath, 'utf8');
+    return { filePath: targetPath, content };
+  } catch {
     return null;
   }
-  const filePath = result.filePaths[0];
-  const content = readFileSync(filePath, 'utf8');
-  return { filePath, content };
 });
+
+ipcMain.handle('get-recents', () => loadRecents());
+ipcMain.handle('add-recent', (_event, filePath: string) => addToRecents(filePath));
+ipcMain.handle('clear-recents', () => clearRecents());
 
 ipcMain.handle('save-file', async (_event, filePath: string | null, content: string) => {
   let targetPath = filePath;

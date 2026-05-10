@@ -18,11 +18,15 @@ interface Window {
     onDone: (cb: (exitCode: number | null) => void) => void;
     getSettings: () => Promise<{ hostname: string; password: string }>;
     saveSettings: (settings: { hostname: string; password: string }) => Promise<void>;
-    openFile: () => Promise<{ filePath: string; content: string } | null>;
+    openFile: (filePath?: string) => Promise<{ filePath: string; content: string } | null>;
     saveFile: (filePath: string | null, content: string) => Promise<string | null>;
+    getRecents: () => Promise<string[]>;
+    addRecent: (filePath: string) => Promise<void>;
+    clearRecents: () => Promise<void>;
     onMenuNewFile: (cb: () => void) => void;
     onMenuOpenFile: (cb: () => void) => void;
     onMenuSaveFile: (cb: () => void) => void;
     onMenuSaveFileAs: (cb: () => void) => void;
+    onMenuOpenRecent: (cb: (filePath: string) => void) => void;
   };
 }

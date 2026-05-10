@@ -1,5 +1,16 @@
-import { Code2, FilePlus, FolderOpen, Menu, Play, Save, Settings } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Code2,
+  FilePlus,
+  FolderOpen,
+  Menu,
+  Play,
+  Save,
+  Settings,
+  Trash2,
+} from 'lucide-react';
+import { useEffect, useState } from 'react';
 
 interface ToolbarProps {
   status: string;
@@ -9,7 +20,13 @@ interface ToolbarProps {
   onOpen: () => void;
   onSave: () => void;
   onOpenSettings: () => void;
+  recents: string[];
+  onOpenRecent: (filePath: string) => void;
+  onClearRecents: () => void;
 }
+
+const fileName = (p: string) => p.replace(/.*[/\\]/, '');
+const dirName = (p: string) => p.replace(/[/\\][^/\\]*$/, '');
 
 export const Toolbar = ({
   status,
@@ -19,30 +36,25 @@ export const Toolbar = ({
   onOpen,
   onSave,
   onOpenSettings,
+  recents,
+  onOpenRecent,
+  onClearRecents,
 }: ToolbarProps) => {
   const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const [panel, setPanel] = useState<'main' | 'recents'>('main');
 
   useEffect(() => {
     if (!menuOpen) {
+      setPanel('main');
       return;
     }
-    const onMouseDown = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setMenuOpen(false);
       }
     };
-    document.addEventListener('mousedown', onMouseDown);
     document.addEventListener('keydown', onKeyDown);
-    return () => {
-      document.removeEventListener('mousedown', onMouseDown);
-      document.removeEventListener('keydown', onKeyDown);
-    };
+    return () => document.removeEventListener('keydown', onKeyDown);
   }, [menuOpen]);
 
   const close = () => setMenuOpen(false);
@@ -56,11 +68,12 @@ export const Toolbar = ({
       <button id="btn-code" onClick={onToggleCode} title="Toggle Python code viewer">
         <Code2 size={14} /> Code
       </button>
-      <div id="burger-menu" ref={menuRef}>
+      <div id="burger-menu">
         <button id="btn-menu" onClick={() => setMenuOpen((o) => !o)} title="Menu">
           <Menu size={16} />
         </button>
-        {menuOpen && (
+        {menuOpen && <div className="menu-overlay" onClick={close} />}
+        {menuOpen && panel === 'main' && (
           <div id="burger-dropdown">
             <button
               onClick={() => {
@@ -77,6 +90,12 @@ export const Toolbar = ({
               }}
             >
               <FolderOpen size={14} /> Open
+            </button>
+            <button className="menu-item-chevron" onClick={() => setPanel('recents')}>
+              <span className="menu-item-chevron-label">
+                <FolderOpen size={14} /> Open Recent
+              </span>
+              <ChevronRight size={14} />
             </button>
             <button
               onClick={() => {
@@ -95,6 +114,44 @@ export const Toolbar = ({
             >
               <Settings size={14} /> Settings
             </button>
+          </div>
+        )}
+        {menuOpen && panel === 'recents' && (
+          <div id="burger-dropdown" className="burger-dropdown-wide">
+            <button className="menu-back" onClick={() => setPanel('main')}>
+              <ChevronLeft size={14} /> Back
+            </button>
+            <hr className="menu-separator" />
+            {recents.length === 0 ? (
+              <span className="recents-empty">No recent files</span>
+            ) : (
+              recents.map((p) => (
+                <button
+                  key={p}
+                  className="recent-item"
+                  onClick={() => {
+                    onOpenRecent(p);
+                    close();
+                  }}
+                >
+                  <span className="recent-name">{fileName(p)}</span>
+                  <span className="recent-dir">{dirName(p)}</span>
+                </button>
+              ))
+            )}
+            {recents.length > 0 && (
+              <>
+                <hr className="menu-separator" />
+                <button
+                  onClick={() => {
+                    onClearRecents();
+                    close();
+                  }}
+                >
+                  <Trash2 size={14} /> Clear Recents
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
