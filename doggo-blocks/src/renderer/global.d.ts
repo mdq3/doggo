@@ -6,10 +6,6 @@ declare module '*.wasm?url' {
 }
 declare module '@fontsource-variable/sono';
 
-// Globals injected by @electron-forge/plugin-vite into the main process bundle.
-declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
-declare const MAIN_WINDOW_VITE_NAME: string;
-
 // contextBridge API exposed by preload.ts.
 interface Window {
   doggo: {
