@@ -19,6 +19,7 @@ interface ToolbarProps {
   onNew: () => void;
   onOpen: () => void;
   onSave: () => void;
+  onSaveAs: () => void;
   onOpenSettings: () => void;
   recents: string[];
   onOpenRecent: (filePath: string) => void;
@@ -35,6 +36,7 @@ export const Toolbar = ({
   onNew,
   onOpen,
   onSave,
+  onSaveAs,
   onOpenSettings,
   recents,
   onOpenRecent,
@@ -104,6 +106,14 @@ export const Toolbar = ({
               }}
             >
               <Save size={14} /> Save
+            </button>
+            <button
+              onClick={() => {
+                onSaveAs();
+                close();
+              }}
+            >
+              <Save size={14} /> Save As…
             </button>
             <hr className="menu-separator" />
             <button

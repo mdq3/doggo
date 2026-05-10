@@ -100,6 +100,7 @@ export const useFileHandling = (
     cancelNewFile: () => setNewFileConfirmOpen(false),
     openFile: () => void handleOpenFileRef.current(),
     saveFile: () => void handleSaveFileRef.current(false),
+    saveFileAs: () => void handleSaveFileRef.current(true),
     recents,
     openRecent: (filePath: string) => void handleOpenFileRef.current(filePath),
     clearRecents: () => {

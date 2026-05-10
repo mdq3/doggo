@@ -54,6 +54,7 @@ export const App = () => {
     cancelNewFile,
     openFile,
     saveFile,
+    saveFileAs,
     recents,
     openRecent,
     clearRecents,
@@ -134,6 +135,7 @@ export const App = () => {
         onNew={newFile}
         onOpen={openFile}
         onSave={saveFile}
+        onSaveAs={saveFileAs}
         onOpenSettings={() => setSettingsOpen(true)}
         recents={recents}
         onOpenRecent={openRecent}
