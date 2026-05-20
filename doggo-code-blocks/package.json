@@ -1,6 +1,6 @@
 {
-  "name": "doggo-blocks",
-  "productName": "DoggoBlocks",
+  "name": "doggo-code-blocks",
+  "productName": "DoggoCodeBlocks",
   "version": "1.0.0",
   "description": "Block-based programming for Petoi Bittle",
   "main": ".vite/build/main.js",

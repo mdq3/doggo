@@ -1,8 +1,10 @@
-# Doggo MicroPython
+# Doggo
 
-MicroPython control of a Petoi Bittle X V2 quadruped robot. Runs Python directly on the BiBoard ESP32 — no external computer required for autonomous operation.
+**Doggo** - a MicroPython SDK for control of a Petoi Bittle X V2 quadruped robot. Runs Python directly on the BiBoard ESP32 — no external computer required for autonomous operation.
 
-Replaces the stock OpenCat firmware with hand-written Python. Gaits are ported from OpenCat keyframe arrays.
+**Doggo Code Blocks** - a blocks-based programming app for controlling the Petoi Bittle X V2.
+
+Replaces the stock OpenCat firmware with Micropython and Python modules. Gaits are ported from OpenCat keyframe arrays.
 
 ---
 
@@ -10,7 +12,7 @@ Replaces the stock OpenCat firmware with hand-written Python. Gaits are ported f
 
 ### Hardware
 - Petoi Bittle X V2 with BiBoard V1.0
-- USB Type-C cable (one-time setup only)
+- USB Type-C cable (charging and one-time setup only)
 
 ### Software
 
@@ -33,8 +35,7 @@ USB is only needed to flash MicroPython and bootstrap WiFi. Everything after tha
 Back up your original firmware first:
 
 ```bash
-esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 \
-    read-flash 0x0 0x400000 biboard_backup.bin
+esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 read-flash 0x0 0x400000 biboard_backup.bin
 ```
 
 Download and flash MicroPython:
@@ -43,8 +44,7 @@ Download and flash MicroPython:
 curl -O https://micropython.org/resources/firmware/ESP32_GENERIC-20251209-v1.27.0.bin
 
 esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 erase-flash
-esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 \
-    --baud 460800 write-flash -z 0x1000 ESP32_GENERIC-20251209-v1.27.0.bin
+esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 --baud 460800 write-flash -z 0x1000 ESP32_GENERIC-20251209-v1.27.0.bin
 ```
 
 ### 2. Configure WiFi credentials
@@ -119,19 +119,19 @@ For detailed calibration instructions and servo identification, see [hardware se
 
 ## Control
 
-The robot can be controlled via the **Doggo Blocks** desktop app, the REST API, or by sending Python scripts directly over the air.
+The robot can be controlled via the **Doggo Code Blocks** desktop app, the REST API, or by sending Python scripts directly over the air.
 
-### Doggo Blocks app
+### Doggo Code Blocks app
 
-[Doggo Blocks](doggo-blocks/) is a drag-and-drop block programming app (built with Electron and Scratch Blocks). Drag motion and pose blocks into the workspace, hit **Run**, and the app compiles the program to MicroPython and sends it to the robot over Wi-Fi — no terminal needed.
+[Doggo Code Blocks](doggo-code-blocks/) is a drag-and-drop block programming app (built with Electron and Scratch Blocks). Drag motion and pose blocks into the workspace, hit **Run**, and the app compiles the program to MicroPython and sends it to the robot over Wi-Fi — no terminal needed.
 
 ```bash
-cd doggo-blocks
+cd doggo-code-blocks
 npm install
 npm start
 ```
 
-Enter the robot's hostname and WebREPL password in the gear ⚙ settings menu. See [doggo-blocks/README.md](doggo-blocks/README.md) for full details.
+Enter the robot's hostname and WebREPL password in the gear ⚙ settings menu. See [doggo-code-blocks/README.md](doggo-code-blocks/README.md) for full details.
 
 ### Send commands via REST API
 

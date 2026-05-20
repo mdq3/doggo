@@ -1,7 +1,7 @@
-<h1 align="center">Doggo Blocks</h1>
+<h1 align="center">Doggo Code Blocks</h1>
 
 <p align="center">
-  <img src="public/doggo-blocks-sparkle.png" height="400" />
+  <img src="public/doggo-code-blocks-sparkle.png" height="400" />
 </p>
 
 Block-based programming for the Petoi Bittle X V2. Drag blocks to build a sequence of moves, then hit **Run** to send the program to the robot over Wi-Fi.
@@ -30,7 +30,7 @@ The Electron window opens. DevTools are available with Cmd+Option+I (hidden in t
 npm run package
 ```
 
-The app is output to `out/DoggoBlocks-darwin-arm64/DoggoBlocks.app` (path varies by platform).
+The app is output to `out/DoggoCodeBlocks-darwin-arm64/DoggoCodeBlocks.app` (path varies by platform).
 
 ## Configuration
 

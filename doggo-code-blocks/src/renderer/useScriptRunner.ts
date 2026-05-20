@@ -40,7 +40,7 @@ export const useScriptRunner = (
       return;
     }
     const code = pyGen.workspaceToCode(ws);
-    console.log(`[doggo-blocks] generated script:\n${code}`);
+    console.log(`[doggo-code-blocks] generated script:\n${code}`);
     outputRef.current = [];
     setStatus('Running…');
     void window.doggo.runScript(code);

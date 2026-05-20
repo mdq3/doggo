@@ -236,7 +236,7 @@ ipcMain.on('set-title', (_event, filePath: string | null, isEdited: boolean) => 
     return;
   }
   const name = filePath ? path.basename(filePath) : null;
-  mainWindow.setTitle(name ? `${name} — Doggo Blocks` : 'Doggo Blocks');
+  mainWindow.setTitle(name ? `${name} — Doggo Code Blocks` : 'Doggo Code Blocks');
   if (process.platform === 'darwin') {
     mainWindow.setRepresentedFilename(filePath ?? '');
     mainWindow.setDocumentEdited(isEdited);

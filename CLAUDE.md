@@ -5,7 +5,7 @@
 MicroPython control of a Petoi Bittle X V2 quadruped robot running on its BiBoard V1.0 (ESP32).
 Replaces the stock OpenCat firmware with hand-written Python.
 
-**Doggo Blocks** (`doggo-blocks/`) is an Electron desktop app that provides drag-and-drop block programming for the robot. It compiles Scratch-style blocks to MicroPython and sends scripts to the robot over Wi-Fi via `webrepl_proxy.py`.
+**Doggo Code Blocks** (`doggo-code-blocks/`) is an Electron desktop app that provides drag-and-drop block programming for the robot. It compiles Scratch-style blocks to MicroPython and sends scripts to the robot over Wi-Fi via `webrepl_proxy.py`.
 
 ## Architecture
 
@@ -33,14 +33,14 @@ src/demos/trot.py           — demo: stand → trot (4 cycles, IMU on) → rest
 src/server.py               — HTTP command server (_thread + raw sockets, port 80)
 src/boot.py                 — WiFi connect + mDNS hostname + WebREPL start (runs on every boot)
 src/main.py                 — HTTP server loop (runs after boot.py)
-webrepl_proxy.py            — host-side PTY proxy: bridges mpremote ↔ WebREPL WebSocket; reads DOGGO_HOST/DOGGO_PASSWORD env vars (set by Doggo Blocks app) or falls back to wifi_config.py
+webrepl_proxy.py            — host-side PTY proxy: bridges mpremote ↔ WebREPL WebSocket; reads DOGGO_HOST/DOGGO_PASSWORD env vars (set by Doggo Code Blocks app) or falls back to wifi_config.py
 src/configuration/wifi_config_template.py — credential template (copy → wifi_config.py)
-doggo-blocks/               — Electron desktop app: block programming UI → MicroPython → webrepl_proxy.py
-doggo-blocks/src/main.ts    — Electron main process: menu, settings (userData/settings.json), spawns webrepl_proxy.py
-doggo-blocks/src/App.tsx    — React renderer: Blockly workspace, splash screen, settings dialog, error popup
-doggo-blocks/src/blocks.ts  — custom Scratch block definitions
-doggo-blocks/src/generator.ts — Blockly MicroPython code generator
-doggo-blocks/forge.config.mjs — electron-forge + Vite build config
+doggo-code-blocks/               — Electron desktop app: block programming UI → MicroPython → webrepl_proxy.py
+doggo-code-blocks/src/main.ts    — Electron main process: menu, settings (userData/settings.json), spawns webrepl_proxy.py
+doggo-code-blocks/src/App.tsx    — React renderer: Blockly workspace, splash screen, settings dialog, error popup
+doggo-code-blocks/src/blocks.ts  — custom Scratch block definitions
+doggo-code-blocks/src/generator.ts — Blockly MicroPython code generator
+doggo-code-blocks/forge.config.mjs — electron-forge + Vite build config
 ```
 
 `servo.py` is a clean hardware abstraction. Calibration and robot-specific geometry belong to `poses.py`, not the driver.
@@ -66,13 +66,13 @@ doggo-blocks/forge.config.mjs — electron-forge + Vite build config
 | `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/walk` `/walk-back` `/turn-left` `/turn-right` `/pivot-left` `/pivot-right` `/bound-left` `/bound-right` `/trot` `/trot-ik` `/battery` `/info` | `server.py` |
 | `src/boot.py` | Runs on boot: WiFi connect + mDNS hostname registration + WebREPL start | `boot.py` |
 | `src/main.py` | Runs after boot: starts HTTP server loop | `main.py` |
-| `webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL; reads `DOGGO_HOST`/`DOGGO_PASSWORD` env vars (from Doggo Blocks) or falls back to `wifi_config.py` | n/a (host only) |
+| `webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL; reads `DOGGO_HOST`/`DOGGO_PASSWORD` env vars (from Doggo Code Blocks) or falls back to `wifi_config.py` | n/a (host only) |
 | `src/configuration/wifi_config_template.py` | Credential + hostname template (checked in; copy to `wifi_config.py`) | n/a (host only) |
-| `doggo-blocks/src/main.ts` | Electron main process — menu, settings persistence (`userData/settings.json`), spawns `webrepl_proxy.py` with env vars | n/a (host only) |
-| `doggo-blocks/src/App.tsx` | React renderer — splash screen, Blockly workspace, toolbar (Run/Code/Settings), error popup, settings dialog | n/a (host only) |
-| `doggo-blocks/src/blocks.ts` | Custom Scratch block type definitions | n/a (host only) |
-| `doggo-blocks/src/generator.ts` | Blockly → MicroPython code generator | n/a (host only) |
-| `doggo-blocks/forge.config.mjs` | electron-forge + Vite packaging config | n/a (host only) |
+| `doggo-code-blocks/src/main.ts` | Electron main process — menu, settings persistence (`userData/settings.json`), spawns `webrepl_proxy.py` with env vars | n/a (host only) |
+| `doggo-code-blocks/src/App.tsx` | React renderer — splash screen, Blockly workspace, toolbar (Run/Code/Settings), error popup, settings dialog | n/a (host only) |
+| `doggo-code-blocks/src/blocks.ts` | Custom Scratch block type definitions | n/a (host only) |
+| `doggo-code-blocks/src/generator.ts` | Blockly → MicroPython code generator | n/a (host only) |
+| `doggo-code-blocks/forge.config.mjs` | electron-forge + Vite packaging config | n/a (host only) |
 | `src/demos/stand.py` | Stand demo script | run via `mpremote run` |
 | `src/demos/walk.py` | Walk demo script | run via `mpremote run` |
 | `src/demos/trot.py` | Trot demo script (uses keyframe trot, not IK) | run via `mpremote run` |

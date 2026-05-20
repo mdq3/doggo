@@ -2,7 +2,7 @@ import * as ScratchBlocks from 'scratch-blocks';
 
 import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
 
-// All block definitions for Doggo Blocks.
+// All block definitions for Doggo Code Blocks.
 // Style names must exist in Themes.Zelos (our theme) with full colour values.
 // Zelos styles: list_blocks=purple, logic_blocks=blue, loop_blocks=teal,
 //               math_blocks=green, variable_blocks=orange
