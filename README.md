@@ -14,28 +14,32 @@ Replaces the stock OpenCat firmware with Micropython and Python modules. Gaits a
 - Petoi Bittle X V2 with BiBoard V1.0
 - USB Type-C cable (charging and one-time setup only)
 
-### Software
-
-```bash
-pip install esptool    # for flashing firmware
-pip install mpremote   # for initial USB bootstrap
-pip install ruff       # for linting
-```
-
-Run `ruff check src/` to lint. Config is in `pyproject.toml`.
-
 ---
 
 ## Getting Started
 
 USB is only needed to flash MicroPython and bootstrap WiFi. Everything after that runs over the air.
 
-### 1. Flash MicroPython (USB)
+### 1. Install required tools
+
+```bash
+pip install esptool    # for flashing firmware
+pip install mpremote   # for initial USB bootstrap
+```
+
+### 2. Flash MicroPython (USB)
+
+## Find USB port of connected robot
+
+```bash
+ls /dev/cu.usbmodem*   # macOS
+ls /dev/ttyUSB*        # Linux
+```
 
 Back up your original firmware first:
 
 ```bash
-esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 read-flash 0x0 0x400000 biboard_backup.bin
+esptool --chip esp32 --port /dev/<doggo-usb-port> read-flash 0x0 0x400000 biboard_backup.bin
 ```
 
 Download and flash MicroPython:
@@ -43,11 +47,24 @@ Download and flash MicroPython:
 ```bash
 curl -O https://micropython.org/resources/firmware/ESP32_GENERIC-20251209-v1.27.0.bin
 
-esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 erase-flash
-esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 --baud 460800 write-flash -z 0x1000 ESP32_GENERIC-20251209-v1.27.0.bin
+esptool --chip esp32 --port /dev/<doggo-usb-port> erase-flash
+esptool --chip esp32 --port /dev/<doggo-usb-port> --baud 460800 write-flash -z 0x1000 ESP32_GENERIC-20251209-v1.27.0.bin
 ```
 
-### 2. Configure WiFi credentials
+### Verify MicroPython
+
+```bash
+mpremote repl
+# Press Enter if the prompt doesn't appear immediately
+# Exit: Ctrl+]
+```
+
+```python
+>>> import sys; sys.platform
+'esp32'
+```
+
+### 3. Configure WiFi credentials
 
 ```bash
 cp src/configuration/wifi_config_template.py wifi_config.py
@@ -67,7 +84,7 @@ HOSTNAME = "doggo"
 
 `wifi_config.py` is gitignored. Never commit it.
 
-### 3. Bootstrap WiFi (USB, one-time)
+### 4. Bootstrap WiFi (USB, one-time)
 
 Upload just enough to get the robot onto the network:
 
@@ -79,7 +96,7 @@ mpremote fs cp wifi_config.py :wifi_config.py + \
 
 Press the reset button. The robot will connect to WiFi and start WebREPL. It will be reachable as `doggo.local` (or whatever `HOSTNAME` you set).
 
-### 4. Deploy everything (WiFi)
+### 5. Deploy everything (WiFi)
 
 Upload all source files in one shot:
 
@@ -89,7 +106,7 @@ python deploy.py
 
 Press reset again to load the deployed files. You can unplug USB — the robot is now fully wireless.
 
-### 5. Calibrate servos (WiFi)
+### 6. Calibrate servos (WiFi)
 
 ```bash
 alias dog='python webrepl_proxy.py'
@@ -119,7 +136,7 @@ For detailed calibration instructions and servo identification, see [hardware se
 
 ## Control
 
-The robot can be controlled via the **Doggo Code Blocks** desktop app, the REST API, or by sending Python scripts directly over the air.
+The robot can be controlled via the [**Doggo Code Blocks**](./doggo-code-blocks/README.md) desktop app, the REST API, or by sending Python scripts directly over the air.
 
 ### Doggo Code Blocks app
 

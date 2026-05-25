@@ -1,52 +1,5 @@
 # Hardware Setup and Calibration
 
-Detailed guide for the one-time hardware setup steps. The README covers the overall workflow — this document goes deeper on the parts that need it: flashing, servo verification, channel identification, and calibration.
-
----
-
-## Finding your USB port
-
-```bash
-ls /dev/cu.usbmodem*   # macOS
-ls /dev/ttyUSB*        # Linux
-# Windows: Device Manager → COM ports
-```
-
----
-
-## Flashing MicroPython
-
-**Remove the battery before flashing — use USB power only.**
-
-```bash
-# Back up existing firmware first (4MB, ~2 minutes)
-esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 \
-    read-flash 0x0 0x400000 biboard_backup.bin
-
-# Erase and flash
-esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 erase-flash
-esptool --chip esp32 --port /dev/cu.usbmodem5AA90272331 \
-    --baud 460800 write-flash -z 0x1000 ESP32_GENERIC-20251209-v1.27.0.bin
-```
-
-Both commands should end with `Hard resetting via RTS pin...`
-
-To restore the original OpenCat firmware, see `docs/hardware-and-opencat-reference.md`.
-
-### Verify MicroPython
-
-```bash
-mpremote repl
-# Press Enter if the prompt doesn't appear immediately
-# Exit: Ctrl+]
-```
-
-```python
->>> import sys; sys.platform
-'esp32'
-```
-
----
 
 ## BiBoard V1 hardware reference
 
@@ -86,12 +39,10 @@ The IMU is labelled ICM-20600 in Petoi docs but the actual chip is ICM-42670-P (
 
 **Reconnect the battery.** Servos need more power than USB alone provides.
 
-Upload the driver and run the verification script:
+Run the verification script:
 
 ```bash
-mpremote fs mkdir :drivers
-mpremote fs cp src/drivers/servo.py :drivers/servo.py
-mpremote run src/configuration/verify_servos_working.py
+python webrepl_proxy.py run src/configuration/verify_servos_working.py
 ```
 
 Expected output ends with `SUCCESS! All servos working!`
