@@ -106,22 +106,62 @@ python deploy.py
 
 Press reset again to load the deployed files. You can unplug USB — the robot is now fully wireless.
 
-### 6. Calibrate servos (WiFi)
+### 6. Verify servos (WiFi)
+
+Set up the `dog` shortcut first (used for all subsequent WiFi steps):
 
 ```bash
 alias dog='python webrepl_proxy.py'
+```
 
-dog fs mkdir :drivers
-dog fs cp src/drivers/servo.py :drivers/servo.py
+Confirm all servos respond before spending time on calibration:
+
+```bash
+dog run src/configuration/verify_servos_working.py
+```
+
+All 9 channels should sweep briefly. If any servo doesn't move, check wiring before continuing.
+
+### 7. Identify servos (WiFi, optional)
+
+If you're unsure which channel controls which joint, wiggle them interactively:
+
+```bash
+dog fs cp src/configuration/identify_servos.py :identify_servos.py
+
+dog repl
+```
+
+```python
+>>> from identify_servos import *
+>>> all()       # step through each channel one by one
+>>> test(4)     # or wiggle a single channel
+```
+
+### 8. Calibrate servos (WiFi)
+
+```bash
 dog fs cp src/configuration/calibrate.py :calibrate.py
 dog repl
 ```
 
 ```python
 >>> from calibrate import *
->>> move(4, 90)   # adjust front-left shoulder to neutral
->>> save(4, 87)   # save when centered
->>> done()        # prints config.py content — copy it
+
+# Move a servo until the joint looks mechanically centered, then save
+>>> move(4, 90)    # start at 90°
+>>> move(4, 87)    # nudge until front-left shoulder is centered
+>>> save(4, 87)    # records offset of -3°
+
+# Shortcuts: m() and s() work the same as move() and save()
+>>> m(5, 90)
+>>> m(5, 93)
+>>> s(5, 93)
+
+# Repeat for all channels: 0, 4, 5, 6, 7, 8, 9, 10, 11
+
+# When done, print the config.py content and copy it
+>>> done()
 ```
 
 Paste the output into `config.py` at the repo root, then upload it:
@@ -129,8 +169,6 @@ Paste the output into `config.py` at the repo root, then upload it:
 ```bash
 dog fs cp config.py :config.py
 ```
-
-For detailed calibration instructions and servo identification, see [hardware setup docs](docs/hardware-setup.md).
 
 ---
 
