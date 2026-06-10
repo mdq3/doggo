@@ -2,7 +2,7 @@
 Doggo Stand Demo
 
 Usage:
-    mpremote run src/demos/stand.py
+    python webrepl_proxy.py run src/demos/stand.py
 """
 
 import time

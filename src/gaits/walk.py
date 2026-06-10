@@ -46,10 +46,11 @@ _CH = (
     CH_RL_LEG,
 )
 _RD = (1, -1, -1, 1, -1, 1, 1, -1)
-_ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
+_ZERO = (90, 90, 90, 90, 90, 90, 90, 90)  # commanded 90 = OpenCat raw 0 (corrected 270° scale)
 
 _FRAME_DELAY = 0.016  # seconds between frames — plays every 2nd frame, ~0.9s cycle
-_SHOULDER_SQUEEZE = 0.85  # compress shoulder sweep around balance (raw=30)
+_SHOULDER_SQUEEZE = 1.0  # compress shoulder sweep around balance (raw=30); 1.0 = faithful
+# OpenCat playback. 0.85 was compensation for the old 1.5x servo scale error (foot clash).
 _SHOULDER_MID = 30  # OpenCat balance pose shoulder angle
 
 # Raw OpenCat angles from wkF in InstinctBittleESP.h.

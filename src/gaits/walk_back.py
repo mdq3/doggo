@@ -48,12 +48,13 @@ _CH = (
     CH_RL_LEG,
 )
 _RD = (1, -1, -1, 1, -1, 1, 1, -1)
-_ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
+_ZERO = (90, 90, 90, 90, 90, 90, 90, 90)  # commanded 90 = OpenCat raw 0 (corrected 270° scale)
 
 _FRAME_DELAY = 0.020  # seconds between frames — tune if sliding or unstable
 _SQUEEZE = 1.0  # shoulder sweep compression around _MID; 1.0 = no compression
 _MID = 30  # OpenCat balance pose shoulder angle
-_TRIM = 9  # raw degrees added to left shoulders (FL + RL); tune to correct curve:
+_TRIM = 0  # raw degrees added to left shoulders (FL + RL); tune to correct curve:
+# (was 9 — measured against the old 1.5x servo scale error; re-tune from 0)
 #   positive → longer left strides (corrects curving right)
 #   negative → longer right strides (corrects curving left)
 

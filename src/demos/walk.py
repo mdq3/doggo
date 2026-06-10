@@ -2,15 +2,7 @@
 Doggo Walk Demo
 
 Usage:
-    mpremote run src/demos/walk.py
-
-Deploy:
-    mpremote fs cp src/drivers/servo.py :servo.py + \
-        fs cp src/poses.py :poses.py + \
-        fs cp config.py :config.py + \
-        fs mkdir :gaits + \
-        fs cp src/gaits/walk.py :gaits/walk.py + \
-        run src/demos/walk.py
+    python webrepl_proxy.py run src/demos/walk.py
 """
 
 import time

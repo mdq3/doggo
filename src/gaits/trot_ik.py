@@ -35,28 +35,27 @@ from kinematics.leg import ik
 from poses import move_to, play_frame, stand
 
 # --- Trajectory parameters -------------------------------------------------
-_BODY_HEIGHT = 101.0  # mm: foot z during stance (from FK at stand pose)
+# NOTE: retuned analytically for the corrected 270-degree servo scale
+# (1 commanded degree = 1 physical degree) — needs hardware re-verification.
+# The old constants (and the violent-stall warnings that shaped them) were
+# artifacts of the 1.5x scale error: the IK demanded excursions that came out
+# 1.5x too large physically and hit servo stops early.
+_BODY_HEIGHT = 98.0  # mm: foot z during stance (FK at corrected stand: alpha=30, gamma=30)
 _STEP_LENGTH = 12.0  # mm: foot sweeps ±this value in x each half-cycle
-_STEP_HEIGHT = 8.0   # mm: foot clearance above ground during swing
-# _STEP_HEIGHT=20 drove FR/RR shoulder servos to commanded ~48° (calibrated ~15°,
-# near physical stop) and leg servos to 169° — causing violent servo stall.
-# At 8mm, worst-case FR/RR_sh ≈ 55° commanded and leg servos ≤ 145°.
-# 12mm already pushes left-leg servos to ~26° (CMD_MIN=45) — too violent.
+_STEP_HEIGHT = 12.0  # mm: foot clearance above ground during swing
 _X_OFFSET = -5.0  # mm: shifts entire foot trajectory backward of shoulder
-# Negative offset biases foot contact behind the shoulder, counteracting the
-# ~10° forward shoulder lean of the stand pose that otherwise causes forward pitch.
 _CYCLE_FRAMES = 48  # frames per full cycle
 _FRAME_DELAY = 0.008  # seconds per frame (8ms minimum for dynamic stability)
 
 # Safety bounds: commanded angles are clamped before dispatch to prevent
-# servo stall at physical stops. Bounds are conservative relative to the
-# working keyframe trot range (FL_sh 63-123, FR_sh 61-116, legs 49-144).
-_CMD_MIN = 45.0
-_CMD_MAX = 150.0
+# servo stall at physical stops. Physical equivalents of the old empirical
+# bounds (45/150 in old 180-degree-mapped units → 90 + 1.5x the excursion).
+_CMD_MIN = 25.0
+_CMD_MAX = 180.0
 
 # Left/right trim: small alpha offset applied to left-side shoulders (FL, RL).
 # Positive corrects rightward drift (same convention as trot.py _TRIM).
-_TRIM = 2.0
+_TRIM = 0.0
 
 # --- IMU stabilization -----------------------------------------------------
 _K_PITCH = 0.2
@@ -65,8 +64,8 @@ _IMU_CLAMP = 8.0
 
 _FRAME_US = int(_FRAME_DELAY * 1_000_000)
 
-# Stand pose physical angles (alpha=10°, gamma=30° → matches poses.py stand)
-_ALPHA_STAND = 10.0
+# Stand pose physical angles (alpha=30°, gamma=30° → OpenCat balance, matches poses.py stand)
+_ALPHA_STAND = 30.0
 _GAMMA_STAND = 30.0
 
 

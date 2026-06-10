@@ -7,16 +7,23 @@ for dynamic stability.
 Gait array column order (OpenCat joint indices 8-15):
   [FL_sh, FR_sh, RR_sh, RL_sh, FL_leg, FR_leg, RR_leg, RL_leg]
 
-Conversion: commanded = ZERO_POS + rotationDirection[joint] * opencat_angle
-  ZERO_POS: FL_sh=65, FR_sh=115, RR_sh=115, RL_sh=65
-            FL_leg=80, FR_leg=100, RR_leg=100, RL_leg=80
+Conversion: commanded = 90 + rotationDirection[joint] * opencat_angle
+  (commanded 90 = OpenCat raw 0 = calibration pose, at the corrected
+   270-degree servo scale where 1 commanded degree = 1 physical degree)
   rotDir:   FL_sh=+1, FR_sh=-1, RR_sh=-1, RL_sh=+1
             FL_leg=-1, FR_leg=+1, RR_leg=+1, RL_leg=-1
 
-IMU correction groups legs by diagonal, not left/right:
-  Diagonal 1 (FL+RR): commanded += +pitch_adj + roll_adj
-  Diagonal 2 (FR+RL): commanded += -pitch_adj + roll_adj
-  No rotDir multiplication — these are direct commanded-angle deltas.
+IMU correction (modelled on OpenCat motion.h adjust()):
+  Each deviation passes through a dead zone (the trot's natural rhythmic sway is
+  NOT corrected — fighting it excites oscillation at gait frequency), is clamped,
+  multiplied by a gain, then slew-rate limited so corrections never step-jump.
+
+  Knees — grouped by diagonal, stance legs only, direct commanded-angle deltas:
+    Diagonal 1 (FL+RR): commanded += +pitch_adj + roll_adj
+    Diagonal 2 (FR+RL): commanded += -pitch_adj + roll_adj
+  Shoulders — all four (stance AND swing, so the upcoming foothold shifts too):
+    commanded += rotDir * sh_adj   (raw-space delta: positive = feet sweep back,
+    shifting the body forward over the feet when the nose pitches up)
 
 Tuning:
   Too fast / toppling   -> increase _FRAME_DELAY (e.g. 0.010 → 0.012)
@@ -24,8 +31,10 @@ Tuning:
   Feet catching on rug  -> increase _LEG_LIFT_SCALE
   Feet sliding on floor -> decrease _LEG_PUSH_SCALE
   Too much side wobble  -> reduce _FRONT/_REAR_SHOULDER_SQUEEZE or increase _K_ROLL
-  Pitching nose-up/down -> tune _K_PITCH
+  Pitching nose-up/down -> tune _K_PITCH / _K_SHOULDER_PITCH
   Rolling left/right    -> tune _K_ROLL
+  Correction twitchy / fights the gait -> widen _DEAD_ROLL/_DEAD_PITCH, lower _ADJ_SLEW
+  Correction too sluggish after a stumble -> raise _ADJ_SLEW
 """
 
 import time
@@ -58,20 +67,28 @@ _CH = (
     CH_RL_LEG,
 )
 _RD = (1, -1, -1, 1, -1, 1, 1, -1)
-_ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
+_ZERO = (90, 90, 90, 90, 90, 90, 90, 90)  # commanded 90 = OpenCat raw 0 (corrected 270° scale)
 
 _FRAME_DELAY = 0.008  # seconds per frame — this gait needs ~8ms for dynamic stability
-_FRONT_SHOULDER_SQUEEZE = 0.87  # compress FL/FR sweep — reduce lateral CoM sway
-_REAR_SHOULDER_SQUEEZE = 0.87  # compress RR/RL sweep — reduce lateral CoM sway
+# Squeeze/scale/trim are neutral (faithful OpenCat playback). The old values
+# (squeeze 0.87, push 0.9, trim 2) compensated for the 1.5x servo scale error.
+_FRONT_SHOULDER_SQUEEZE = 1.0  # compress FL/FR sweep — reduce lateral CoM sway
+_REAR_SHOULDER_SQUEEZE = 1.0  # compress RR/RL sweep — reduce lateral CoM sway
 _SHOULDER_MID = 30  # OpenCat balance-pose shoulder angle (raw)
-_LEG_PUSH_SCALE = 0.9  # scale push/stride (raw > 0) — reduce to cut sliding
+_LEG_PUSH_SCALE = 1.0  # scale push/stride (raw > 0) — reduce to cut sliding
 _LEG_LIFT_SCALE = 1.0  # scale lift height (raw < 0) — increase for rug clearance
-_TRIM = 2  # raw degrees added to left shoulders (FL+RL); positive corrects rightward curve
+_TRIM = 0  # raw degrees added to left shoulders (FL+RL); positive corrects rightward curve
 
-# IMU stabilization — actively corrects roll/pitch each frame
-_K_PITCH = 0.2  # pitch correction gain
-_K_ROLL = 0.4  # roll correction gain
+# IMU stabilization — actively corrects roll/pitch each frame.
+# Pipeline per axis (OpenCat-style): dead zone -> deviation clamp -> gain -> slew limit.
+_K_PITCH = 0.2  # knee pitch gain (front/rear legs push antisymmetrically)
+_K_ROLL = 0.4  # knee roll gain (left/right legs push antisymmetrically)
+_K_SHOULDER_PITCH = 0.35  # shoulder pitch gain — shifts feet fore/aft under the CoM
+_DEAD_PITCH = 3.0  # deg dead zone — pitch inside this band is the gait's own motion
+_DEAD_ROLL = 5.0  # deg dead zone — roll inside this band is the gait's own motion
+_DEV_CLAMP = 15.0  # max deviation (after dead zone) fed into the gains
 _IMU_CLAMP = 8  # max correction degrees per axis
+_ADJ_SLEW = 1.0  # max change per correction per frame (deg) — damps step jumps
 
 # Index constants for IMU correction (legs only, indices 4-7 in _CH).
 # Grouped by diagonal pair — pitch correction alternates by diagonal, roll is uniform.
@@ -141,6 +158,15 @@ def _clamp(v, lo, hi):
     return lo if v < lo else (hi if v > hi else v)
 
 
+def _dead_zone(v, tol):
+    """Shrink v toward zero by tol; values inside ±tol become 0."""
+    if v > tol:
+        return v - tol
+    if v < -tol:
+        return v + tol
+    return 0.0
+
+
 def _to_commanded(raw):
     """Convert a raw frame to commanded-angle dict. Used only for the startup move_to."""
     result = {}
@@ -184,15 +210,19 @@ def _ensure_base():
     _BASE = tuple(frames)
 
 
-def _play_base_frame(base, raw_legs, p_adj, r_adj):
+def _play_base_frame(base, raw_legs, p_adj, r_adj, sh_adj):
     """Fill _frame_buf from pre-computed base angles + IMU correction, then dispatch.
 
-    IMU correction is applied only to stance legs (raw >= 0 = foot on ground).
-    Swing legs (foot in air) are unaffected — correction there has no physical effect.
+    Knee correction is applied only to stance legs (raw >= 0 = foot on ground) —
+    on swing legs it has no physical effect. Shoulder correction is applied to all
+    four shoulders (rotDir-mirrored raw delta) including swing legs, so the next
+    foothold also lands shifted under the CoM.
     """
     for i in range(8):
         a = base[i]
-        if i >= 4 and raw_legs[i - 4] >= 0:  # stance leg
+        if i < 4:  # shoulder: feet fore/aft shift (raw-space delta)
+            a += _RD[i] * sh_adj
+        elif raw_legs[i - 4] >= 0:  # stance leg
             if i == _FL_LEG_I or i == _RR_LEG_I:  # diagonal 1
                 a += p_adj + r_adj
             else:  # diagonal 2 (FR, RL)
@@ -227,6 +257,7 @@ def trot_forward(steps=None, use_imu=True):
     move_to(_to_commanded(_FRAMES[0]), speed=2)
 
     count = 0
+    p_adj = r_adj = sh_adj = 0.0  # live corrections — slew toward targets each frame
     try:
         while steps is None or count < steps:
             for base, raw_legs in frames:
@@ -234,13 +265,19 @@ def trot_forward(steps=None, use_imu=True):
                 if imu is not None:
                     try:
                         pitch, roll = imu.read()
-                        p_adj = _clamp(_K_PITCH * pitch, -_IMU_CLAMP, _IMU_CLAMP)
-                        r_adj = _clamp(_K_ROLL * roll, -_IMU_CLAMP, _IMU_CLAMP)
+                        p_dev = _clamp(_dead_zone(pitch, _DEAD_PITCH), -_DEV_CLAMP, _DEV_CLAMP)
+                        r_dev = _clamp(_dead_zone(roll, _DEAD_ROLL), -_DEV_CLAMP, _DEV_CLAMP)
+                        p_tgt = _clamp(_K_PITCH * p_dev, -_IMU_CLAMP, _IMU_CLAMP)
+                        r_tgt = _clamp(_K_ROLL * r_dev, -_IMU_CLAMP, _IMU_CLAMP)
+                        s_tgt = _clamp(_K_SHOULDER_PITCH * p_dev, -_IMU_CLAMP, _IMU_CLAMP)
                     except Exception:
-                        p_adj = r_adj = 0.0
+                        p_tgt = r_tgt = s_tgt = 0.0
                 else:
-                    p_adj = r_adj = 0.0
-                _play_base_frame(base, raw_legs, p_adj, r_adj)
+                    p_tgt = r_tgt = s_tgt = 0.0
+                p_adj += _clamp(p_tgt - p_adj, -_ADJ_SLEW, _ADJ_SLEW)
+                r_adj += _clamp(r_tgt - r_adj, -_ADJ_SLEW, _ADJ_SLEW)
+                sh_adj += _clamp(s_tgt - sh_adj, -_ADJ_SLEW, _ADJ_SLEW)
+                _play_base_frame(base, raw_legs, p_adj, r_adj, sh_adj)
                 remaining = _FRAME_US - ticks_diff(ticks_us(), t0)
                 if remaining > 0:
                     time.sleep_us(remaining)

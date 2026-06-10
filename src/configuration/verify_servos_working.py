@@ -4,7 +4,7 @@ Test servo control - Run this first!
 Tests direct PWM servo control on BiBoard V1.
 
 Usage:
-    mpremote run src/configuration/verify_servos_working.py
+    python webrepl_proxy.py run src/configuration/verify_servos_working.py
 """
 
 import time

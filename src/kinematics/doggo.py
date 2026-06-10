@@ -10,9 +10,12 @@ Servo commanded angle mapping (verified against poses.py stand() values):
   Right legs (FR, RR):  commanded_sh  = 90 - alpha   (rotDir -1)
                         commanded_leg = 90 + gamma   (rotDir +1)
 
-Cross-check at stand pose (alpha=10, gamma=30):
-  FL_sh  = 100  FR_sh  =  80  RR_sh  =  80  RL_sh  = 100  ✓ (poses.py)
+Cross-check at stand pose (alpha=30, gamma=30 — OpenCat balance):
+  FL_sh  = 120  FR_sh  =  60  RR_sh  =  60  RL_sh  = 120  ✓ (poses.py)
   FL_leg =  60  FR_leg = 120  RR_leg = 120  RL_leg =  60  ✓
+
+With the corrected 270-degree servo scale (1 commanded degree = 1 physical
+degree) these formulas are physically true, not just convention.
 """
 
 from poses import (

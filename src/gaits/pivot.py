@@ -61,7 +61,10 @@ _CH = (
     CH_RL_LEG,
 )
 _RD = (1, -1, -1, 1, -1, 1, 1, -1)
-_ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
+_ZERO = (90, 90, 90, 90, 90, 90, 90, 90)  # commanded 90 = OpenCat raw 0 (corrected 270° scale)
+# NOTE: _SHOULDER_CAP/_LEG_OFFSET/_LEG_CAP below were tuned against the old 1.5x
+# servo scale error; vtL's "extreme extension" problem may not exist at true scale.
+# Worth re-testing with offset/caps relaxed.
 
 _FRAME_DELAY = 0.014  # seconds between frames — tune if unstable
 _SHOULDER_CAP = 28  # tight cap → small step arc → in-place rotation (raise for wider pivot circle)

@@ -2,17 +2,7 @@
 Doggo Trot Demo
 
 Usage:
-    mpremote run src/demos/trot.py
-
-Deploy:
-    mpremote fs mkdir :drivers + \
-        fs cp src/drivers/servo.py :drivers/servo.py + \
-        fs cp src/poses.py :poses.py + \
-        fs cp config.py :config.py + \
-        fs cp src/imu.py :imu.py + \
-        fs mkdir :gaits + \
-        fs cp src/gaits/trot.py :gaits/trot.py + \
-        run src/demos/trot.py
+    python webrepl_proxy.py run src/demos/trot.py
 """
 
 import time

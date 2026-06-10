@@ -52,7 +52,7 @@ _CH = (
     CH_RL_LEG,
 )
 _RD = (1, -1, -1, 1, -1, 1, 1, -1)
-_ZERO = (65, 115, 115, 65, 80, 100, 100, 80)  # mechanical neutral per joint
+_ZERO = (90, 90, 90, 90, 90, 90, 90, 90)  # commanded 90 = OpenCat raw 0 (corrected 270° scale)
 
 _FRAME_DELAY = 0.016  # seconds between frames — tune if unstable
 

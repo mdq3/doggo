@@ -65,22 +65,19 @@ print("✓ Hardware ready")
 # Used to initialise current_pos so zero_position() transitions smoothly
 # from lying-flat rather than from an assumed neutral that may be wrong.
 #
-# Angles reduced from the OpenCat reference (shoulder 75→50, knee -55→-50)
-# to keep every channel's calibrated value inside [0, 180].  The limiting
-# channels with this robot's calibration are:
-#   FL_SHOULDER (+37 offset): commanded=140 → calibrated 177 (limit ~143)
-#   FR_SHOULDER (-33 offset): commanded= 40 → calibrated   7 (limit  ~57)
-#   FL_LEG      (+36 offset): commanded=140 → calibrated 176 (limit ~144)
+# Full OpenCat rest[] values: shoulder = 75, knee = -55. With the corrected
+# 270-degree servo scale the commandable range is -45..225, so no reduction
+# is needed (worst calibrated extreme: FL_SHOULDER 165 + 55.5 = 220.5).
 _REST_COMMANDED = {
     CH_HEAD: 90,
-    CH_FL_SHOULDER: 140,  # 90 + 1*50  → calibrated 177
-    CH_FR_SHOULDER: 40,  # 90 - 1*50  → calibrated   7
-    CH_RR_SHOULDER: 40,  # 90 - 1*50  → calibrated  82
-    CH_RL_SHOULDER: 140,  # 90 + 1*50  → calibrated  99
-    CH_FL_LEG: 135,  # rd=-1, opencat=-40: 90+40=130 → calibrated 166
-    CH_FR_LEG: 45,  # rd=+1, opencat=-40: 90-40= 50 → calibrated  18
-    CH_RR_LEG: 45,  # rd=+1, opencat=-40: 90-40= 50 → calibrated  16
-    CH_RL_LEG: 135,  # rd=-1, opencat=-40: 90+40=130 → calibrated 162
+    CH_FL_SHOULDER: 165,  # 90 + 1*75
+    CH_FR_SHOULDER: 15,  # 90 - 1*75
+    CH_RR_SHOULDER: 15,  # 90 - 1*75
+    CH_RL_SHOULDER: 165,  # 90 + 1*75
+    CH_FL_LEG: 145,  # rd=-1, opencat=-55: 90+55
+    CH_FR_LEG: 35,  # rd=+1, opencat=-55: 90-55
+    CH_RR_LEG: 35,  # rd=+1, opencat=-55: 90-55
+    CH_RL_LEG: 145,  # rd=-1, opencat=-55: 90+55
 }
 
 # Track current positions (calibrated), initialised to rest state
@@ -145,15 +142,17 @@ def stand():
     """
     Standing pose.
     OpenCat reference: balance[] — shoulder pitch = 30, knee = 30 (all joints).
+    With the corrected servo scale these are the true OpenCat values (the old
+    shoulder fudge of 10 compensated for the 1.5x scale error).
     """
     print("\nStanding up...")
     move_to(
         {
             CH_HEAD: 90,
-            CH_FL_SHOULDER: 100,  # 90 + 1*10  (opencat=10)
-            CH_FR_SHOULDER: 80,  # 90 - 1*10
-            CH_RR_SHOULDER: 80,  # 90 - 1*10
-            CH_RL_SHOULDER: 100,  # 90 + 1*10
+            CH_FL_SHOULDER: 120,  # 90 + 1*30  (opencat=30)
+            CH_FR_SHOULDER: 60,  # 90 - 1*30
+            CH_RR_SHOULDER: 60,  # 90 - 1*30
+            CH_RL_SHOULDER: 120,  # 90 + 1*30
             CH_FL_LEG: 60,  # 90 - 1*30  (rd=-1, opencat=30)
             CH_FR_LEG: 120,  # 90 + 1*30  (rd=+1, opencat=30)
             CH_RR_LEG: 120,  # 90 + 1*30
@@ -177,14 +176,14 @@ def sit():
     move_to(
         {
             CH_HEAD: 90,
-            CH_FL_SHOULDER: 100,  # stand value — front stable
-            CH_FR_SHOULDER: 80,  # stand value — front stable
-            CH_RR_SHOULDER: 40,  # rest value  — haunches down
-            CH_RL_SHOULDER: 140,  # rest value  — haunches down
+            CH_FL_SHOULDER: 120,  # stand value — front stable
+            CH_FR_SHOULDER: 60,  # stand value — front stable
+            CH_RR_SHOULDER: 15,  # rest value  — haunches down
+            CH_RL_SHOULDER: 165,  # rest value  — haunches down
             CH_FL_LEG: 60,  # stand value — front extended
             CH_FR_LEG: 120,  # stand value — front extended
-            CH_RR_LEG: 62,  # midpoint between rest(45) and neutral(90)
-            CH_RL_LEG: 118,  # midpoint between rest(135) and neutral(90)
+            CH_RR_LEG: 62,  # midpoint between rest(35) and neutral(90)
+            CH_RL_LEG: 118,  # midpoint between rest(145) and neutral(90)
         },
         speed=2,
     )

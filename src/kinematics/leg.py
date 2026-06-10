@@ -10,9 +10,9 @@ Physical angles:
 
 At alpha=0, gamma=0: leg hangs straight down, foot at (0, L1+L2).
 
-Verified against Doggo stand pose (alpha=10, gamma=30):
-  foot = (-10mm, 101mm) — foot slightly behind shoulder, 101mm below.
-  These physical angles map exactly to poses.py stand() commanded angles.
+At the corrected stand pose (alpha=30, gamma=30 — OpenCat balance):
+  foot = (+25mm, 98mm). These physical angles map exactly to poses.py
+  stand() commanded angles via kinematics/doggo.py.
 """
 
 import math

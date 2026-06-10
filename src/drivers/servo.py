@@ -4,12 +4,17 @@ BiBoard V1 Servo Driver for MicroPython
 Controls servos directly via ESP32 PWM (LEDC) - no external chip needed.
 BiBoard V1 has 12 servo channels on specific GPIO pins.
 
+Bittle X servos are Petoi P1L: 270 degrees of travel across the 500-2500us
+pulse range (OpenCat espServo.h `ServoModel servoP1L(270, ...)`). One
+commanded degree here = one physical degree. Angles are 90-centred:
+90 = servo centre (1500us), valid range 90 +/- 135 (i.e. -45..225).
+
 Usage:
     from servo import Servos
 
     servos = Servos()
 
-    # Move servo on channel 0 to 90 degrees
+    # Move servo on channel 0 to centre
     servos.set_servo(0, 90)
 """
 
@@ -39,9 +44,10 @@ class Servos:
         # PWM objects for each channel
         self.pwm: list[PWM | None] = [None] * self.num_channels
 
-        # Servo pulse range (microseconds)
-        self.min_us = 500  # 0 degrees
-        self.max_us = 2500  # 180 degrees
+        # Servo pulse range (microseconds) — P1L: 270 degrees across this range
+        self.min_us = 500  # 90 - 135 = -45 degrees
+        self.max_us = 2500  # 90 + 135 = 225 degrees
+        self.angle_range = 270.0  # P1L physical travel; 1 commanded deg = 1 physical deg
 
     def _init_channel(self, channel):
         """Initialize PWM for a channel if not already done"""
@@ -57,13 +63,14 @@ class Servos:
         Gives ~6500 steps across the servo range vs 103 with 10-bit duty().
 
         Args:
-            angle: 0-180 degrees
+            angle: degrees, 90-centred (valid -45..225 for the 270-degree P1L)
 
         Returns:
             Duty cycle value (0-65535)
         """
-        angle = max(0, min(180, angle))
-        pulse_us = self.min_us + (angle / 180.0) * (self.max_us - self.min_us)
+        half = self.angle_range / 2.0
+        angle = max(90 - half, min(90 + half, angle))
+        pulse_us = 1500.0 + (angle - 90.0) * (self.max_us - self.min_us) / self.angle_range
         period_us = 1000000 / self.freq  # 20000us at 50Hz
         return int(pulse_us / period_us * 65535)
 
@@ -73,7 +80,7 @@ class Servos:
 
         Args:
             channel: Servo channel (0-11 for BiBoard V1)
-            angle: Angle in degrees (0-180)
+            angle: Angle in degrees, 90-centred (clamped to -45..225)
         """
         if channel < 0 or channel >= self.num_channels:
             raise ValueError(f"Channel must be 0-{self.num_channels - 1}")
