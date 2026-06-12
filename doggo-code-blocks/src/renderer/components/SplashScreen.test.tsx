@@ -6,7 +6,7 @@ import { SplashScreen } from './SplashScreen.js';
 describe('SplashScreen', () => {
   it('renders the app title', () => {
     render(<SplashScreen onStart={vi.fn()} />);
-    expect(screen.getByText('doggo blocks')).toBeInTheDocument();
+    expect(screen.getByText('doggo code blocks')).toBeInTheDocument();
   });
 
   it('renders the Start Coding button', () => {

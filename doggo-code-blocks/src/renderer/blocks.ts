@@ -1,6 +1,6 @@
 import * as ScratchBlocks from 'scratch-blocks';
 
-import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
+import { MOTION_COMMANDS, POSE_COMMANDS, TRICK_COMMANDS } from './commands.js';
 
 // All block definitions for Doggo Code Blocks.
 // Style names must exist in Themes.Zelos (our theme) with full colour values.
@@ -80,8 +80,8 @@ export const defineBlocks = (): void => {
     },
   };
 
-  // ─── POSES ────────────────────────────────────────────────────────────────
-  for (const def of POSE_COMMANDS) {
+  // ─── POSES & TRICKS ───────────────────────────────────────────────────────
+  for (const def of [...POSE_COMMANDS, ...TRICK_COMMANDS]) {
     Blocks[def.blockType] = {
       init(this: ScratchBlocks.Block) {
         this.appendDummyInput().appendField(def.label);

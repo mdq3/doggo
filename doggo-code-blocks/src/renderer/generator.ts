@@ -1,6 +1,6 @@
 import * as ScratchBlocks from 'scratch-blocks';
 
-import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
+import { MOTION_COMMANDS, POSE_COMMANDS, TRICK_COMMANDS } from './commands.js';
 
 // Python code generator using Blockly 12's forBlock API.
 // Imports are accumulated per-generation and prepended as a header block.
@@ -53,8 +53,8 @@ export const createGenerator = (): { workspaceToCode(workspace: MinWorkspace): s
   // ─── ON START HAT ─────────────────────────────────────────────────────────
   gen.forBlock['doggo_on_start'] = () => '';
 
-  // ─── POSES ────────────────────────────────────────────────────────────────
-  for (const def of POSE_COMMANDS) {
+  // ─── POSES & TRICKS ───────────────────────────────────────────────────────
+  for (const def of [...POSE_COMMANDS, ...TRICK_COMMANDS]) {
     gen.forBlock[def.blockType] = () => {
       imports.add(def.importLine);
       return `${def.functionName}()\n`;

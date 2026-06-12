@@ -37,6 +37,65 @@ export const POSE_COMMANDS: PoseCommand[] = [
   },
 ];
 
+export const TRICK_COMMANDS: PoseCommand[] = [
+  {
+    blockType: 'doggo_wave',
+    label: 'wave',
+    style: 'math_blocks',
+    importLine: 'from behaviors import wave',
+    functionName: 'wave',
+  },
+  {
+    blockType: 'doggo_high_five',
+    label: 'high five',
+    style: 'math_blocks',
+    importLine: 'from behaviors import high_five',
+    functionName: 'high_five',
+  },
+  {
+    blockType: 'doggo_handshake',
+    label: 'handshake',
+    style: 'math_blocks',
+    importLine: 'from behaviors import handshake',
+    functionName: 'handshake',
+  },
+  {
+    blockType: 'doggo_pee',
+    label: 'pee',
+    style: 'math_blocks',
+    importLine: 'from behaviors import pee',
+    functionName: 'pee',
+  },
+  {
+    blockType: 'doggo_play_dead',
+    label: 'play dead',
+    style: 'math_blocks',
+    importLine: 'from behaviors import play_dead',
+    functionName: 'play_dead',
+  },
+  {
+    blockType: 'doggo_push_ups',
+    label: 'push-ups',
+    style: 'math_blocks',
+    importLine: 'from behaviors import push_ups',
+    functionName: 'push_ups',
+  },
+  {
+    blockType: 'doggo_moonwalk',
+    label: 'moonwalk',
+    style: 'math_blocks',
+    importLine: 'from behaviors import moonwalk',
+    functionName: 'moonwalk',
+  },
+  {
+    blockType: 'doggo_boxing',
+    label: 'boxing',
+    style: 'math_blocks',
+    importLine: 'from behaviors import boxing',
+    functionName: 'boxing',
+  },
+];
+
 export const MOTION_COMMANDS: MotionCommand[] = [
   {
     blockType: 'doggo_walk',

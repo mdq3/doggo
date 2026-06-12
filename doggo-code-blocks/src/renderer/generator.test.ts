@@ -94,6 +94,18 @@ describe('createGenerator', () => {
     expect(out).toBe('from poses import rest\n\nrest()\n');
   });
 
+  it('generates wave() with its import', () => {
+    const gen = createGenerator();
+    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_wave'))));
+    expect(out).toBe('from behaviors import wave\n\nwave()\n');
+  });
+
+  it('generates play_dead() with its import', () => {
+    const gen = createGenerator();
+    const out = gen.workspaceToCode(workspace(hat(stmtBlock('doggo_play_dead'))));
+    expect(out).toBe('from behaviors import play_dead\n\nplay_dead()\n');
+  });
+
   it('chains consecutive statement blocks', () => {
     const gen = createGenerator();
     const sit = stmtBlock('doggo_sit');

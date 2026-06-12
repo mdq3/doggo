@@ -2,7 +2,7 @@ import pythonWasmUrl from 'tree-sitter-python/tree-sitter-python.wasm?url';
 import { Language, Parser, type Node } from 'web-tree-sitter';
 import treeSitterWasmUrl from 'web-tree-sitter/tree-sitter.wasm?url';
 
-import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
+import { MOTION_COMMANDS, POSE_COMMANDS, TRICK_COMMANDS } from './commands.js';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -261,7 +261,9 @@ const parseAssignment = (node: Node, vars: Map<string, string>, line: number): B
 
 // ── Call parsing ─────────────────────────────────────────────────────────────
 
-const POSE_BLOCK_MAP = new Map(POSE_COMMANDS.map((d) => [d.functionName, d.blockType]));
+const NO_ARG_BLOCK_MAP = new Map(
+  [...POSE_COMMANDS, ...TRICK_COMMANDS].map((d) => [d.functionName, d.blockType]),
+);
 const MOTION_COMMAND_MAP = new Map(MOTION_COMMANDS.map((d) => [d.functionName, d]));
 
 const parseCallStmt = (node: Node, vars: Map<string, string>): BlockData => {
@@ -294,12 +296,12 @@ const parseCallStmt = (node: Node, vars: Map<string, string>): BlockData => {
   const name = fn.text;
   const argNodes = argList ? namedChildren(argList) : [];
 
-  const poseBlockType = POSE_BLOCK_MAP.get(name);
-  if (poseBlockType !== undefined) {
+  const noArgBlockType = NO_ARG_BLOCK_MAP.get(name);
+  if (noArgBlockType !== undefined) {
     if (argNodes.length !== 0) {
       throw new ParseError(`Line ${line}: ${name}() takes no arguments`, line);
     }
-    return { type: poseBlockType };
+    return { type: noArgBlockType };
   }
 
   const motionDef = MOTION_COMMAND_MAP.get(name);

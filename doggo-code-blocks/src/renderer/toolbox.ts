@@ -1,6 +1,6 @@
 import type * as ScratchBlocks from 'scratch-blocks';
 
-import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
+import { MOTION_COMMANDS, POSE_COMMANDS, TRICK_COMMANDS } from './commands.js';
 
 type FlyoutItem = ScratchBlocks.utils.toolbox.FlyoutItemInfo;
 type Category = { colour: string; contents: FlyoutItem[]; kind: string; name: string };
@@ -31,6 +31,12 @@ export const toolboxConfig: { kind: string; contents: Category[] } = {
         type: def.blockType,
         inputs: { [def.param.toUpperCase()]: numShadow(def.defaultValue) },
       })),
+    },
+    {
+      kind: 'category',
+      name: 'Tricks',
+      colour: '#59C059',
+      contents: TRICK_COMMANDS.map((def) => ({ kind: 'block', type: def.blockType })),
     },
     {
       kind: 'category',

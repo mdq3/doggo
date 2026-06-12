@@ -45,6 +45,16 @@ describe('parsePython', () => {
     expect(block(el, 'doggo_rest')).toBeTruthy();
   });
 
+  it('parses wave()', async () => {
+    const el = await parsePython('wave()\n');
+    expect(block(el, 'doggo_wave')).toBeTruthy();
+  });
+
+  it('parses play_dead()', async () => {
+    const el = await parsePython('play_dead()\n');
+    expect(block(el, 'doggo_play_dead')).toBeTruthy();
+  });
+
   it('parses walk(steps=3) and carries the step value', async () => {
     const el = await parsePython('walk(steps=3)\n');
     const b = block(el, 'doggo_walk');

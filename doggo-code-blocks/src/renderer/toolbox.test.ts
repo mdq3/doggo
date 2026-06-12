@@ -1,7 +1,7 @@
 import type * as ScratchBlocks from 'scratch-blocks';
 import { describe, expect, it } from 'vite-plus/test';
 
-import { MOTION_COMMANDS, POSE_COMMANDS } from './commands.js';
+import { MOTION_COMMANDS, POSE_COMMANDS, TRICK_COMMANDS } from './commands.js';
 import { buildToolboxItems, toolboxConfig } from './toolbox.js';
 
 type FlyoutItem = ScratchBlocks.utils.toolbox.FlyoutItemInfo;
@@ -47,6 +47,18 @@ describe('toolboxConfig', () => {
     const poses = toolboxConfig.contents.find((c) => c.name === 'Poses')!;
     const types = poses.contents.filter(isBlock).map((item) => item.type);
     for (const cmd of POSE_COMMANDS) {
+      expect(types).toContain(cmd.blockType);
+    }
+  });
+
+  it('contains a Tricks category', () => {
+    expect(toolboxConfig.contents.some((c) => c.name === 'Tricks')).toBe(true);
+  });
+
+  it('Tricks category lists every TRICK_COMMAND block type', () => {
+    const tricks = toolboxConfig.contents.find((c) => c.name === 'Tricks')!;
+    const types = tricks.contents.filter(isBlock).map((item) => item.type);
+    for (const cmd of TRICK_COMMANDS) {
       expect(types).toContain(cmd.blockType);
     }
   });

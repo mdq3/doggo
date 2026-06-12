@@ -178,7 +178,7 @@ The robot can be controlled via the [**Doggo Code Blocks**](./doggo-code-blocks/
 
 ### Doggo Code Blocks app
 
-[Doggo Code Blocks](doggo-code-blocks/) is a drag-and-drop block programming app (built with Electron and Scratch Blocks). Drag motion and pose blocks into the workspace, hit **Run**, and the app compiles the program to MicroPython and sends it to the robot over Wi-Fi — no terminal needed.
+[Doggo Code Blocks](doggo-code-blocks/) is a drag-and-drop block programming app (built with Electron and Scratch Blocks). Drag motion, pose, and trick blocks into the workspace, hit **Run**, and the app compiles the program to MicroPython and sends it to the robot over Wi-Fi — no terminal needed.
 
 ```bash
 cd doggo-code-blocks
