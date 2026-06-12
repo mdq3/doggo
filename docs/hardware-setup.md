@@ -54,6 +54,19 @@ Each gait has tuning constants at the top of its file. Notes on the non-obvious 
 
 - `_TRIM` — raw degree offset added to left-side shoulders (FL, RL) to correct sideways drift. Positive corrects rightward curve. Tune until the robot goes straight. (Was 9 pre-scale-fix; reset to 0.)
 
+### Behaviors / tricks (`src/behaviors.py`)
+
+Tricks (wave, high-five, push-ups, …) don't use a fixed frame delay. Each OpenCat behavior
+frame carries its own transition speed and pause, replayed per OpenCat `skill.h`/`motion.h`:
+
+- transition: cosine-eased interpolation at `speed_byte / 8` degrees per 8 ms step, all
+  joints arriving together; a speed byte of 0 snaps instantly (used mid-moonwalk/boxing)
+- pause: `delay_byte × 50 ms` after the frame lands
+- loop spec `(loop_from, loop_to, count)` replays a frame sub-range, e.g. each push-up rep
+
+A trick that looks too violent or too sluggish on hardware means the frame data needs
+checking against `InstinctBittleESP.h`, not a constant tweak — there are no per-trick fudges.
+
 ### Trot (`src/gaits/trot.py`)
 
 - `_FRAME_DELAY = 0.008` — matches OpenCat's ~8ms gait frame rate. (Pre-scale-fix, ≥10ms caused falls; re-test at the corrected scale.)

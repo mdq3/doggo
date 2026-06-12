@@ -13,7 +13,7 @@ rotationDirection (indices 8-15):
   FL_LEG(ch8)=-1       FR_LEG(ch9)=+1       RR_LEG(ch10)=+1      RL_LEG(ch11)=-1
 
 Usage:
-    from poses import stand, sit, rest, zero_position
+    from poses import stand, sit, rest, stretch, zero_position
 """
 
 import time
@@ -188,6 +188,31 @@ def sit():
         speed=2,
     )
     print("✓ Sitting position")
+
+
+def stretch():
+    """
+    Stretching pose (downward dog): front legs extended forward, chest
+    lowered, haunches up.
+    OpenCat reference: str[] — front shoulders = -75, rear shoulders = 30,
+    front knees = 60, rear knees = 0.
+    """
+    print("\nStretching...")
+    move_to(
+        {
+            CH_HEAD: 90,
+            CH_FL_SHOULDER: 15,  # 90 + 1*(-75)
+            CH_FR_SHOULDER: 165,  # 90 - 1*(-75)
+            CH_RR_SHOULDER: 60,  # 90 - 1*30
+            CH_RL_SHOULDER: 120,  # 90 + 1*30
+            CH_FL_LEG: 30,  # 90 - 1*60  (rd=-1, opencat=60)
+            CH_FR_LEG: 150,  # 90 + 1*60
+            CH_RR_LEG: 90,  # opencat=0
+            CH_RL_LEG: 90,  # opencat=0
+        },
+        speed=2,
+    )
+    print("✓ Stretching position")
 
 
 def rest():

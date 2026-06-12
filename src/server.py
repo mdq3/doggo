@@ -4,16 +4,31 @@ Routes:
   GET /stand
   GET /sit
   GET /rest
+  GET /stretch
   GET /walk?steps=N
   GET /walk-back?steps=N
+  GET /walk-back-left?steps=N
+  GET /walk-back-right?steps=N
   GET /turn-left?steps=N
   GET /turn-right?steps=N
   GET /pivot-left?steps=N
   GET /pivot-right?steps=N
   GET /bound-left?steps=N
   GET /bound-right?steps=N
+  GET /step?steps=N
+  GET /crawl?steps=N
+  GET /crawl-left?steps=N
+  GET /crawl-right?steps=N
   GET /trot?steps=N&imu=0
   GET /trot-ik?steps=N&imu=0
+  GET /wave
+  GET /high-five
+  GET /handshake
+  GET /pee
+  GET /play-dead
+  GET /push-ups
+  GET /moonwalk
+  GET /boxing
   GET /battery
   GET /info
 
@@ -26,15 +41,20 @@ import _thread
 import socket
 
 from battery import battery_status
+from behaviors import boxing, handshake, high_five, moonwalk, pee, play_dead, push_ups, wave
 from device_info import device_info
+from gaits.back_turn import walk_back_left, walk_back_right
 from gaits.bound_turn import bound_left, bound_right
+from gaits.crawl import crawl
+from gaits.crawl_turn import crawl_left, crawl_right
 from gaits.pivot import pivot_left, pivot_right
+from gaits.step import step_in_place
 from gaits.trot import trot_forward
 from gaits.trot_ik import trot_forward as trot_ik_forward
 from gaits.turn import turn_left, turn_right
 from gaits.walk import walk
 from gaits.walk_back import walk_back
-from poses import rest, sit, stand
+from poses import rest, sit, stand, stretch
 
 
 def _parse_steps(qs):
@@ -73,18 +93,34 @@ def _handle(conn):
                 b"Poses:\n"
                 b"  GET /stand\n"
                 b"  GET /sit\n"
-                b"  GET /rest\n\n"
+                b"  GET /rest\n"
+                b"  GET /stretch\n\n"
                 b"Gaits (optional ?steps=N):\n"
                 b"  GET /walk\n"
                 b"  GET /walk-back\n"
+                b"  GET /walk-back-left\n"
+                b"  GET /walk-back-right\n"
                 b"  GET /turn-left\n"
                 b"  GET /turn-right\n"
                 b"  GET /pivot-left\n"
                 b"  GET /pivot-right\n"
                 b"  GET /bound-left\n"
                 b"  GET /bound-right\n"
+                b"  GET /step\n"
+                b"  GET /crawl\n"
+                b"  GET /crawl-left\n"
+                b"  GET /crawl-right\n"
                 b"  GET /trot          (default steps=2, imu=1)\n"
                 b"  GET /trot-ik       (default steps=2, imu=1)\n\n"
+                b"Tricks:\n"
+                b"  GET /wave\n"
+                b"  GET /high-five\n"
+                b"  GET /handshake\n"
+                b"  GET /pee\n"
+                b"  GET /play-dead\n"
+                b"  GET /push-ups\n"
+                b"  GET /moonwalk\n"
+                b"  GET /boxing\n\n"
                 b"Diagnostics:\n"
                 b"  GET /battery\n"
                 b"  GET /info\n",
@@ -96,10 +132,16 @@ def _handle(conn):
             sit()
         elif path == "/rest":
             rest()
+        elif path == "/stretch":
+            stretch()
         elif path == "/walk":
             walk(steps=_parse_steps(qs))
         elif path == "/walk-back":
             walk_back(steps=_parse_steps(qs))
+        elif path == "/walk-back-left":
+            walk_back_left(steps=_parse_steps(qs))
+        elif path == "/walk-back-right":
+            walk_back_right(steps=_parse_steps(qs))
         elif path == "/turn-left":
             turn_left(steps=_parse_steps(qs))
         elif path == "/turn-right":
@@ -112,6 +154,30 @@ def _handle(conn):
             bound_left(steps=_parse_steps(qs))
         elif path == "/bound-right":
             bound_right(steps=_parse_steps(qs))
+        elif path == "/step":
+            step_in_place(steps=_parse_steps(qs))
+        elif path == "/crawl":
+            crawl(steps=_parse_steps(qs))
+        elif path == "/crawl-left":
+            crawl_left(steps=_parse_steps(qs))
+        elif path == "/crawl-right":
+            crawl_right(steps=_parse_steps(qs))
+        elif path == "/wave":
+            wave()
+        elif path == "/high-five":
+            high_five()
+        elif path == "/handshake":
+            handshake()
+        elif path == "/pee":
+            pee()
+        elif path == "/play-dead":
+            play_dead()
+        elif path == "/push-ups":
+            push_ups()
+        elif path == "/moonwalk":
+            moonwalk()
+        elif path == "/boxing":
+            boxing()
         elif path == "/trot":
             trot_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
         elif path == "/trot-ik":

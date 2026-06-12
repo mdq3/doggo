@@ -195,16 +195,31 @@ Enter the robot's hostname and WebREPL password in the gear ⚙ settings menu. S
 | `/stand` | | Stand up |
 | `/sit` | | Sit down |
 | `/rest` | | Lie flat |
+| `/stretch` | | Downward-dog stretch |
 | `/walk` | `steps=N` | Walk forward N cycles |
 | `/walk-back` | `steps=N` | Walk backward N cycles |
+| `/walk-back-left` | `steps=N` | Walk backward arcing left |
+| `/walk-back-right` | `steps=N` | Walk backward arcing right |
 | `/turn-left` | `steps=N` | Arc turn left |
 | `/turn-right` | `steps=N` | Arc turn right |
 | `/pivot-left` | `steps=N` | Rotate in place left |
 | `/pivot-right` | `steps=N` | Rotate in place right |
 | `/bound-left` | `steps=N` | Tight arc turn left |
 | `/bound-right` | `steps=N` | Tight arc turn right |
+| `/step` | `steps=N` | March in place |
+| `/crawl` | `steps=N` | Low-stance crawl forward |
+| `/crawl-left` | `steps=N` | Low-stance crawl arcing left |
+| `/crawl-right` | `steps=N` | Low-stance crawl arcing right |
 | `/trot` | `steps=N` `imu=0/1` | Diagonal trot (IMU stabilization on by default) |
 | `/trot-ik` | `steps=N` `imu=0/1` | IK-based trot with parametric foot trajectories |
+| `/wave` | | Wave a front paw |
+| `/high-five` | | Offer a high five |
+| `/handshake` | | Shake hands |
+| `/pee` | | Lift a rear leg |
+| `/play-dead` | | Roll over and play dead |
+| `/push-ups` | | Do push-ups |
+| `/moonwalk` | | Moonwalk shuffle |
+| `/boxing` | | Boxing jabs |
 | `/battery` | | Battery voltage and charge level |
 | `/info` | | Device diagnostics (RAM, flash, CPU, WiFi, uptime) |
 
