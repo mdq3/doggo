@@ -220,8 +220,15 @@ Enter the robot's hostname and WebREPL password in the gear ⚙ settings menu. S
 | `/push-ups` | | Do push-ups |
 | `/moonwalk` | | Moonwalk shuffle |
 | `/boxing` | | Boxing jabs |
+| `/recover` | | Get back up after falling over |
+| `/watchdog` | `on=0/1` | Show or toggle automatic fall recovery (on by default) |
 | `/battery` | | Battery voltage and charge level |
 | `/info` | | Device diagnostics (RAM, flash, CPU, WiFi, uptime) |
+
+The robot also rights itself automatically: a fall watchdog starts on boot and
+plays the recover trick when the IMU reports the body tipped more than 75° for
+over a second while no movement is being played. Turn it off with
+`curl "http://doggo.local/watchdog?on=0"`.
 
 ```bash
 curl http://doggo.local/walk?steps=3

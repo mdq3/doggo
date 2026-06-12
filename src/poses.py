@@ -16,6 +16,7 @@ Usage:
     from poses import stand, sit, rest, stretch, zero_position
 """
 
+import _thread
 import time
 
 from drivers.servo import Servos
@@ -83,6 +84,24 @@ _REST_COMMANDED = {
 # Track current positions (calibrated), initialised to rest state
 current_pos = {ch: apply_calibration(_REST_COMMANDED.get(ch, 90), ch) for ch in ALL_CHANNELS}
 
+# Cross-thread motion coordination. motion_lock serialises servo access between
+# the HTTP server thread and the fall watchdog thread; _last_motion_ms lets the
+# watchdog tell "lying still" apart from "mid-behavior pause" (every motion path
+# calls note_motion() each time it commands the servos).
+motion_lock = _thread.allocate_lock()
+_last_motion_ms = time.ticks_ms()
+
+
+def note_motion():
+    """Record that a servo command was just sent (called by all motion paths)."""
+    global _last_motion_ms
+    _last_motion_ms = time.ticks_ms()
+
+
+def idle_ms():
+    """Milliseconds since the last servo command from any motion path."""
+    return time.ticks_diff(time.ticks_ms(), _last_motion_ms)
+
 
 def play_frame(targets):
     """
@@ -92,6 +111,7 @@ def play_frame(targets):
     Args:
         targets: Dict of {channel: commanded_angle} (before calibration)
     """
+    note_motion()
     for ch, angle in targets.items():
         cal = apply_calibration(angle, ch)
         servos.set_servo(ch, cal)
@@ -110,6 +130,7 @@ def move_to(targets, speed=2, delay=0.015):
     calibrated = {ch: apply_calibration(angle, ch) for ch, angle in targets.items()}
 
     while True:
+        note_motion()
         all_done = True
 
         for ch, target in calibrated.items():

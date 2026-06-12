@@ -94,6 +94,13 @@ export const TRICK_COMMANDS: PoseCommand[] = [
     importLine: 'from behaviors import boxing',
     functionName: 'boxing',
   },
+  {
+    blockType: 'doggo_recover',
+    label: 'recover',
+    style: 'math_blocks',
+    importLine: 'from behaviors import recover',
+    functionName: 'recover',
+  },
 ];
 
 export const MOTION_COMMANDS: MotionCommand[] = [

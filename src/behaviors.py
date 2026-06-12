@@ -17,8 +17,10 @@ Frame tuple (raw OpenCat degrees; commanded = 90 + rotDir * raw):
 
 The original 16-joint rows also carry head-tilt, tail and shoulder-roll columns
 (joints Bittle doesn't have — dropped) and per-frame IMU trigger bytes (zero in
-every trick here — not implemented). All tricks below use angleDataRatio=1 and
-both start and end near the balance (stand) pose.
+every trick here — not implemented). All tricks below use angleDataRatio=1 —
+except rc (recover), whose OpenCat source halves its angles to fit int8_t
+(angleDataRatio=2); its frames are stored here pre-doubled. Every trick ends
+near the balance (stand) pose.
 
 Usage:
     from behaviors import wave, high_five, handshake, pee
@@ -40,6 +42,7 @@ from poses import (
     CH_RR_SHOULDER,
     apply_calibration,
     current_pos,
+    note_motion,
     servos,
     stand,
 )
@@ -86,6 +89,7 @@ def _transform(targets, speed):
         steps = round(max_diff * 8.0 / speed)
 
     if steps < 1:  # speed byte 0, or the move is too small to interpolate — snap
+        note_motion()
         for ch, angle in calibrated.items():
             servos.set_servo(ch, int(angle))
             current_pos[ch] = angle
@@ -95,6 +99,7 @@ def _transform(targets, speed):
     diff = {ch: calibrated[ch] - start[ch] for ch in calibrated}
 
     for s in range(1, steps + 1):
+        note_motion()
         frac = (1 - math.cos(math.pi * s / steps)) / 2
         for ch in calibrated:
             angle = start[ch] + diff[ch] * frac
@@ -203,6 +208,17 @@ _BEHAVIORS = {
         (0, 38, 15, 50, 21, 30, 27, 24, 27, 0, 0),
         (0, 30, 30, 30, 30, 30, 30, 30, 30, 32, 0),
     )),
+    # rc — recover: sweep the legs to roll off the back/side, then push up to stand.
+    # OpenCat stores rc with angleDataRatio=2 — these values are pre-doubled.
+    # The big frame-1/2 shoulder angles drive past the servo travel on purpose
+    # (the driver clamps to -45..225, matching OpenCat's pulse saturation).
+    "rc": (0, 0, 0, (
+        (0, -176, -86, 134, 200, 84, -70, 84, 84, 32, 0),
+        (0, -166, -176, 200, 120, 84, 84, 84, 100, 32, 0),
+        (-16, 36, 36, 44, 44, -28, -28, -26, -26, 16, 10),
+        (-16, 36, 36, 36, 36, -28, -28, -28, -28, 8, 10),
+        (0, 30, 30, 30, 30, 30, 30, 30, 30, 8, 0),
+    )),
     # bx — boxing
     "bx": (6, 7, 5, (
         (0, 30, 30, 30, 30, 30, 30, 30, 30, 8, 0),
@@ -275,3 +291,15 @@ def boxing():
     print("\nBoxing...")
     _play("bx")
     print("✓ Boxing")
+
+
+def recover():
+    """Get back on all four feet after falling over (OpenCat rc).
+
+    Call when the robot is on its side or back (e.g. knocked over, or left
+    lying after play_dead). If called while already standing, the leg sweep
+    will tip the robot over and right it again — harmless but dramatic.
+    """
+    print("\nRecovering...")
+    _play("rc")
+    print("✓ Recover")

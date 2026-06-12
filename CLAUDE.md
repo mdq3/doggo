@@ -14,7 +14,7 @@ Replaces the stock OpenCat firmware with hand-written Python.
 ```
 src/drivers/servo.py        — hardware only: PWM/GPIO, no calibration knowledge
 src/poses.py                — poses layer: calibration, motion, named poses
-src/behaviors.py            — behavior (trick) player + tricks: wave, high-five, handshake, pee, play dead, push-ups, moonwalk, boxing (OpenCat behavior arrays)
+src/behaviors.py            — behavior (trick) player + tricks: wave, high-five, handshake, pee, play dead, push-ups, moonwalk, boxing, recover (OpenCat behavior arrays)
 src/battery.py              — battery voltage monitoring (GPIO 37, BiBoard V1.0)
 src/device_info.py          — device diagnostics: RAM, flash, CPU, WiFi, uptime
 src/gaits/walk.py           — walk forward gait: 116-frame OpenCat wkF keyframe sequence
@@ -28,7 +28,8 @@ src/gaits/crawl.py          — crawl forward gait: 103-frame low-stance OpenCat
 src/gaits/crawl_turn.py     — crawl left/right arc gaits: 103-frame OpenCat crL keyframe sequence
 src/gaits/trot.py           — trot forward gait: 48-frame OpenCat trF; IMU roll/pitch stabilization
 src/gaits/trot_ik.py        — IK-based trot: parametric foot trajectories + 2-link IK each frame; IMU stabilization
-src/imu.py                  — ICM-42670-P IMU driver (I2C 0x69, GPIO 21/22); complementary filter → pitch/roll
+src/imu.py                  — ICM-42670-P IMU driver (I2C 0x69, GPIO 21/22); complementary filter → pitch/roll; tilt() for flip detection
+src/fall_watchdog.py        — auto-recovery thread: polls IMU tilt, plays recover() when flipped and idle (OpenCat IMU_EXCEPTION_FLIPPED reaction)
 src/kinematics/__init__.py  — kinematics package
 src/kinematics/leg.py       — 2-DOF planar leg IK/FK (L1=50mm, L2=55mm); fk(alpha, gamma) → (x,z); ik(x,z) → (alpha, gamma)
 src/kinematics/doggo.py     — robot-specific angle conversion: physical (alpha, gamma) → servo commanded angles
@@ -56,7 +57,7 @@ doggo-code-blocks/forge.config.mjs — electron-forge + Vite build config
 |------|------|--------------------|
 | `src/drivers/servo.py` | Direct PWM servo driver (ESP32 LEDC, 200Hz) | `drivers/servo.py` |
 | `src/poses.py` | Pose library — channel consts, calibration, `move_to`, `play_frame`, `stand`, `sit`, `rest`, `stretch`, `zero_position` | `poses.py` |
-| `src/behaviors.py` | Behavior (trick) player — per-frame speed/delay + loop section playback of OpenCat behavior arrays; `wave`, `high_five`, `handshake`, `pee`, `play_dead`, `push_ups`, `moonwalk`, `boxing` | `behaviors.py` |
+| `src/behaviors.py` | Behavior (trick) player — per-frame speed/delay + loop section playback of OpenCat behavior arrays; `wave`, `high_five`, `handshake`, `pee`, `play_dead`, `push_ups`, `moonwalk`, `boxing`, `recover` (get up after falling) | `behaviors.py` |
 | `src/battery.py` | Battery voltage monitoring — GPIO 37 ADC, BiBoard V1.0 formula | `battery.py` |
 | `src/device_info.py` | Device diagnostics — RAM, flash, CPU freq, chip ID, WiFi, uptime | `device_info.py` |
 | `src/gaits/walk.py` | Walk gait — 116-frame one-foot-at-a-time sequence from OpenCat `wkF` | `gaits/walk.py` |
@@ -70,12 +71,13 @@ doggo-code-blocks/forge.config.mjs — electron-forge + Vite build config
 | `src/gaits/crawl_turn.py` | Crawl left/right arc — 103-frame sequence from OpenCat `crL`; right = L/R mirror | `gaits/crawl_turn.py` |
 | `src/gaits/trot.py` | Trot forward — 48-frame diagonal-pair gait from OpenCat `trF`; IMU roll/pitch correction | `gaits/trot.py` |
 | `src/gaits/trot_ik.py` | IK-based trot — parametric foot trajectories, 2-link IK per frame, IMU stabilization | `gaits/trot_ik.py` |
-| `src/imu.py` | ICM-42670-P IMU driver — I2C 0x69, SDA=GPIO21, SCL=GPIO22; complementary filter → `(pitch, roll)` | `imu.py` |
+| `src/imu.py` | ICM-42670-P IMU driver — I2C 0x69, SDA=GPIO21, SCL=GPIO22; complementary filter → `(pitch, roll)`; `tilt()` = accel-only angle from upright (flip detection) | `imu.py` |
+| `src/fall_watchdog.py` | Auto-recovery thread — plays `recover()` when tilt > 75° sustained 1s while no motion for 2s and `poses.motion_lock` free; 3 attempts then gives up until righted | `fall_watchdog.py` |
 | `src/kinematics/leg.py` | 2-DOF planar leg IK/FK — `fk(alpha, gamma)→(x,z)`, `ik(x,z)→(alpha, gamma)`; L1=50mm, L2=55mm | `kinematics/leg.py` |
 | `src/kinematics/doggo.py` | Servo angle conversion — physical `(alpha, gamma)` → commanded angles; `leg_frame()` builds 8-joint dict | `kinematics/doggo.py` |
-| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/stretch` `/walk` `/walk-back` `/walk-back-left` `/walk-back-right` `/turn-left` `/turn-right` `/pivot-left` `/pivot-right` `/bound-left` `/bound-right` `/step` `/crawl` `/crawl-left` `/crawl-right` `/trot` `/trot-ik` `/wave` `/high-five` `/handshake` `/pee` `/play-dead` `/push-ups` `/moonwalk` `/boxing` `/battery` `/info` | `server.py` |
+| `src/server.py` | HTTP command server — routes `/stand` `/sit` `/rest` `/stretch` `/walk` `/walk-back` `/walk-back-left` `/walk-back-right` `/turn-left` `/turn-right` `/pivot-left` `/pivot-right` `/bound-left` `/bound-right` `/step` `/crawl` `/crawl-left` `/crawl-right` `/trot` `/trot-ik` `/wave` `/high-five` `/handshake` `/pee` `/play-dead` `/push-ups` `/moonwalk` `/boxing` `/recover` `/watchdog` `/battery` `/info`; motion routes hold `poses.motion_lock` | `server.py` |
 | `src/boot.py` | Runs on boot: WiFi connect + mDNS hostname registration + WebREPL start | `boot.py` |
-| `src/main.py` | Runs after boot: starts HTTP server loop | `main.py` |
+| `src/main.py` | Runs after boot: starts HTTP server loop + fall watchdog | `main.py` |
 | `webrepl_proxy.py` | Host-side PTY proxy bridging mpremote ↔ WebREPL; reads `DOGGO_HOST`/`DOGGO_PASSWORD` env vars (from Doggo Code Blocks) or falls back to `wifi_config.py` | n/a (host only) |
 | `src/configuration/wifi_config_template.py` | Credential + hostname template (checked in; copy to `wifi_config.py`) | n/a (host only) |
 | `doggo-code-blocks/src/main.ts` | Electron main process — menu, settings persistence (`userData/settings.json`), spawns `webrepl_proxy.py` with env vars | n/a (host only) |
@@ -198,6 +200,7 @@ mpremote fs mkdir :drivers + \
     fs cp src/boot.py :boot.py + \
     fs cp src/server.py :server.py + \
     fs cp src/imu.py :imu.py + \
+    fs cp src/fall_watchdog.py :fall_watchdog.py + \
     fs mkdir :gaits + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
@@ -256,8 +259,11 @@ ruff check --fix src/    # auto-fix import ordering etc.
   forward), `lftF`/`lftL`, `phF`/`phL` (push walk), `carpetF`/`carpetL` (high-step carpet walk;
   newer versions in OpenCat `SkillLibrary/*.md`)
 - Acrobatic behaviors (`bf`/`ff`/`flip` flips, `jmp` jump, `hds` handstand, `lpov` leap-over,
-  `rl` roll, `rc` recover) — use `angleDataRatio=2` and ballistic timing; deliberately skipped
-  until the behavior player is proven on gentle tricks
+  `rl` roll) — use `angleDataRatio=2` and ballistic timing; deliberately skipped until the
+  behavior player is proven on gentle tricks. (`rc` recover is ported — its frames are stored
+  pre-doubled in `behaviors.py` since the player has no `angleDataRatio` support.)
+- Other IMU exceptions from OpenCat's `getImuException()` (`lifted`, `dropped`/free-fall,
+  `knocked`, `pushed`) — only the flipped exception is handled (`fall_watchdog.py`)
 - Per-frame IMU trigger bytes in behavior arrays (zero in all ported tricks) are not supported
   by `behaviors.py`
 
@@ -265,3 +271,8 @@ ruff check --fix src/    # auto-fix import ordering etc.
 
 The BiBoard V1 IMU is an **ICM-42670-P** (WHO_AM_I = 0x67), not ICM-20600 as labelled in Petoi docs.
 Different register map — driver is in `src/imu.py`. I2C address 0x69, SDA=GPIO21, SCL=GPIO22.
+
+Orientation: raw accel **z > 0 means upright** on the BiBoard (OpenCat's
+`petoi_icm42670p.cpp` treats `az < 0` as the flipped hemisphere when unfolding pitch).
+`IMU.tilt()` uses `acos(az/|a|)` — 0° upright, 90° on side, 180° upside down — which is
+what `fall_watchdog.py` polls for flip detection.

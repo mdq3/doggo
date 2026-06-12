@@ -28,7 +28,7 @@ Smoke test:
 """
 
 import time
-from math import atan2, sqrt
+from math import acos, atan2, sqrt
 
 from machine import I2C, Pin
 from utime import ticks_diff, ticks_ms
@@ -84,3 +84,20 @@ class IMU:
         self._roll = 0.98 * (self._roll - gx * dt) + 0.02 * accel_roll
 
         return self._pitch, self._roll
+
+    def tilt(self) -> float:
+        """Angle of the body z-axis away from upright, in degrees (accel only).
+
+        0 = upright, 90 = on a side, 180 = upside down. Exact when stationary,
+        and sign-safe: raw az > 0 means upright on the BiBoard (OpenCat's
+        petoi_icm42670p.cpp relies on the same convention to unfold pitch).
+        Used by fall_watchdog.py for flip detection.
+        """
+        raw = self._i2c.readfrom_mem(_ADDR, 0x0B, 6)
+        ax = _s16(raw, 0)
+        ay = _s16(raw, 2)
+        az = _s16(raw, 4)
+        norm = sqrt(ax * ax + ay * ay + az * az)
+        if norm == 0:
+            return 0.0
+        return acos(max(-1.0, min(1.0, az / norm))) * 57.2958

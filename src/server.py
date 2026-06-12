@@ -29,19 +29,34 @@ Routes:
   GET /push-ups
   GET /moonwalk
   GET /boxing
+  GET /recover
+  GET /watchdog?on=0|1
   GET /battery
   GET /info
 
 Returns 200 OK on success, 404 for unknown routes.
 Runs in a background _thread using raw sockets so the main thread
 stays free for WebREPL / interactive REPL access.
+
+Motion routes hold poses.motion_lock while they run, so the fall watchdog
+never drives the servos at the same time as a command.
 """
 
 import _thread
 import socket
 
 from battery import battery_status
-from behaviors import boxing, handshake, high_five, moonwalk, pee, play_dead, push_ups, wave
+from behaviors import (
+    boxing,
+    handshake,
+    high_five,
+    moonwalk,
+    pee,
+    play_dead,
+    push_ups,
+    recover,
+    wave,
+)
 from device_info import device_info
 from gaits.back_turn import walk_back_left, walk_back_right
 from gaits.bound_turn import bound_left, bound_right
@@ -54,7 +69,7 @@ from gaits.trot_ik import trot_forward as trot_ik_forward
 from gaits.turn import turn_left, turn_right
 from gaits.walk import walk
 from gaits.walk_back import walk_back
-from poses import rest, sit, stand, stretch
+from poses import motion_lock, rest, sit, stand, stretch
 
 
 def _parse_steps(qs):
@@ -72,6 +87,13 @@ def _parse_imu(qs):
         if part.startswith("imu="):
             return part[4:] not in ("0", "false", "off")
     return True
+
+
+def _parse_on(qs):
+    for part in (qs or "").split("&"):
+        if part.startswith("on="):
+            return part[3:] not in ("0", "false", "off")
+    return None
 
 
 def _send_body(conn, body):
@@ -120,68 +142,14 @@ def _handle(conn):
                 b"  GET /play-dead\n"
                 b"  GET /push-ups\n"
                 b"  GET /moonwalk\n"
-                b"  GET /boxing\n\n"
+                b"  GET /boxing\n"
+                b"  GET /recover     (get up after falling over)\n\n"
                 b"Diagnostics:\n"
                 b"  GET /battery\n"
-                b"  GET /info\n",
+                b"  GET /info\n"
+                b"  GET /watchdog    (?on=0|1 toggles auto-recovery)\n",
             )
             return
-        elif path == "/stand":
-            stand()
-        elif path == "/sit":
-            sit()
-        elif path == "/rest":
-            rest()
-        elif path == "/stretch":
-            stretch()
-        elif path == "/walk":
-            walk(steps=_parse_steps(qs))
-        elif path == "/walk-back":
-            walk_back(steps=_parse_steps(qs))
-        elif path == "/walk-back-left":
-            walk_back_left(steps=_parse_steps(qs))
-        elif path == "/walk-back-right":
-            walk_back_right(steps=_parse_steps(qs))
-        elif path == "/turn-left":
-            turn_left(steps=_parse_steps(qs))
-        elif path == "/turn-right":
-            turn_right(steps=_parse_steps(qs))
-        elif path == "/pivot-left":
-            pivot_left(steps=_parse_steps(qs))
-        elif path == "/pivot-right":
-            pivot_right(steps=_parse_steps(qs))
-        elif path == "/bound-left":
-            bound_left(steps=_parse_steps(qs))
-        elif path == "/bound-right":
-            bound_right(steps=_parse_steps(qs))
-        elif path == "/step":
-            step_in_place(steps=_parse_steps(qs))
-        elif path == "/crawl":
-            crawl(steps=_parse_steps(qs))
-        elif path == "/crawl-left":
-            crawl_left(steps=_parse_steps(qs))
-        elif path == "/crawl-right":
-            crawl_right(steps=_parse_steps(qs))
-        elif path == "/wave":
-            wave()
-        elif path == "/high-five":
-            high_five()
-        elif path == "/handshake":
-            handshake()
-        elif path == "/pee":
-            pee()
-        elif path == "/play-dead":
-            play_dead()
-        elif path == "/push-ups":
-            push_ups()
-        elif path == "/moonwalk":
-            moonwalk()
-        elif path == "/boxing":
-            boxing()
-        elif path == "/trot":
-            trot_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
-        elif path == "/trot-ik":
-            trot_ik_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
         elif path == "/battery":
             v, pct, low = battery_status()
             body = f"{v:.2f}V ({pct}%)"
@@ -193,9 +161,85 @@ def _handle(conn):
         elif path == "/info":
             _send_body(conn, device_info().encode())
             return
-        else:
-            conn.send(b"HTTP/1.1 404 Not Found\r\nContent-Length: 10\r\n\r\nNot found\n")
+        elif path == "/watchdog":
+            import fall_watchdog
+
+            on = _parse_on(qs)
+            if on is not None:
+                fall_watchdog.enabled = on
+            state = "on" if fall_watchdog.enabled else "off"
+            if not fall_watchdog.running():
+                state += " (thread not running)"
+            _send_body(conn, ("fall watchdog " + state + "\n").encode())
             return
+
+        # Everything below moves the robot — hold the lock so the fall
+        # watchdog never plays recover() mid-command.
+        motion_lock.acquire()
+        try:
+            if path == "/stand":
+                stand()
+            elif path == "/sit":
+                sit()
+            elif path == "/rest":
+                rest()
+            elif path == "/stretch":
+                stretch()
+            elif path == "/walk":
+                walk(steps=_parse_steps(qs))
+            elif path == "/walk-back":
+                walk_back(steps=_parse_steps(qs))
+            elif path == "/walk-back-left":
+                walk_back_left(steps=_parse_steps(qs))
+            elif path == "/walk-back-right":
+                walk_back_right(steps=_parse_steps(qs))
+            elif path == "/turn-left":
+                turn_left(steps=_parse_steps(qs))
+            elif path == "/turn-right":
+                turn_right(steps=_parse_steps(qs))
+            elif path == "/pivot-left":
+                pivot_left(steps=_parse_steps(qs))
+            elif path == "/pivot-right":
+                pivot_right(steps=_parse_steps(qs))
+            elif path == "/bound-left":
+                bound_left(steps=_parse_steps(qs))
+            elif path == "/bound-right":
+                bound_right(steps=_parse_steps(qs))
+            elif path == "/step":
+                step_in_place(steps=_parse_steps(qs))
+            elif path == "/crawl":
+                crawl(steps=_parse_steps(qs))
+            elif path == "/crawl-left":
+                crawl_left(steps=_parse_steps(qs))
+            elif path == "/crawl-right":
+                crawl_right(steps=_parse_steps(qs))
+            elif path == "/wave":
+                wave()
+            elif path == "/high-five":
+                high_five()
+            elif path == "/handshake":
+                handshake()
+            elif path == "/pee":
+                pee()
+            elif path == "/play-dead":
+                play_dead()
+            elif path == "/push-ups":
+                push_ups()
+            elif path == "/moonwalk":
+                moonwalk()
+            elif path == "/boxing":
+                boxing()
+            elif path == "/recover":
+                recover()
+            elif path == "/trot":
+                trot_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
+            elif path == "/trot-ik":
+                trot_ik_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
+            else:
+                conn.send(b"HTTP/1.1 404 Not Found\r\nContent-Length: 10\r\n\r\nNot found\n")
+                return
+        finally:
+            motion_lock.release()
 
         conn.send(b"HTTP/1.1 200 OK\r\nContent-Length: 3\r\n\r\nOK\n")
     except Exception as e:
