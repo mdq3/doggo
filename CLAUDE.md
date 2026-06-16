@@ -256,6 +256,29 @@ ruff check src/          # show issues
 ruff check --fix src/    # auto-fix import ordering etc.
 ```
 
+## Testing
+
+Host-side unit tests for the pure-logic parts of the firmware run on desktop CPython —
+no device needed. Each test file sits **next to the source it covers**, named
+`<source>_test.py` (e.g. `kinematics/leg.py` → `kinematics/leg_test.py`). `src/conftest.py`
+is a thin loader for `src/test/test_harness.py`, which stubs the MicroPython-only modules
+(`machine`, `utime`, `esp`, `network`, `webrepl`) and the `time.ticks_*` / `sleep_us`
+extensions, then puts `src/` on the path, so the firmware modules import unchanged. Tests cover what is safe to verify off-hardware: leg
+IK/FK round-trips, the OpenCat→commanded angle conversion (a regression guard against the
+old 1.5x servo scale), gait L/R mirroring, IMU byte/trig decoding, and the HTTP query
+parsers.
+
+`*_test.py` are never deployed — `deploy.py` and the mpremote commands copy an explicit
+file list, not a glob.
+
+```bash
+pip install --group dev   # one-time: install pytest
+python -m pytest          # run the suite
+```
+
+Hardware-dependent code (servo PWM, I2C/ADC reads, gait playback timing) is exercised
+on-device, not here.
+
 ## What's not implemented yet
 
 - IK-based gaits beyond trot (walk, turn, etc. still use OpenCat keyframes)

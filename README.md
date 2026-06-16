@@ -298,6 +298,17 @@ dog fs cp src/poses.py :poses.py   # upload a single file
 
 ---
 
+## Tests
+
+To run the Python tests:
+
+```bash
+pip install --group dev   # one-time: installs pytest
+python -m pytest
+```
+
+---
+
 ## Documentation
 
 - **[Hardware Setup & Calibration](docs/micropython-getting-started.md)** — flashing, servo verification, channel identification, calibration

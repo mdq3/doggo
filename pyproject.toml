@@ -1,3 +1,17 @@
+[dependency-groups]
+# Host-side test tooling (not deployed to the device). Install with:
+#   pip install --group dev      (or: pip install pytest)
+dev = ["pytest>=8"]
+
+[tool.pytest.ini_options]
+# Host-side unit tests for the pure-logic parts of the firmware. Tests sit next to
+# the source they cover, named <source>_test.py. src/conftest.py loads
+# src/test/test_harness.py, which stubs the MicroPython-only modules (machine,
+# utime, esp, ...) so they import on CPython. Run: python -m pytest
+testpaths = ["src"]
+python_files = ["*_test.py"]
+addopts = "--import-mode=importlib"
+
 [tool.ruff]
 target-version = "py38"
 line-length = 100
