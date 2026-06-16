@@ -20,33 +20,7 @@ Tuning:
   Too slow / shuffling -> decrease _FRAME_DELAY (e.g. 0.012)
 """
 
-import time
-
-from poses import (
-    CH_FL_LEG,
-    CH_FL_SHOULDER,
-    CH_FR_LEG,
-    CH_FR_SHOULDER,
-    CH_RL_LEG,
-    CH_RL_SHOULDER,
-    CH_RR_LEG,
-    CH_RR_SHOULDER,
-    move_to,
-    play_frame,
-    stand,
-)
-
-_CH = (
-    CH_FL_SHOULDER,
-    CH_FR_SHOULDER,
-    CH_RR_SHOULDER,
-    CH_RL_SHOULDER,
-    CH_FL_LEG,
-    CH_FR_LEG,
-    CH_RR_LEG,
-    CH_RL_LEG,
-)
-_RD = (1, -1, -1, 1, -1, 1, 1, -1)
+from gaits.player import play
 
 _FRAME_DELAY = 0.016  # seconds between frames — tune if sliding or unstable
 
@@ -159,13 +133,6 @@ _FRAMES = (
 )
 
 
-def _to_commanded(raw):
-    result = {}
-    for i in range(8):
-        result[_CH[i]] = 90 + _RD[i] * raw[i]
-    return result
-
-
 def crawl(steps=None):
     """
     Crawl forward in a low stance (103-frame cycle, one foot at a time).
@@ -174,19 +141,4 @@ def crawl(steps=None):
         steps: Number of full 103-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    print("\nStarting crawl...")
-
-    move_to(_to_commanded(_FRAMES[0]), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for frame in _FRAMES:
-                play_frame(_to_commanded(frame))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nCrawl interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(_FRAMES, _FRAME_DELAY, steps, name="crawl")

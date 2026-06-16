@@ -23,33 +23,7 @@ Tuning:
   Too slow / shuffling -> decrease _FRAME_DELAY (e.g. 0.012)
 """
 
-import time
-
-from poses import (
-    CH_FL_LEG,
-    CH_FL_SHOULDER,
-    CH_FR_LEG,
-    CH_FR_SHOULDER,
-    CH_RL_LEG,
-    CH_RL_SHOULDER,
-    CH_RR_LEG,
-    CH_RR_SHOULDER,
-    move_to,
-    play_frame,
-    stand,
-)
-
-_CH = (
-    CH_FL_SHOULDER,
-    CH_FR_SHOULDER,
-    CH_RR_SHOULDER,
-    CH_RL_SHOULDER,
-    CH_FL_LEG,
-    CH_FR_LEG,
-    CH_RR_LEG,
-    CH_RL_LEG,
-)
-_RD = (1, -1, -1, 1, -1, 1, 1, -1)
+from gaits.player import play
 
 _FRAME_DELAY = 0.016  # seconds between frames — tune if sliding or unstable
 
@@ -162,38 +136,6 @@ _FRAMES = (
 )
 
 
-def _to_commanded(raw):
-    result = {}
-    for i in range(8):
-        result[_CH[i]] = 90 + _RD[i] * raw[i]
-    return result
-
-
-def _mirror(frame):
-    """Swap L/R column pairs for right turn."""
-    f = frame
-    return (f[1], f[0], f[3], f[2], f[5], f[4], f[7], f[6])
-
-
-def _run(steps, transform, label):
-    print("\nStarting crawl " + label + "...")
-
-    move_to(_to_commanded(transform(_FRAMES[0])), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for frame in _FRAMES:
-                play_frame(_to_commanded(transform(frame)))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nCrawl " + label + " interrupted.")
-
-    print("Returning to stand...")
-    stand()
-
-
 def crawl_left(steps=None):
     """
     Crawl in a leftward arc (103-frame cycle, low stance).
@@ -202,7 +144,7 @@ def crawl_left(steps=None):
         steps: Number of full 103-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    _run(steps, lambda f: f, "left")
+    play(_FRAMES, _FRAME_DELAY, steps, name="crawl left")
 
 
 def crawl_right(steps=None):
@@ -213,4 +155,4 @@ def crawl_right(steps=None):
         steps: Number of full 103-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    _run(steps, _mirror, "right")
+    play(_FRAMES, _FRAME_DELAY, steps, mirror_lr=True, name="crawl right")

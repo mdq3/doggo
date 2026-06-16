@@ -44,6 +44,34 @@ ALL_CHANNELS = [
     CH_RL_LEG,
 ]
 
+# Keyframe gait column order — OpenCat joint indices 8-15 (shoulders then knees).
+# Every gait array (wkF, bkF, trF, ...) lays its eight columns out in this order.
+GAIT_CHANNELS = (
+    CH_FL_SHOULDER,
+    CH_FR_SHOULDER,
+    CH_RR_SHOULDER,
+    CH_RL_SHOULDER,
+    CH_FL_LEG,
+    CH_FR_LEG,
+    CH_RR_LEG,
+    CH_RL_LEG,
+)
+
+# Per-joint rotation direction relative to OpenCat raw angles: a robot fact shared by
+# the gait player (gaits/player.py) and the behavior player (behaviors.py). Commanded
+# angle for a joint = 90 + ROTATION_DIRECTION[channel] * opencat_raw_angle.
+ROTATION_DIRECTION = {
+    CH_HEAD: 1,
+    CH_FL_SHOULDER: 1,
+    CH_FR_SHOULDER: -1,
+    CH_RR_SHOULDER: -1,
+    CH_RL_SHOULDER: 1,
+    CH_FL_LEG: -1,
+    CH_FR_LEG: 1,
+    CH_RR_LEG: 1,
+    CH_RL_LEG: -1,
+}
+
 # Try to load calibration
 try:
     from config import CALIBRATION, apply_calibration

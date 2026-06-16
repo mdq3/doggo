@@ -24,35 +24,7 @@ Tuning:
   Too slow / shuffling -> decrease _FRAME_DELAY (e.g. 0.012)
 """
 
-import time
-
-from poses import (
-    CH_FL_LEG,
-    CH_FL_SHOULDER,
-    CH_FR_LEG,
-    CH_FR_SHOULDER,
-    CH_RL_LEG,
-    CH_RL_SHOULDER,
-    CH_RR_LEG,
-    CH_RR_SHOULDER,
-    move_to,
-    play_frame,
-    stand,
-)
-
-# Gait array index -> (channel, rotationDirection, zero_position)
-_CH = (
-    CH_FL_SHOULDER,
-    CH_FR_SHOULDER,
-    CH_RR_SHOULDER,
-    CH_RL_SHOULDER,
-    CH_FL_LEG,
-    CH_FR_LEG,
-    CH_RR_LEG,
-    CH_RL_LEG,
-)
-_RD = (1, -1, -1, 1, -1, 1, 1, -1)
-_ZERO = (90, 90, 90, 90, 90, 90, 90, 90)  # commanded 90 = OpenCat raw 0 (corrected 270° scale)
+from gaits.player import play
 
 _FRAME_DELAY = 0.016  # seconds between frames — tune if unstable
 
@@ -179,19 +151,6 @@ _FRAMES = (
 )
 
 
-def _to_commanded(raw):
-    result = {}
-    for i in range(8):
-        result[_CH[i]] = _ZERO[i] + _RD[i] * raw[i]
-    return result
-
-
-def _mirror(frame):
-    """Swap L/R column pairs for right turn."""
-    f = frame
-    return (f[1], f[0], f[3], f[2], f[5], f[4], f[7], f[6])
-
-
 def turn_left(steps=None):
     """
     Turn left (116-frame crawl cycle, 3-point support).
@@ -200,22 +159,7 @@ def turn_left(steps=None):
         steps: Number of full 116-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    print("\nStarting turn left...")
-
-    move_to(_to_commanded(_FRAMES[0]), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for i in range(0, len(_FRAMES), 2):  # every 2nd frame — above servo deadband
-                play_frame(_to_commanded(_FRAMES[i]))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nTurn left interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(_FRAMES, _FRAME_DELAY, steps, every=2, name="turn left")
 
 
 def turn_right(steps=None):
@@ -226,19 +170,4 @@ def turn_right(steps=None):
         steps: Number of full 116-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    print("\nStarting turn right...")
-
-    move_to(_to_commanded(_mirror(_FRAMES[0])), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for i in range(0, len(_FRAMES), 2):  # every 2nd frame — above servo deadband
-                play_frame(_to_commanded(_mirror(_FRAMES[i])))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nTurn right interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(_FRAMES, _FRAME_DELAY, steps, mirror_lr=True, every=2, name="turn right")

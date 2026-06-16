@@ -20,35 +20,7 @@ Tuning:
   Curves left          → decrease _TRIM (lengthens right strides)
 """
 
-import time
-
-from poses import (
-    CH_FL_LEG,
-    CH_FL_SHOULDER,
-    CH_FR_LEG,
-    CH_FR_SHOULDER,
-    CH_RL_LEG,
-    CH_RL_SHOULDER,
-    CH_RR_LEG,
-    CH_RR_SHOULDER,
-    move_to,
-    play_frame,
-    stand,
-)
-
-# Gait array index → (channel, rotationDirection, zero_position)
-_CH = (
-    CH_FL_SHOULDER,
-    CH_FR_SHOULDER,
-    CH_RR_SHOULDER,
-    CH_RL_SHOULDER,
-    CH_FL_LEG,
-    CH_FR_LEG,
-    CH_RR_LEG,
-    CH_RL_LEG,
-)
-_RD = (1, -1, -1, 1, -1, 1, 1, -1)
-_ZERO = (90, 90, 90, 90, 90, 90, 90, 90)  # commanded 90 = OpenCat raw 0 (corrected 270° scale)
+from gaits.player import play
 
 _FRAME_DELAY = 0.020  # seconds between frames — tune if sliding or unstable
 _SQUEEZE = 1.0  # shoulder sweep compression around _MID; 1.0 = no compression
@@ -107,16 +79,13 @@ _FRAMES = (
 )
 
 
-def _to_commanded(raw):
-    result = {}
-    for i in range(8):
-        r = raw[i]
-        if i < 4:  # shoulder
-            if _TRIM and i in (0, 3):  # FL and RL — left side
-                r += _TRIM
-            r = _MID + (r - _MID) * _SQUEEZE
-        result[_CH[i]] = _ZERO[i] + _RD[i] * r  # keep float — int() at PWM level
-    return result
+def _transform(i, r):
+    """Shoulder sweep: optional left-side trim, then squeeze around the balance pose."""
+    if i < 4:
+        if _TRIM and i in (0, 3):  # FL and RL — left side
+            r += _TRIM
+        return _MID + (r - _MID) * _SQUEEZE
+    return r
 
 
 def walk_back(steps=None):
@@ -129,19 +98,4 @@ def walk_back(steps=None):
         steps: Number of full 43-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    print("\nStarting walk back...")
-
-    move_to(_to_commanded(_FRAMES[0]), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for frame in _FRAMES:
-                play_frame(_to_commanded(frame))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nWalk back interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(_FRAMES, _FRAME_DELAY, steps, transform=_transform, name="walk back")

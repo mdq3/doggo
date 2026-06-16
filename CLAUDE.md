@@ -17,6 +17,7 @@ src/poses.py                — poses layer: calibration, motion, named poses
 src/behaviors.py            — behavior (trick) player + tricks: wave, high-five, handshake, pee, play dead, push-ups, moonwalk, boxing, recover (OpenCat behavior arrays)
 src/battery.py              — battery voltage monitoring (GPIO 37, BiBoard V1.0)
 src/device_info.py          — device diagnostics: RAM, flash, CPU, WiFi, uptime
+src/gaits/player.py         — shared keyframe-gait player: 90+rotDir conversion, L/R mirror, frame-loop playback (enter-from-stand → loop → stand)
 src/gaits/walk.py           — walk forward gait: 116-frame OpenCat wkF keyframe sequence
 src/gaits/walk_back.py      — walk backward gait: 43-frame OpenCat bkF keyframe sequence
 src/gaits/back_turn.py      — walk backward left/right arc gaits: 48-frame OpenCat bkL keyframe sequence
@@ -58,10 +59,11 @@ doggo-code-blocks/forge.config.mjs     — electron-forge packaging config (lint
 | File | Role | Lives on device as |
 |------|------|--------------------|
 | `src/drivers/servo.py` | Direct PWM servo driver (ESP32 LEDC, 200Hz) | `drivers/servo.py` |
-| `src/poses.py` | Pose library — channel consts, calibration, `move_to`, `play_frame`, `stand`, `sit`, `rest`, `stretch`, `zero_position` | `poses.py` |
+| `src/poses.py` | Pose library — channel consts, `GAIT_CHANNELS`/`ROTATION_DIRECTION`, calibration, `move_to`, `play_frame`, `stand`, `sit`, `rest`, `stretch`, `zero_position` | `poses.py` |
 | `src/behaviors.py` | Behavior (trick) player — per-frame speed/delay + loop section playback of OpenCat behavior arrays; `wave`, `high_five`, `handshake`, `pee`, `play_dead`, `push_ups`, `moonwalk`, `boxing`, `recover` (get up after falling) | `behaviors.py` |
 | `src/battery.py` | Battery voltage monitoring — GPIO 37 ADC, BiBoard V1.0 formula | `battery.py` |
 | `src/device_info.py` | Device diagnostics — RAM, flash, CPU freq, chip ID, WiFi, uptime | `device_info.py` |
+| `src/gaits/player.py` | Shared keyframe-gait player — `to_commanded` (90 + rotDir·raw), `mirror` (L/R swap), `play` (enter-from-stand → frame loop → stand); per-gait `transform`/`mirror_lr`/`every` knobs | `gaits/player.py` |
 | `src/gaits/walk.py` | Walk gait — 116-frame one-foot-at-a-time sequence from OpenCat `wkF` | `gaits/walk.py` |
 | `src/gaits/walk_back.py` | Walk backward gait — 43-frame one-foot-at-a-time sequence from OpenCat `bkF` | `gaits/walk_back.py` |
 | `src/gaits/back_turn.py` | Walk backward left/right arc — 48-frame sequence from OpenCat `bkL`; right = L/R mirror | `gaits/back_turn.py` |
@@ -173,6 +175,7 @@ mpremote fs mkdir :drivers + \
     fs cp src/poses.py :poses.py + \
     fs cp config.py :config.py + \
     fs mkdir :gaits + \
+    fs cp src/gaits/player.py :gaits/player.py + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     run src/demos/walk.py
 ```
@@ -206,6 +209,7 @@ mpremote fs mkdir :drivers + \
     fs cp src/imu.py :imu.py + \
     fs cp src/fall_watchdog.py :fall_watchdog.py + \
     fs mkdir :gaits + \
+    fs cp src/gaits/player.py :gaits/player.py + \
     fs cp src/gaits/walk.py :gaits/walk.py + \
     fs cp src/gaits/walk_back.py :gaits/walk_back.py + \
     fs cp src/gaits/back_turn.py :gaits/back_turn.py + \

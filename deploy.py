@@ -58,6 +58,7 @@ MANIFEST = [
     ("src/main.py", "main.py"),
     ("src/imu.py", "imu.py"),
     ("src/fall_watchdog.py", "fall_watchdog.py"),
+    ("src/gaits/player.py", "gaits/player.py"),
     ("src/gaits/walk.py", "gaits/walk.py"),
     ("src/gaits/walk_back.py", "gaits/walk_back.py"),
     ("src/gaits/back_turn.py", "gaits/back_turn.py"),

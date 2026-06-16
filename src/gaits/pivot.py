@@ -33,35 +33,8 @@ Tuning:
   Too slow            -> decrease _FRAME_DELAY (e.g. 0.010)
 """
 
-import time
+from gaits.player import play
 
-from poses import (
-    CH_FL_LEG,
-    CH_FL_SHOULDER,
-    CH_FR_LEG,
-    CH_FR_SHOULDER,
-    CH_RL_LEG,
-    CH_RL_SHOULDER,
-    CH_RR_LEG,
-    CH_RR_SHOULDER,
-    move_to,
-    play_frame,
-    stand,
-)
-
-# Gait array index -> (channel, rotationDirection, zero_position)
-_CH = (
-    CH_FL_SHOULDER,
-    CH_FR_SHOULDER,
-    CH_RR_SHOULDER,
-    CH_RL_SHOULDER,
-    CH_FL_LEG,
-    CH_FR_LEG,
-    CH_RR_LEG,
-    CH_RL_LEG,
-)
-_RD = (1, -1, -1, 1, -1, 1, 1, -1)
-_ZERO = (90, 90, 90, 90, 90, 90, 90, 90)  # commanded 90 = OpenCat raw 0 (corrected 270° scale)
 # NOTE: _SHOULDER_CAP/_LEG_OFFSET/_LEG_CAP below were tuned against the old 1.5x
 # servo scale error; vtL's "extreme extension" problem may not exist at true scale.
 # Worth re-testing with offset/caps relaxed.
@@ -151,22 +124,12 @@ _FRAMES = (
 )
 
 
-def _to_commanded(raw):
-    result = {}
-    for i in range(8):
-        r = raw[i]
-        if i < 4:  # shoulder joints
-            r = min(r, _SHOULDER_CAP)
-        else:  # leg joints: shift toward standing neutral then clamp both ends
-            r = max(_LEG_MIN, min(r + _LEG_OFFSET, _LEG_CAP))
-        result[_CH[i]] = _ZERO[i] + _RD[i] * r
-    return result
-
-
-def _mirror(frame):
-    """Swap L/R column pairs for right pivot."""
-    f = frame
-    return (f[1], f[0], f[3], f[2], f[5], f[4], f[7], f[6])
+def _transform(i, r):
+    """Cap the shoulder reach (in-place rotation) and pull legs toward standing neutral."""
+    if i < 4:  # shoulder joints
+        return min(r, _SHOULDER_CAP)
+    # leg joints: shift toward standing neutral then clamp both ends
+    return max(_LEG_MIN, min(r + _LEG_OFFSET, _LEG_CAP))
 
 
 def pivot_left(steps=None):
@@ -177,22 +140,7 @@ def pivot_left(steps=None):
         steps: Number of full 72-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    print("\nStarting pivot left...")
-
-    move_to(_to_commanded(_FRAMES[0]), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for i in range(0, len(_FRAMES), 2):  # every 2nd frame — above servo deadband
-                play_frame(_to_commanded(_FRAMES[i]))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nPivot left interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(_FRAMES, _FRAME_DELAY, steps, transform=_transform, every=2, name="pivot left")
 
 
 def pivot_right(steps=None):
@@ -203,19 +151,7 @@ def pivot_right(steps=None):
         steps: Number of full 72-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    print("\nStarting pivot right...")
-
-    move_to(_to_commanded(_mirror(_FRAMES[0])), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for i in range(0, len(_FRAMES), 2):  # every 2nd frame — above servo deadband
-                play_frame(_to_commanded(_mirror(_FRAMES[i])))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nPivot right interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(
+        _FRAMES, _FRAME_DELAY, steps, transform=_transform, mirror_lr=True, every=2,
+        name="pivot right",
+    )

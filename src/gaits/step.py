@@ -17,33 +17,7 @@ Tuning:
   Too slow / shuffling → decrease _FRAME_DELAY (e.g. 0.010)
 """
 
-import time
-
-from poses import (
-    CH_FL_LEG,
-    CH_FL_SHOULDER,
-    CH_FR_LEG,
-    CH_FR_SHOULDER,
-    CH_RL_LEG,
-    CH_RL_SHOULDER,
-    CH_RR_LEG,
-    CH_RR_SHOULDER,
-    move_to,
-    play_frame,
-    stand,
-)
-
-_CH = (
-    CH_FL_SHOULDER,
-    CH_FR_SHOULDER,
-    CH_RR_SHOULDER,
-    CH_RL_SHOULDER,
-    CH_FL_LEG,
-    CH_FR_LEG,
-    CH_RR_LEG,
-    CH_RL_LEG,
-)
-_RD = (1, -1, -1, 1, -1, 1, 1, -1)
+from gaits.player import play
 
 _FRAME_DELAY = 0.014  # seconds between frames — tune if unstable
 
@@ -90,13 +64,6 @@ _FRAMES = (
 )
 
 
-def _to_commanded(raw):
-    result = {}
-    for i in range(8):
-        result[_CH[i]] = 90 + _RD[i] * raw[i]
-    return result
-
-
 def step_in_place(steps=None):
     """
     March on the spot (37-frame cycle, alternating diagonal legs).
@@ -105,19 +72,4 @@ def step_in_place(steps=None):
         steps: Number of full 37-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    print("\nStarting step in place...")
-
-    move_to(_to_commanded(_FRAMES[0]), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for frame in _FRAMES:
-                play_frame(_to_commanded(frame))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nStep in place interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(_FRAMES, _FRAME_DELAY, steps, name="step in place")

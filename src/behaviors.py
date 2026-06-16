@@ -40,6 +40,7 @@ from poses import (
     CH_RL_SHOULDER,
     CH_RR_LEG,
     CH_RR_SHOULDER,
+    ROTATION_DIRECTION,
     apply_calibration,
     current_pos,
     note_motion,
@@ -59,7 +60,7 @@ _CH = (
     CH_RR_LEG,
     CH_RL_LEG,
 )
-_RD = (1, 1, -1, -1, 1, -1, 1, 1, -1)
+_RD = tuple(ROTATION_DIRECTION[ch] for ch in _CH)  # head + OpenCat joints 8-15
 
 _HEAD_LIMIT = 85  # OpenCat Bittle head-pan angleLimit is ±85°
 _STEP_DELAY = 0.008  # seconds per interpolation step (OpenCat: delay(DOF/2) ms)

@@ -18,35 +18,7 @@ Tuning:
   Too slow / shuffling → decrease _FRAME_DELAY (e.g. 0.015)
 """
 
-import time
-
-from poses import (
-    CH_FL_LEG,
-    CH_FL_SHOULDER,
-    CH_FR_LEG,
-    CH_FR_SHOULDER,
-    CH_RL_LEG,
-    CH_RL_SHOULDER,
-    CH_RR_LEG,
-    CH_RR_SHOULDER,
-    move_to,
-    play_frame,
-    stand,
-)
-
-# Gait array index → (channel, rotationDirection, zero_position)
-_CH = (
-    CH_FL_SHOULDER,
-    CH_FR_SHOULDER,
-    CH_RR_SHOULDER,
-    CH_RL_SHOULDER,
-    CH_FL_LEG,
-    CH_FR_LEG,
-    CH_RR_LEG,
-    CH_RL_LEG,
-)
-_RD = (1, -1, -1, 1, -1, 1, 1, -1)
-_ZERO = (90, 90, 90, 90, 90, 90, 90, 90)  # commanded 90 = OpenCat raw 0 (corrected 270° scale)
+from gaits.player import play
 
 _FRAME_DELAY = 0.016  # seconds between frames — plays every 2nd frame, ~0.9s cycle
 _SHOULDER_SQUEEZE = 1.0  # compress shoulder sweep around balance (raw=30); 1.0 = faithful
@@ -175,14 +147,11 @@ _FRAMES = (
 )
 
 
-def _to_commanded(raw):
-    result = {}
-    for i in range(8):
-        r = raw[i]
-        if i < 4:  # shoulder: compress sweep around balance pose
-            r = _SHOULDER_MID + (r - _SHOULDER_MID) * _SHOULDER_SQUEEZE
-        result[_CH[i]] = _ZERO[i] + _RD[i] * r  # keep float — int() at PWM level
-    return result
+def _transform(i, r):
+    """Compress the shoulder sweep around the balance pose; legs pass through."""
+    if i < 4:
+        return _SHOULDER_MID + (r - _SHOULDER_MID) * _SHOULDER_SQUEEZE
+    return r
 
 
 def walk(steps=None):
@@ -193,20 +162,4 @@ def walk(steps=None):
         steps: Number of full 116-frame cycles to run.
                None = run until KeyboardInterrupt.
     """
-    print("\nStarting walk...")
-
-    # Smooth entry from stand to first gait frame
-    move_to(_to_commanded(_FRAMES[0]), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for i in range(0, len(_FRAMES), 2):  # every 2nd frame — above servo deadband
-                play_frame(_to_commanded(_FRAMES[i]))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nWalk interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(_FRAMES, _FRAME_DELAY, steps, transform=_transform, every=2, name="walk")

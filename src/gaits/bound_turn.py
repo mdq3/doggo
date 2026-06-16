@@ -13,10 +13,8 @@ Tuning:
   Too slow            -> decrease _FRAME_DELAY (e.g. 0.010)
 """
 
-import time
-
-from gaits.pivot import _CH, _FRAMES, _RD, _ZERO, _mirror
-from poses import move_to, play_frame, stand
+from gaits.pivot import _FRAMES
+from gaits.player import play
 
 _FRAME_DELAY = 0.014
 _SHOULDER_CAP = 42
@@ -25,16 +23,11 @@ _LEG_CAP = 10
 _LEG_MIN = 0
 
 
-def _to_commanded(raw):
-    result = {}
-    for i in range(8):
-        r = raw[i]
-        if i < 4:
-            r = min(r, _SHOULDER_CAP)
-        else:
-            r = max(_LEG_MIN, min(r + _LEG_OFFSET, _LEG_CAP))
-        result[_CH[i]] = _ZERO[i] + _RD[i] * r
-    return result
+def _transform(i, r):
+    """Like pivot, but a wider shoulder cap so each foot reaches further (tight arc)."""
+    if i < 4:
+        return min(r, _SHOULDER_CAP)
+    return max(_LEG_MIN, min(r + _LEG_OFFSET, _LEG_CAP))
 
 
 def bound_left(steps=None):
@@ -44,22 +37,7 @@ def bound_left(steps=None):
     Args:
         steps: Number of full cycles to run. None = run until KeyboardInterrupt.
     """
-    print("\nStarting bound left...")
-
-    move_to(_to_commanded(_FRAMES[0]), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for i in range(0, len(_FRAMES), 2):
-                play_frame(_to_commanded(_FRAMES[i]))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nBound left interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(_FRAMES, _FRAME_DELAY, steps, transform=_transform, every=2, name="bound left")
 
 
 def bound_right(steps=None):
@@ -69,19 +47,7 @@ def bound_right(steps=None):
     Args:
         steps: Number of full cycles to run. None = run until KeyboardInterrupt.
     """
-    print("\nStarting bound right...")
-
-    move_to(_to_commanded(_mirror(_FRAMES[0])), speed=2)
-
-    count = 0
-    try:
-        while steps is None or count < steps:
-            for i in range(0, len(_FRAMES), 2):
-                play_frame(_to_commanded(_mirror(_FRAMES[i])))
-                time.sleep(_FRAME_DELAY)
-            count += 1
-    except KeyboardInterrupt:
-        print("\n\nBound right interrupted.")
-
-    print("Returning to stand...")
-    stand()
+    play(
+        _FRAMES, _FRAME_DELAY, steps, transform=_transform, mirror_lr=True, every=2,
+        name="bound right",
+    )
