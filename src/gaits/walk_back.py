@@ -7,9 +7,9 @@ body stays level.
 Gait array column order (OpenCat joint indices 8-15):
   [FL_sh, FR_sh, RR_sh, RL_sh, FL_leg, FR_leg, RR_leg, RL_leg]
 
-Conversion: commanded = ZERO_POS + rotationDirection[joint] * opencat_angle
-  ZERO_POS: FL_sh=65, FR_sh=115, RR_sh=115, RL_sh=65
-            FL_leg=80, FR_leg=100, RR_leg=100, RL_leg=80
+Conversion: commanded = 90 + rotationDirection[joint] * opencat_angle
+  (commanded 90 = OpenCat raw 0 = calibration pose, at the corrected 270-degree
+   servo scale where 1 commanded degree = 1 physical degree)
   rotDir:   FL_sh=+1, FR_sh=-1, RR_sh=-1, RL_sh=+1
             FL_leg=-1, FR_leg=+1, RR_leg=+1, RL_leg=-1
 
