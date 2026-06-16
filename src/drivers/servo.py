@@ -111,7 +111,7 @@ class Servos:
             return
 
         if self.pwm[channel] is not None:
-            self.pwm[channel].duty(0)
+            self.pwm[channel].duty_u16(0)  # 0% duty; duty_u16 keeps the 16-bit API consistent
 
     def all_off(self):
         """Turn off all servo channels"""

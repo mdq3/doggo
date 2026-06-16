@@ -246,7 +246,7 @@ mpremote connect /dev/ttysNNN run src/demos/walk.py
 
 When making code changes, keep `README.md` and `docs/` in sync:
 
-- **Route changes** (add/remove/rename) → update the routes table in `README.md` and the routes list in `src/server.py`'s docstring
+- **Route changes** (add/remove/rename) → update the routes table in `README.md` and the route tables in `src/server.py` (`_POSE_ROUTES`/`_GAIT_ROUTES`/`_TRICK_ROUTES`/`_DIAG_ROUTES`; `GET /` serves a generated index from them)
 - **New files or modules** → add to the layer separation diagram and key files table in this file (`CLAUDE.md`)
 - **New gaits or demos** → add to the relevant deployment commands in `CLAUDE.md`
 - **Tuning constants or behaviour changes** → update `docs/hardware-setup.md` if that gait is documented there

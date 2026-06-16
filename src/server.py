@@ -1,45 +1,15 @@
 """HTTP command server for wireless Doggo control.
 
-Routes:
-  GET /stand
-  GET /sit
-  GET /rest
-  GET /stretch
-  GET /walk?steps=N
-  GET /walk-back?steps=N
-  GET /walk-back-left?steps=N
-  GET /walk-back-right?steps=N
-  GET /turn-left?steps=N
-  GET /turn-right?steps=N
-  GET /pivot-left?steps=N
-  GET /pivot-right?steps=N
-  GET /bound-left?steps=N
-  GET /bound-right?steps=N
-  GET /step?steps=N
-  GET /crawl?steps=N
-  GET /crawl-left?steps=N
-  GET /crawl-right?steps=N
-  GET /trot?steps=N&imu=0
-  GET /trot-ik?steps=N&imu=0
-  GET /wave
-  GET /high-five
-  GET /handshake
-  GET /pee
-  GET /play-dead
-  GET /push-ups
-  GET /moonwalk
-  GET /boxing
-  GET /recover
-  GET /watchdog?on=0|1
-  GET /battery
-  GET /info
+All routes are defined once, in the tables below: the pose/gait/trick motion routes
+(_POSE_ROUTES / _GAIT_ROUTES / _TRICK_ROUTES) and the diagnostics (_DIAG_ROUTES).
+`GET /` serves an index generated from those tables, so the route list is never
+duplicated. Returns 200 OK on success, 404 for unknown routes.
 
-Returns 200 OK on success, 404 for unknown routes.
-Runs in a background _thread using raw sockets so the main thread
-stays free for WebREPL / interactive REPL access.
+Runs in a background _thread using raw sockets so the main thread stays free for
+WebREPL / interactive REPL access.
 
-Motion routes hold poses.motion_lock while they run, so the fall watchdog
-never drives the servos at the same time as a command.
+Motion routes hold poses.motion_lock while they run, so the fall watchdog never drives
+the servos at the same time as a command.
 """
 
 import _thread
@@ -71,29 +41,121 @@ from gaits.walk import walk
 from gaits.walk_back import walk_back
 from poses import motion_lock, rest, sit, stand, stretch
 
+# --- query-string parsing ---
+
+
+def _qget(qs, key):
+    """Return the raw string value of `key` in the query string, or None."""
+    prefix = key + "="
+    for part in (qs or "").split("&"):
+        if part.startswith(prefix):
+            return part[len(prefix):]
+    return None
+
 
 def _parse_steps(qs):
-    for part in (qs or "").split("&"):
-        if part.startswith("steps="):
-            try:
-                return int(part[6:])
-            except ValueError:
-                pass
-    return None
+    v = _qget(qs, "steps")
+    if v is None:
+        return None
+    try:
+        return int(v)
+    except ValueError:
+        return None
+
+
+def _parse_bool(qs, key, default):
+    v = _qget(qs, key)
+    return default if v is None else v not in ("0", "false", "off")
 
 
 def _parse_imu(qs):
-    for part in (qs or "").split("&"):
-        if part.startswith("imu="):
-            return part[4:] not in ("0", "false", "off")
-    return True
+    return _parse_bool(qs, "imu", True)
 
 
 def _parse_on(qs):
-    for part in (qs or "").split("&"):
-        if part.startswith("on="):
-            return part[3:] not in ("0", "false", "off")
-    return None
+    return _parse_bool(qs, "on", None)
+
+
+# --- motion route tables ---
+# Each entry: (path, function, kind, help). `kind` selects how the function is invoked:
+_KIND_NONE = 0  # fn()                                                   — poses, tricks
+_KIND_STEPS = 1  # fn(steps=_parse_steps(qs))                            — gaits
+_KIND_TROT = 2  # fn(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs)) — trot
+
+_POSE_ROUTES = (
+    ("/stand", stand, _KIND_NONE, "Stand up"),
+    ("/sit", sit, _KIND_NONE, "Sit down"),
+    ("/rest", rest, _KIND_NONE, "Lie flat"),
+    ("/stretch", stretch, _KIND_NONE, "Downward-dog stretch"),
+)
+
+_GAIT_ROUTES = (
+    ("/walk", walk, _KIND_STEPS, "Walk forward"),
+    ("/walk-back", walk_back, _KIND_STEPS, "Walk backward"),
+    ("/walk-back-left", walk_back_left, _KIND_STEPS, "Walk backward arcing left"),
+    ("/walk-back-right", walk_back_right, _KIND_STEPS, "Walk backward arcing right"),
+    ("/turn-left", turn_left, _KIND_STEPS, "Arc turn left"),
+    ("/turn-right", turn_right, _KIND_STEPS, "Arc turn right"),
+    ("/pivot-left", pivot_left, _KIND_STEPS, "Rotate in place left"),
+    ("/pivot-right", pivot_right, _KIND_STEPS, "Rotate in place right"),
+    ("/bound-left", bound_left, _KIND_STEPS, "Tight arc turn left"),
+    ("/bound-right", bound_right, _KIND_STEPS, "Tight arc turn right"),
+    ("/step", step_in_place, _KIND_STEPS, "March in place"),
+    ("/crawl", crawl, _KIND_STEPS, "Low-stance crawl forward"),
+    ("/crawl-left", crawl_left, _KIND_STEPS, "Low-stance crawl arcing left"),
+    ("/crawl-right", crawl_right, _KIND_STEPS, "Low-stance crawl arcing right"),
+    ("/trot", trot_forward, _KIND_TROT, "Diagonal trot (?imu=0/1, default steps=2)"),
+    ("/trot-ik", trot_ik_forward, _KIND_TROT, "IK-based trot (?imu=0/1, default steps=2)"),
+)
+
+_TRICK_ROUTES = (
+    ("/wave", wave, _KIND_NONE, "Wave a front paw"),
+    ("/high-five", high_five, _KIND_NONE, "Offer a high five"),
+    ("/handshake", handshake, _KIND_NONE, "Shake hands"),
+    ("/pee", pee, _KIND_NONE, "Lift a rear leg"),
+    ("/play-dead", play_dead, _KIND_NONE, "Roll over and play dead"),
+    ("/push-ups", push_ups, _KIND_NONE, "Do push-ups"),
+    ("/moonwalk", moonwalk, _KIND_NONE, "Moonwalk shuffle"),
+    ("/boxing", boxing, _KIND_NONE, "Boxing jabs"),
+    ("/recover", recover, _KIND_NONE, "Get up after falling over"),
+)
+
+# Ordered groups for the generated GET / index (MicroPython dicts are unordered,
+# so the listing is driven by these tuples, not by _MOTION).
+_MOTION_GROUPS = (
+    ("Poses", _POSE_ROUTES),
+    ("Gaits (optional ?steps=N)", _GAIT_ROUTES),
+    ("Tricks", _TRICK_ROUTES),
+)
+
+# Diagnostics are handled individually (custom bodies, no motion lock); listed here
+# only so GET / can advertise them.
+_DIAG_ROUTES = (
+    ("/battery", "Battery voltage and charge level"),
+    ("/info", "Device diagnostics (RAM, flash, CPU, WiFi, uptime)"),
+    ("/watchdog", "Show or toggle auto-recovery (?on=0/1)"),
+)
+
+# Flat path -> (function, kind) lookup for dispatch.
+_MOTION = {}
+for _, _routes in _MOTION_GROUPS:
+    for _path, _fn, _kind, _ in _routes:
+        _MOTION[_path] = (_fn, _kind)
+
+
+def _index_body():
+    """Render the GET / help text from the route tables (single source of truth)."""
+    lines = ["Doggo HTTP API", ""]
+    for title, routes in _MOTION_GROUPS:
+        lines.append(title + ":")
+        for path, _fn, _kind, help_text in routes:
+            lines.append("  GET %-18s %s" % (path, help_text))
+        lines.append("")
+    lines.append("Diagnostics:")
+    for path, help_text in _DIAG_ROUTES:
+        lines.append("  GET %-18s %s" % (path, help_text))
+    lines.append("")
+    return "\n".join(lines).encode()
 
 
 def _send_body(conn, body):
@@ -108,55 +170,16 @@ def _handle(conn):
             return
         path, _, qs = parts[1].partition("?")
 
+        # Diagnostics — no motion lock, custom response bodies.
         if path == "/":
-            _send_body(
-                conn,
-                b"Doggo HTTP API\n\n"
-                b"Poses:\n"
-                b"  GET /stand\n"
-                b"  GET /sit\n"
-                b"  GET /rest\n"
-                b"  GET /stretch\n\n"
-                b"Gaits (optional ?steps=N):\n"
-                b"  GET /walk\n"
-                b"  GET /walk-back\n"
-                b"  GET /walk-back-left\n"
-                b"  GET /walk-back-right\n"
-                b"  GET /turn-left\n"
-                b"  GET /turn-right\n"
-                b"  GET /pivot-left\n"
-                b"  GET /pivot-right\n"
-                b"  GET /bound-left\n"
-                b"  GET /bound-right\n"
-                b"  GET /step\n"
-                b"  GET /crawl\n"
-                b"  GET /crawl-left\n"
-                b"  GET /crawl-right\n"
-                b"  GET /trot          (default steps=2, imu=1)\n"
-                b"  GET /trot-ik       (default steps=2, imu=1)\n\n"
-                b"Tricks:\n"
-                b"  GET /wave\n"
-                b"  GET /high-five\n"
-                b"  GET /handshake\n"
-                b"  GET /pee\n"
-                b"  GET /play-dead\n"
-                b"  GET /push-ups\n"
-                b"  GET /moonwalk\n"
-                b"  GET /boxing\n"
-                b"  GET /recover     (get up after falling over)\n\n"
-                b"Diagnostics:\n"
-                b"  GET /battery\n"
-                b"  GET /info\n"
-                b"  GET /watchdog    (?on=0|1 toggles auto-recovery)\n",
-            )
+            _send_body(conn, _index_body())
             return
         elif path == "/battery":
             v, pct, low = battery_status()
             body = f"{v:.2f}V ({pct}%)"
             if low:
                 body += " - please charge"
-            body = (body + "\n").encode()
-            _send_body(conn, body)
+            _send_body(conn, (body + "\n").encode())
             return
         elif path == "/info":
             _send_body(conn, device_info().encode())
@@ -173,71 +196,21 @@ def _handle(conn):
             _send_body(conn, ("fall watchdog " + state + "\n").encode())
             return
 
-        # Everything below moves the robot — hold the lock so the fall
-        # watchdog never plays recover() mid-command.
+        # Everything else moves the robot — hold the lock so the fall watchdog
+        # never plays recover() mid-command.
+        entry = _MOTION.get(path)
+        if entry is None:
+            conn.send(b"HTTP/1.1 404 Not Found\r\nContent-Length: 10\r\n\r\nNot found\n")
+            return
+        fn, kind = entry
         motion_lock.acquire()
         try:
-            if path == "/stand":
-                stand()
-            elif path == "/sit":
-                sit()
-            elif path == "/rest":
-                rest()
-            elif path == "/stretch":
-                stretch()
-            elif path == "/walk":
-                walk(steps=_parse_steps(qs))
-            elif path == "/walk-back":
-                walk_back(steps=_parse_steps(qs))
-            elif path == "/walk-back-left":
-                walk_back_left(steps=_parse_steps(qs))
-            elif path == "/walk-back-right":
-                walk_back_right(steps=_parse_steps(qs))
-            elif path == "/turn-left":
-                turn_left(steps=_parse_steps(qs))
-            elif path == "/turn-right":
-                turn_right(steps=_parse_steps(qs))
-            elif path == "/pivot-left":
-                pivot_left(steps=_parse_steps(qs))
-            elif path == "/pivot-right":
-                pivot_right(steps=_parse_steps(qs))
-            elif path == "/bound-left":
-                bound_left(steps=_parse_steps(qs))
-            elif path == "/bound-right":
-                bound_right(steps=_parse_steps(qs))
-            elif path == "/step":
-                step_in_place(steps=_parse_steps(qs))
-            elif path == "/crawl":
-                crawl(steps=_parse_steps(qs))
-            elif path == "/crawl-left":
-                crawl_left(steps=_parse_steps(qs))
-            elif path == "/crawl-right":
-                crawl_right(steps=_parse_steps(qs))
-            elif path == "/wave":
-                wave()
-            elif path == "/high-five":
-                high_five()
-            elif path == "/handshake":
-                handshake()
-            elif path == "/pee":
-                pee()
-            elif path == "/play-dead":
-                play_dead()
-            elif path == "/push-ups":
-                push_ups()
-            elif path == "/moonwalk":
-                moonwalk()
-            elif path == "/boxing":
-                boxing()
-            elif path == "/recover":
-                recover()
-            elif path == "/trot":
-                trot_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
-            elif path == "/trot-ik":
-                trot_ik_forward(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
-            else:
-                conn.send(b"HTTP/1.1 404 Not Found\r\nContent-Length: 10\r\n\r\nNot found\n")
-                return
+            if kind == _KIND_NONE:
+                fn()
+            elif kind == _KIND_STEPS:
+                fn(steps=_parse_steps(qs))
+            else:  # _KIND_TROT
+                fn(steps=_parse_steps(qs) or 2, use_imu=_parse_imu(qs))
         finally:
             motion_lock.release()
 

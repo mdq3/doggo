@@ -1,5 +1,6 @@
-"""Query-string parsing in the HTTP command server (server.py)."""
+"""Query parsing and route table in the HTTP command server (server.py)."""
 
+import server
 from server import _parse_imu, _parse_on, _parse_steps
 
 
@@ -39,3 +40,29 @@ def test_parse_on():
     assert _parse_on("on=1") is True
     assert _parse_on("on=0") is False
     assert _parse_on("on=off") is False
+
+
+def test_motion_routes_are_callable_with_valid_kind():
+    valid = (server._KIND_NONE, server._KIND_STEPS, server._KIND_TROT)
+    for fn, kind in server._MOTION.values():
+        assert callable(fn)
+        assert kind in valid
+
+
+def test_trot_routes_use_trot_kind():
+    assert server._MOTION["/trot"][1] == server._KIND_TROT
+    assert server._MOTION["/trot-ik"][1] == server._KIND_TROT
+
+
+def test_motion_paths_are_unique_across_groups():
+    paths = [path for _, routes in server._MOTION_GROUPS for path, *_ in routes]
+    assert len(paths) == len(set(paths))
+    assert set(paths) == set(server._MOTION)
+
+
+def test_index_lists_every_route():
+    body = server._index_body().decode()
+    for path in server._MOTION:
+        assert path in body
+    for path, _ in server._DIAG_ROUTES:
+        assert path in body
